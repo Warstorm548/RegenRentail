@@ -2,9 +2,10 @@
 
 **Complete WorldGuard Region Rental System with Clickable Signs**
 
-Version: 1.0.0  
-Minecraft: Paper/Spigot 1.21+  
-Java: 21+
+Version: 1.0.0
+Minecraft: Paper/Spigot 1.21+
+Java: OpenJDK 21+
+Build System: Gradle
 
 ## ✅ All Features Implemented
 
@@ -34,18 +35,21 @@ Java: 21+
 ### Technical Requirements Verified
 - ✅ **Paper/Spigot 1.21+** - Built for Paper API 1.21.3
 - ✅ **WorldGuard 7.0.14** - Full integration implemented
-- ✅ **Vault plugin** - Economy system integrated  
+- ✅ **WorldEdit 7.3.6** - Block restoration implemented
+- ✅ **Vault plugin** - Economy system integrated
 - ✅ **Economy plugin support** - Works with EssentialsX, CMI, etc.
 - ✅ **All classes correct** - Proper package structure
 - ✅ **Correct JavaPlugin terms** - Extends JavaPlugin properly
-- ✅ **Build will run** - Maven POM configured correctly
-- ✅ **Java 21+** - Compiled with Java 21 target
+- ✅ **Build will run** - Gradle build configured correctly
+- ✅ **Java 21+** - Compiled with OpenJDK 21 target
 
 ## 📦 Project Structure
 
 ```
 RegionRental/
-├── pom.xml                          # Maven configuration
+├── build.gradle                     # Gradle build configuration
+├── settings.gradle                  # Gradle settings
+├── gradle.properties                # Gradle properties
 ├── build.sh                         # Build script
 ├── README.md                        # This file
 └── src/main/
@@ -67,42 +71,27 @@ RegionRental/
     │   │   └── StorageConfig.java
     │   ├── listeners/               # Event listeners (1 class)
     │   │   └── SignInteractListener.java
-    │   └── managers/                # Core managers (6 classes)
+    │   └── managers/                # Core managers (7 classes)
     │       ├── Rental.java          # Data model
     │       ├── RentalManager.java
     │       ├── SignManager.java
     │       ├── StorageManager.java
     │       ├── ExpirationManager.java
-    │       └── WorldGuardManager.java
+    │       ├── WorldGuardManager.java
+    │       └── WorldEditManager.java # NEW: Block restoration
     └── resources/
         ├── plugin.yml               # Plugin metadata
         └── config.yml               # Default configuration
 ```
 
-**Total: 20 Java classes + 2 resource files**
+**Total: 21 Java classes + 2 resource files**
 
 ## 🔨 Build Instructions
 
 ### Prerequisites
 
-1. **Java 21+** - Required for compilation and runtime
-2. **Maven 3.6+** - Required for building
-
-### Install Maven (if not installed)
-
-**Ubuntu/Debian:**
-```bash
-sudo apt update
-sudo apt install maven
-```
-
-**Windows:**
-Download from https://maven.apache.org/download.cgi
-
-**macOS:**
-```bash
-brew install maven
-```
+1. **Java 21+** (OpenJDK recommended) - Required for compilation and runtime
+2. **Gradle** - Included via Gradle Wrapper (no installation needed)
 
 ### Build the Plugin
 
@@ -119,26 +108,27 @@ chmod +x build.sh
 ./build.sh
 ```
 
-Or build directly with Maven:
+Or build directly with Gradle:
 ```bash
-mvn clean package
+./gradlew clean build
 ```
 
 4. **Find your JAR file:**
 ```
-target/RegionRental-1.0.0.jar
+build/libs/RegionRental-1.0.0.jar
 ```
 
 ## 🚀 Installation
 
 1. **Copy the JAR to your server:**
 ```bash
-cp target/RegionRental-1.0.0.jar /path/to/server/plugins/
+cp build/libs/RegionRental-1.0.0.jar /path/to/server/plugins/
 ```
 
 2. **Install required dependencies:**
    - Vault
    - WorldGuard 7.0.14+
+   - WorldEdit 7.3.6+
    - Any economy plugin (EssentialsX, CMI, etc.)
    - (Optional) LuckPerms for advanced permissions
 
@@ -183,8 +173,9 @@ All commands start with `/rr` to avoid conflicts:
 **Admin Commands:**
 - `/rrreload` - Reload configuration
 - `/rrcreatesign <region>` - Create a rental sign
-- `/rrreset <region>` - Reset a rental
+- `/rrreset <region>` - Reset a rental (with full refund)
 - `/rrretime <player> <region> [days]` - Reset rental time
+- `/rrremove <region>` - Remove RegionRental setup from a region
 
 ## ⚙️ Configuration
 
@@ -257,16 +248,19 @@ When a rental expires:
 
 ### Build Errors
 
-**"mvn: command not found"**
-- Install Maven (see instructions above)
+**"Permission denied" when running ./gradlew**
+```bash
+chmod +x gradlew
+```
 
 **"Java version mismatch"**
-- Ensure Java 21+ is installed
+- Ensure Java 21+ (OpenJDK) is installed
 - Check with: `java -version`
 
 **Compilation errors**
 - All classes are included and properly structured
 - Check that all files are in correct directories
+- Run `./gradlew clean build --stacktrace` for detailed error info
 
 ### Runtime Issues
 
@@ -275,6 +269,9 @@ When a rental expires:
 
 **"WorldGuard not found"**
 - Install WorldGuard 7.0.14+
+
+**"WorldEdit not found"**
+- Install WorldEdit 7.3.6+
 
 **"No economy system"**
 - Install an economy plugin (EssentialsX, CMI, etc.)
@@ -287,8 +284,10 @@ This plugin is provided for use on Minecraft servers.
 
 - Built for Paper/Spigot 1.21+
 - Uses WorldGuard API for region management
+- Uses WorldEdit API for block restoration
 - Uses Vault API for economy integration
 - Compatible with LuckPerms permission system
+- Built with Gradle build system
 
 ---
 

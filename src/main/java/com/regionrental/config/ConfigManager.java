@@ -43,6 +43,7 @@ public class ConfigManager {
     
     // Features
     private boolean blockRestoration;
+    private boolean autoDeleteSchematics;
     private boolean itemStorage;
     private boolean signProtection;
     
@@ -125,6 +126,7 @@ public class ConfigManager {
         
         // Features
         blockRestoration = config.getBoolean("restoration.enabled", true);
+        autoDeleteSchematics = config.getBoolean("restoration.auto-delete-schematics", true);
         itemStorage = config.getBoolean("storage.enabled", true);
         signProtection = config.getBoolean("signs.protect-signs", true);
     }
@@ -148,6 +150,9 @@ public class ConfigManager {
         messages.put("sign-created", "&aRental sign created for region &e{region}!");
         messages.put("sign-removed", "&aRental sign removed!");
         messages.put("rental-reset", "&aRental for &e{region}&a has been reset!");
+        messages.put("admin-reset-success", "&aSuccessfully reset rental for &e{region}&a. Player &e{player}&a has been refunded &e{amount}&a.");
+        messages.put("rental-reset-refund", "&aYour rental of &e{region}&a has been reset by an admin. You have been refunded &e{amount}&a.");
+        messages.put("region-removed", "&aRegionRental setup completely removed from &e{region}&a:");
         messages.put("rental-info", "&6=== Rental Info for {region} ===");
         messages.put("config-reloaded", "&aConfiguration reloaded!");
         
@@ -200,6 +205,7 @@ public class ConfigManager {
     public List<String> getAvailableSignFormat() { return availableSignFormat; }
     public List<String> getRentedSignFormat() { return rentedSignFormat; }
     public boolean isBlockRestoration() { return blockRestoration; }
+    public boolean isAutoDeleteSchematics() { return autoDeleteSchematics; }
     public boolean isItemStorage() { return itemStorage; }
     public boolean isSignProtection() { return signProtection; }
     public Map<String, Double> getPermissionPrices() { return permissionPrices; }

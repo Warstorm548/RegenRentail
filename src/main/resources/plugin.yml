@@ -9,6 +9,7 @@ website: https://yourwebsite.com
 depend:
   - Vault
   - WorldGuard
+  - WorldEdit
 
 softdepend:
   - LuckPerms
@@ -73,6 +74,12 @@ commands:
     permission: regionrental.admin.duration
     aliases: [duration]
 
+  rrremove:
+    description: Remove RegionRental setup from a region
+    usage: /rrremove <region>
+    permission: regionrental.admin.remove
+    aliases: [remove]
+
 permissions:
   regionrental.*:
     description: All RegionRental permissions
@@ -90,6 +97,7 @@ permissions:
       regionrental.admin.reset: true
       regionrental.admin.retime: true
       regionrental.admin.duration: true
+      regionrental.admin.remove: true
       regionrental.admin.bypass: true
       regionrental.admin.breaksign: true
       regionrental.admin.list.others: true
@@ -143,7 +151,11 @@ permissions:
   regionrental.admin.duration:
     description: Modify rental duration
     default: op
-    
+
+  regionrental.admin.remove:
+    description: Remove RegionRental setup from a region
+    default: op
+
   regionrental.admin.bypass:
     description: Bypass rental restrictions
     default: op

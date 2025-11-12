@@ -8,19 +8,19 @@ echo "========================================="
 
 # Clean previous builds
 echo "Cleaning previous builds..."
-mvn clean
+./gradlew clean
 
 # Build the plugin
 echo "Building plugin..."
-mvn package
+./gradlew build
 
 # Check if build was successful
-if [ -f "target/RegionRental-1.0.0.jar" ]; then
+if [ -f "build/libs/RegionRental-1.0.0.jar" ]; then
     echo "========================================="
     echo "Build SUCCESS!"
-    echo "Plugin JAR: target/RegionRental-1.0.0.jar"
+    echo "Plugin JAR: build/libs/RegionRental-1.0.0.jar"
     echo "========================================="
-    ls -lh target/RegionRental-1.0.0.jar
+    ls -lh build/libs/RegionRental-1.0.0.jar
 else
     echo "========================================="
     echo "Build FAILED!"

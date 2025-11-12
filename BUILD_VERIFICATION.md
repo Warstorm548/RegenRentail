@@ -162,13 +162,33 @@ After building, test these features:
 - **Permissions**: 15+ nodes
 - **Features**: 15 core + 4 additional
 
+## ✅ Recent Updates
+
+### Recent Features
+
+#### Rental Reset Refund Feature
+- ✅ **Full Refund on Admin Reset** - Players receive 100% refund when admin resets rental
+- ✅ **Admin Notification Messages** - Detailed feedback showing refund amount and player name
+- ✅ **Player Notification** - Players receive notification when rental is reset with refund amount
+- ✅ **Audit Logging** - All admin resets are logged to server logs
+- ✅ **New Config Messages** - `admin-reset-success` and `rental-reset-refund`
+
+#### Region Removal Command (Latest)
+- ✅ **Complete Region Cleanup** - `/rrremove` command removes all RegionRental setup
+- ✅ **Automatic Rental Reset** - Resets active rentals with full refund before removal
+- ✅ **Sign Cleanup** - Clears sign text and removes from configuration
+- ✅ **Schematic Deletion** - Removes WorldEdit schematics to free disk space
+- ✅ **Comprehensive Feedback** - Shows what was removed (sign, schematic, rental)
+- ✅ **New Permission** - `regionrental.admin.remove`
+
 ## ✅ Ready for Production
 
 All requirements have been met. The plugin is ready to:
-1. Build with Maven
+1. Build with Gradle (Kotlin DSL)
 2. Deploy to Paper/Spigot 1.21+ servers
 3. Use with WorldGuard 7.0.14+
-4. Integrate with any Vault economy
+4. Use with WorldEdit 7.3.6+
+5. Integrate with any Vault economy
 
 ## 📝 Notes
 

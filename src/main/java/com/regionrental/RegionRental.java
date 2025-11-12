@@ -31,6 +31,7 @@ public class RegionRental extends JavaPlugin {
     private StorageManager storageManager;
     private ExpirationManager expirationManager;
     private WorldGuardManager worldGuardManager;
+    private WorldEditManager worldEditManager;
     
     // Economy
     private Economy economy;
@@ -130,13 +131,19 @@ public class RegionRental extends JavaPlugin {
             getLogger().severe("Vault is not installed!");
             return false;
         }
-        
+
         // Check for WorldGuard
         if (getServer().getPluginManager().getPlugin("WorldGuard") == null) {
             getLogger().severe("WorldGuard is not installed!");
             return false;
         }
-        
+
+        // Check for WorldEdit
+        if (getServer().getPluginManager().getPlugin("WorldEdit") == null) {
+            getLogger().severe("WorldEdit is not installed!");
+            return false;
+        }
+
         return true;
     }
     
@@ -150,15 +157,16 @@ public class RegionRental extends JavaPlugin {
     }
     
     private void initializeManagers() {
-        // Initialize WorldGuard manager first
+        // Initialize WorldGuard and WorldEdit managers first
         worldGuardManager = new WorldGuardManager(this);
-        
+        worldEditManager = new WorldEditManager(this);
+
         // Initialize other managers
         rentalManager = new RentalManager(this);
         signManager = new SignManager(this);
         storageManager = new StorageManager(this);
         expirationManager = new ExpirationManager(this);
-        
+
         // Load data
         rentalManager.loadAllRentals();
         signManager.loadAllSigns();
@@ -167,7 +175,7 @@ public class RegionRental extends JavaPlugin {
     private void registerCommands() {
         // Main command handler
         getCommand("rr").setExecutor(new RRCommand(this));
-        
+
         // Register all subcommands with rr prefix
         getCommand("rrreload").setExecutor(new ReloadCommand(this));
         getCommand("rrcreatesign").setExecutor(new CreateSignCommand(this));
@@ -177,7 +185,8 @@ public class RegionRental extends JavaPlugin {
         getCommand("rrinfo").setExecutor(new InfoCommand(this));
         getCommand("rrlist").setExecutor(new ListCommand(this));
         getCommand("rrextend").setExecutor(new ExtendCommand(this));
-        getCommand("rrduration").setExecutor(new DurationCommand(this)); // New duration command
+        getCommand("rrduration").setExecutor(new DurationCommand(this));
+        getCommand("rrremove").setExecutor(new RemoveCommand(this)); // New remove command
     }
     
     private void registerAliasesIfPossible() {
@@ -204,7 +213,8 @@ public class RegionRental extends JavaPlugin {
                 {"info", "rrinfo"},
                 {"list", "rrlist"},
                 {"extend", "rrextend"},
-                {"duration", "rrduration"}
+                {"duration", "rrduration"},
+                {"remove", "rrremove"}
             };
             
             boolean allAliasesRegistered = true;
@@ -365,7 +375,11 @@ public class RegionRental extends JavaPlugin {
     public WorldGuardManager getWorldGuardManager() {
         return worldGuardManager;
     }
-    
+
+    public WorldEditManager getWorldEditManager() {
+        return worldEditManager;
+    }
+
     public Economy getEconomy() {
         return economy;
     }

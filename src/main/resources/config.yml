@@ -212,6 +212,32 @@ storage:
   
   # Items per page in retrieval GUI
   items-per-page: 45
+
+# ============================================
+# BLOCK RESTORATION SETTINGS (WorldEdit)
+# ============================================
+restoration:
+  # Enable block restoration when rental expires
+  # Requires WorldEdit to be installed
+  enabled: true
+
+  # Automatically delete schematic files after restoration
+  # If false, schematics are kept for manual restoration
+  auto-delete-schematics: true
+
+  # Restore entities (item frames, armor stands, etc.)
+  restore-entities: true
+
+  # Restore biomes (may impact performance)
+  restore-biomes: false
+
+  # Capture region state on rental creation
+  # If false, only restoration requests will be manual
+  auto-capture-on-rent: true
+
+  # Maximum schematic file size (MB) to prevent memory issues
+  # Set to -1 for no limit
+  max-schematic-size: 50
   
   # Enable multi-page GUI for large storages
   enable-multi-page: true
@@ -329,6 +355,9 @@ messages:
   
   # Admin messages
   rental-reset: '&aRental for &e{region}&a has been reset!'
+  admin-reset-success: '&aSuccessfully reset rental for &e{region}&a. Player &e{player}&a has been refunded &e{amount}&a.'
+  rental-reset-refund: '&aYour rental of &e{region}&a has been reset by an admin. You have been refunded &e{amount}&a.'
+  region-removed: '&aRegionRental setup completely removed from &e{region}&a:'
   rental-info: '&6=== Rental Info for {region} ==='
   config-reloaded: '&aConfiguration reloaded!'
   aliases-enabled: '&aShort command aliases have been enabled!'

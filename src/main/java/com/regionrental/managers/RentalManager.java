@@ -97,28 +97,36 @@ public class RentalManager {
         if (isRented(regionName)) {
             return false;
         }
-        
+
         // Check player rental limit
         if (getPlayerRentals(player.getUniqueId()).size() >= plugin.getConfigManager().getMaxRentalsPerPlayer()) {
             player.sendMessage(plugin.getConfigManager().getMessage("max-rentals-reached"));
             return false;
         }
-        
+
+        // Capture region state with WorldEdit before renting (if enabled)
+        if (plugin.getConfigManager().isBlockRestoration()) {
+            boolean captured = plugin.getWorldEditManager().captureRegion(regionName);
+            if (!captured && plugin.getConfigManager().isDebug()) {
+                plugin.getLogger().warning("Failed to capture region state for: " + regionName);
+            }
+        }
+
         // Create the rental
         long endDate = System.currentTimeMillis() + (days * 24L * 60L * 60L * 1000L);
         Rental rental = new Rental(regionName, player.getUniqueId(), player.getName(), endDate, price);
-        
+
         rentals.put(regionName, rental);
-        
+
         // Add player to region
         plugin.getWorldGuardManager().addPlayerToRegion(regionName, player.getUniqueId());
-        
+
         // Update sign
         plugin.getSignManager().updateSign(regionName);
-        
+
         // Save
         saveAllRentals();
-        
+
         return true;
     }
     
@@ -149,31 +157,88 @@ public class RentalManager {
     
     public void expireRental(String regionName) {
         Rental rental = rentals.get(regionName);
-        
+
         if (rental == null) {
             return;
         }
-        
+
         // Remove player from region
         plugin.getWorldGuardManager().removePlayerFromRegion(regionName, rental.getPlayerUUID());
-        
+
         // Store items if enabled
         if (plugin.getConfigManager().isItemStorage()) {
             plugin.getStorageManager().storeItemsFromRegion(regionName, rental.getPlayerUUID());
         }
-        
+
+        // Restore region blocks with WorldEdit (if enabled)
+        if (plugin.getConfigManager().isBlockRestoration()) {
+            boolean restored = plugin.getWorldEditManager().restoreRegion(regionName);
+            if (restored) {
+                plugin.getLogger().info("Restored blocks for region: " + regionName);
+            } else if (plugin.getConfigManager().isDebug()) {
+                plugin.getLogger().warning("Failed to restore blocks for region: " + regionName);
+            }
+        }
+
         // Remove rental
         rentals.remove(regionName);
-        
+
         // Update sign
         plugin.getSignManager().updateSign(regionName);
-        
+
         // Save
         saveAllRentals();
-        
+
         plugin.getLogger().info("Rental expired for region " + regionName);
     }
     
+    /**
+     * Resets a rental with full refund (for admin use)
+     * @param regionName The region to reset
+     * @return A map containing refund details (playerUUID, playerName, refundAmount) or null if rental doesn't exist
+     */
+    public Map<String, Object> resetRentalWithRefund(String regionName) {
+        Rental rental = rentals.get(regionName);
+
+        if (rental == null) {
+            return null;
+        }
+
+        // Get rental information before expiring
+        UUID playerUUID = rental.getPlayerUUID();
+        String playerName = rental.getPlayerName();
+        double refundAmount = rental.getTotalPaid();
+
+        // Refund the full amount to the player
+        if (refundAmount > 0 && plugin.getEconomy() != null) {
+            plugin.getEconomy().depositPlayer(plugin.getServer().getOfflinePlayer(playerUUID), refundAmount);
+
+            // Notify player if online
+            Player player = plugin.getServer().getPlayer(playerUUID);
+            if (player != null && player.isOnline()) {
+                String formattedAmount = String.format(plugin.getConfigManager().getCurrencyFormat(), refundAmount);
+                player.sendMessage(plugin.getConfigManager().getMessage("rental-reset-refund",
+                    "{region}", regionName,
+                    "{amount}", formattedAmount));
+            }
+        }
+
+        // Now expire the rental (this removes player from region, stores items, restores blocks, etc.)
+        expireRental(regionName);
+
+        // Return details for admin notification
+        Map<String, Object> refundDetails = new HashMap<>();
+        refundDetails.put("playerUUID", playerUUID);
+        refundDetails.put("playerName", playerName);
+        refundDetails.put("refundAmount", refundAmount);
+
+        return refundDetails;
+    }
+
+    /**
+     * @deprecated Use resetRentalWithRefund for admin resets to ensure proper refunds
+     */
+    @Deprecated
     public void resetRental(String regionName) {
         expireRental(regionName);
     }

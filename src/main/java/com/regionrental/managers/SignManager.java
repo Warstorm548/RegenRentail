@@ -37,6 +37,41 @@ public class SignManager {
         plugin.getSignsConfig().removeSign(regionName);
         plugin.getLogger().info("Removed rental sign for region " + regionName);
     }
+
+    /**
+     * Completely removes RegionRental setup from a region
+     * This includes removing the sign from config and clearing the physical sign
+     * @param regionName The region to remove setup from
+     * @return true if sign was removed, false if no sign existed
+     */
+    public boolean removeRegionSetup(String regionName) {
+        Location location = plugin.getSignsConfig().getSignLocation(regionName);
+
+        if (location == null) {
+            return false; // No sign exists for this region
+        }
+
+        // Clear the physical sign if it exists
+        Block block = location.getBlock();
+        if (block.getState() instanceof Sign) {
+            Sign sign = (Sign) block.getState();
+
+            // Clear all lines on the sign
+            for (int i = 0; i < 4; i++) {
+                sign.line(i, net.kyori.adventure.text.Component.text(""));
+            }
+            sign.update(true);
+
+            // Optionally break the sign block (uncomment if desired)
+            // block.setType(Material.AIR);
+        }
+
+        // Remove from config
+        plugin.getSignsConfig().removeSign(regionName);
+        plugin.getLogger().info("Removed RegionRental setup from region " + regionName);
+
+        return true;
+    }
     
     public void updateSign(String regionName) {
         Location location = plugin.getSignsConfig().getSignLocation(regionName);
