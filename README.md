@@ -55,16 +55,18 @@ RegionRental/
 └── src/main/
     ├── java/com/regionrental/
     │   ├── RegionRental.java        # Main plugin class
-    │   ├── commands/                # All command handlers (9 classes)
+    │   ├── commands/                # All command handlers (10 classes)
     │   │   ├── RRCommand.java
     │   │   ├── ReloadCommand.java
     │   │   ├── CreateSignCommand.java
     │   │   ├── ResetCommand.java
+    │   │   ├── RemoveCommand.java
     │   │   ├── RetimeCommand.java
     │   │   ├── RetrieveCommand.java
     │   │   ├── InfoCommand.java
     │   │   ├── ListCommand.java
-    │   │   └── ExtendCommand.java
+    │   │   ├── ExtendCommand.java
+    │   │   └── DurationCommand.java
     │   ├── config/                  # Configuration managers (3 classes)
     │   │   ├── ConfigManager.java
     │   │   ├── SignsConfig.java
@@ -84,7 +86,7 @@ RegionRental/
         └── config.yml               # Default configuration
 ```
 
-**Total: 21 Java classes + 2 resource files**
+**Total: 22 Java classes + 2 resource files**
 
 ## 🔨 Build Instructions
 
@@ -210,10 +212,13 @@ Automatically stores items from expired rentals
 - `regionrental.admin.*` - All admin permissions
 - `regionrental.admin.reload` - Reload the plugin
 - `regionrental.admin.createsign` - Create rental signs
-- `regionrental.admin.reset` - Reset rentals
+- `regionrental.admin.reset` - Reset rentals (with full refund)
 - `regionrental.admin.retime` - Reset rental time
-- `regionrental.admin.bypass` - Bypass restrictions
+- `regionrental.admin.duration` - Modify rental duration
+- `regionrental.admin.remove` - Remove RegionRental setup from regions
+- `regionrental.admin.bypass` - Bypass rental restrictions
 - `regionrental.admin.breaksign` - Break rental signs
+- `regionrental.admin.list.others` - List other players' rentals
 
 ## 🎯 Features in Detail
 
@@ -243,6 +248,21 @@ When a rental expires:
 - Permission-based pricing (VIP discounts)
 - Extension price multiplier
 - Automatic refunds on failed operations
+- **Full refunds on admin resets** - Players receive 100% refund when admin uses `/rrreset`
+
+### Block Restoration (WorldEdit)
+- Automatically captures region state when rental starts
+- Restores blocks and entities when rental expires
+- Schematics stored in `plugins/RegionRental/schematics/`
+- Configurable auto-delete of schematics after restoration
+- Optional entity and biome restoration
+
+### Region Removal
+- Use `/rrremove <region>` to completely remove rental setup
+- Automatically resets active rentals with full refund
+- Removes signs from configuration
+- Deletes WorldEdit schematics
+- Useful for repurposing regions or server restructuring
 
 ## 🐛 Troubleshooting
 
