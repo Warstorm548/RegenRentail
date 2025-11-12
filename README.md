@@ -35,7 +35,7 @@ Build System: Gradle
 ### Technical Requirements Verified
 - ✅ **Paper/Spigot 1.21+** - Built for Paper API 1.21.3
 - ✅ **WorldGuard 7.0.14** - Full integration implemented
-- ✅ **WorldEdit 7.3.6** - Block restoration implemented
+- ✅ **WorldEdit 7.3.16** - Block restoration implemented
 - ✅ **Vault plugin** - Economy system integrated
 - ✅ **Economy plugin support** - Works with EssentialsX, CMI, etc.
 - ✅ **All classes correct** - Proper package structure
@@ -130,7 +130,7 @@ cp build/libs/RegionRental-1.0.0.jar /path/to/server/plugins/
 2. **Install required dependencies:**
    - Vault
    - WorldGuard 7.0.14+
-   - WorldEdit 7.3.6+
+   - WorldEdit 7.3.16+
    - Any economy plugin (EssentialsX, CMI, etc.)
    - (Optional) LuckPerms for advanced permissions
 
@@ -291,7 +291,7 @@ chmod +x gradlew
 - Install WorldGuard 7.0.14+
 
 **"WorldEdit not found"**
-- Install WorldEdit 7.3.6+
+- Install WorldEdit 7.3.16+
 
 **"No economy system"**
 - Install an economy plugin (EssentialsX, CMI, etc.)

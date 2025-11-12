@@ -9,9 +9,9 @@ RegionRental is a Minecraft Paper/Spigot plugin (1.21+) that implements a comple
 **Technology Stack:**
 - Java 21+ (OpenJDK 21)
 - Paper API 1.21.3
-- Gradle 8.5 (Kotlin DSL)
+- Gradle 8.11.1 (Kotlin DSL)
 - WorldGuard 7.0.14 (region management)
-- WorldEdit 7.3.6 (block editing/restoration)
+- WorldEdit 7.3.16 (block editing/restoration)
 - Vault API (economy integration)
 - LuckPerms API (optional permissions)
 
@@ -251,7 +251,7 @@ Add to `StorageManager.CONTAINER_TYPES` set (currently supports: chest, barrel, 
 - Paper/Spigot 1.21+ server
 - Vault plugin installed
 - WorldGuard 7.0.14+ installed
-- WorldEdit 7.3.6+ installed
+- WorldEdit 7.3.16+ installed
 - Any economy plugin (EssentialsX, CMI, etc.)
 
 ### Quick Test Workflow

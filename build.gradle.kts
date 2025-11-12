@@ -34,6 +34,21 @@ repositories {
     }
 }
 
+configurations.all {
+    resolutionStrategy {
+        // Force specific versions to resolve conflicts
+        force(
+            "com.google.guava:guava:33.3.1-jre",           // Use WorldGuard's version
+            "com.google.code.gson:gson:2.11.0",            // Use WorldGuard's version
+            "it.unimi.dsi:fastutil:8.5.15",                // Use WorldGuard's version
+            "org.apache.logging.log4j:log4j-bom:2.24.1"    // Use WorldGuard's version
+        )
+
+        // Prefer modules from Paper when conflicts arise
+        preferProjectModules()
+    }
+}
+
 dependencies {
     // Paper API
     compileOnly("io.papermc.paper:paper-api:1.21.3-R0.1-SNAPSHOT")
@@ -41,12 +56,27 @@ dependencies {
     // Vault API
     compileOnly("com.github.MilkBowl:VaultAPI:1.7")
 
-    // WorldGuard
-    compileOnly("com.sk89q.worldguard:worldguard-bukkit:7.0.14")
+    // WorldGuard (latest version)
+    compileOnly("com.sk89q.worldguard:worldguard-bukkit:7.0.14") {
+        exclude(group = "com.google.guava")
+        exclude(group = "com.google.code.gson")
+        exclude(group = "it.unimi.dsi")
+        exclude(group = "org.apache.logging.log4j")
+    }
 
-    // WorldEdit
-    compileOnly("com.sk89q.worldedit:worldedit-bukkit:7.3.6")
-    compileOnly("com.sk89q.worldedit:worldedit-core:7.3.6")
+    // WorldEdit (use compatible version with WorldGuard)
+    compileOnly("com.sk89q.worldedit:worldedit-bukkit:7.3.16") {
+        exclude(group = "com.google.guava")
+        exclude(group = "com.google.code.gson")
+        exclude(group = "it.unimi.dsi")
+        exclude(group = "org.apache.logging.log4j")
+    }
+    compileOnly("com.sk89q.worldedit:worldedit-core:7.3.16") {
+        exclude(group = "com.google.guava")
+        exclude(group = "com.google.code.gson")
+        exclude(group = "it.unimi.dsi")
+        exclude(group = "org.apache.logging.log4j")
+    }
 
     // LuckPerms API
     compileOnly("net.luckperms:api:5.4")

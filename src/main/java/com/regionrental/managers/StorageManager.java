@@ -99,9 +99,9 @@ public class StorageManager implements Listener {
         BlockVector3 max = region.getMaximumPoint();
         
         // Scan for containers in the region
-        for (int x = min.getX(); x <= max.getX(); x++) {
-            for (int y = min.getY(); y <= max.getY(); y++) {
-                for (int z = min.getZ(); z <= max.getZ(); z++) {
+        for (int x = min.x(); x <= max.x(); x++) {
+            for (int y = min.y(); y <= max.y(); y++) {
+                for (int z = min.z(); z <= max.z(); z++) {
                     Location loc = new Location(world, x, y, z);
                     Block block = loc.getBlock();
                     
