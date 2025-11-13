@@ -80,10 +80,6 @@ dependencies {
 
     // LuckPerms API
     compileOnly("net.luckperms:api:5.4")
-
-    // Lombok for cleaner code
-    compileOnly("org.projectlombok:lombok:1.18.30")
-    annotationProcessor("org.projectlombok:lombok:1.18.30")
 }
 
 java {
@@ -113,7 +109,9 @@ tasks.shadowJar {
     archiveFileName.set("${project.name}-${project.version}.jar")
 
     // Minimize JAR by removing unused classes
-    minimize()
+    // Note: minimize() disabled due to Java 21 compatibility issues with Shadow 8.1.1
+    // Re-enable after upgrading to Shadow 8.3+ if smaller JAR size is needed
+    // minimize()
 }
 
 tasks.build {

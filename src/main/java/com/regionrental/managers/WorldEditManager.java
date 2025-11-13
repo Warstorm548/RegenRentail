@@ -7,7 +7,9 @@ import com.sk89q.worldedit.bukkit.BukkitAdapter;
 import com.sk89q.worldedit.extent.clipboard.BlockArrayClipboard;
 import com.sk89q.worldedit.extent.clipboard.Clipboard;
 import com.sk89q.worldedit.function.operation.ForwardExtentCopy;
+import com.sk89q.worldedit.function.operation.Operation;
 import com.sk89q.worldedit.function.operation.Operations;
+import com.sk89q.worldedit.session.ClipboardHolder;
 import com.sk89q.worldedit.math.BlockVector3;
 import com.sk89q.worldedit.regions.CuboidRegion;
 import com.sk89q.worldedit.regions.Region;
@@ -129,8 +131,13 @@ public class WorldEditManager {
 
             // Paste the clipboard back
             try (EditSession editSession = WorldEdit.getInstance().newEditSession(weWorld)) {
-                // Use the direct paste method for WorldEdit 7.3.16+
-                clipboard.paste(editSession, clipboard.getOrigin(), true);
+                // Use ClipboardHolder with builder pattern for WorldEdit 7.3.16+
+                ClipboardHolder holder = new ClipboardHolder(clipboard);
+                Operation operation = holder.createPaste(editSession)
+                    .to(clipboard.getOrigin())
+                    .ignoreAirBlocks(false)
+                    .build();
+                Operations.complete(operation);
             }
 
             if (plugin.getConfigManager().isDebug()) {
