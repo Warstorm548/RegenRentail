@@ -80,10 +80,6 @@ dependencies {
 
     // LuckPerms API
     compileOnly("net.luckperms:api:5.4")
-
-    // Lombok for cleaner code
-    compileOnly("org.projectlombok:lombok:1.18.30")
-    annotationProcessor("org.projectlombok:lombok:1.18.30")
 }
 
 java {
