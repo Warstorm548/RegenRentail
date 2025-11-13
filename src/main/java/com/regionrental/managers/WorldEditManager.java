@@ -129,8 +129,13 @@ public class WorldEditManager {
 
             // Paste the clipboard back
             try (EditSession editSession = WorldEdit.getInstance().newEditSession(weWorld)) {
-                // Use the direct paste method for WorldEdit 7.3.16+
-                clipboard.paste(editSession, clipboard.getOrigin(), true);
+                // Use the builder pattern for WorldEdit 7.3.16+
+                Operations.complete(
+                    clipboard.createPaste(editSession)
+                        .to(clipboard.getOrigin())
+                        .ignoreAirBlocks(false)
+                        .build()
+                );
             }
 
             if (plugin.getConfigManager().isDebug()) {
