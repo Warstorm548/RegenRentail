@@ -1,6 +1,6 @@
 plugins {
     java
-    id("com.github.johnrengelman.shadow") version "8.1.1"
+    id("com.gradleup.shadow") version "9.2.2"
 }
 
 group = "com.regionrental"
@@ -108,9 +108,8 @@ tasks.shadowJar {
     archiveClassifier.set("")
     archiveFileName.set("${project.name}-${project.version}.jar")
 
-    // Minimize JAR by removing unused classes
-    // Note: minimize() disabled due to Java 21 compatibility issues with Shadow 8.1.1
-    // Re-enable after upgrading to Shadow 8.3+ if smaller JAR size is needed
+    // Minimize JAR by removing unused classes (optional)
+    // Uncomment if smaller JAR size is needed:
     // minimize()
 }
 

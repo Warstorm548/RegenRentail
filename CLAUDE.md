@@ -9,7 +9,7 @@ RegionRental is a Minecraft Paper/Spigot plugin (1.21+) that implements a comple
 **Technology Stack:**
 - Java 21+ (OpenJDK 21)
 - Paper API 1.21.3
-- Gradle 8.11.1 (Kotlin DSL)
+- Gradle 9.2.0 (Kotlin DSL)
 - WorldGuard 7.0.14 (region management)
 - WorldEdit 7.3.16 (block editing/restoration)
 - Vault API (economy integration)
