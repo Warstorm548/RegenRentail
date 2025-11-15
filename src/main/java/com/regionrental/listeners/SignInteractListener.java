@@ -221,17 +221,28 @@ public class SignInteractListener implements Listener {
         if (!plugin.getConfigManager().isSignProtection()) {
             return;
         }
-        
-        if (!(event.getBlock().getState() instanceof Sign)) {
+
+        Location blockLoc = event.getBlock().getLocation();
+
+        // Check if the block being broken is the sign itself
+        if (event.getBlock().getState() instanceof Sign) {
+            if (plugin.getSignManager().isRentalSign(blockLoc)) {
+                // Check if player has admin permission
+                if (!event.getPlayer().hasPermission("regionrental.admin.breaksign")) {
+                    event.setCancelled(true);
+                    event.getPlayer().sendMessage(plugin.getConfigManager().getMessage("sign-protected"));
+                }
+            }
             return;
         }
-        
-        Location signLoc = event.getBlock().getLocation();
-        if (plugin.getSignManager().isRentalSign(signLoc)) {
-            // Check if player has admin permission
+
+        // Check if the block being broken is a support block for a rental sign
+        String regionName = plugin.getSignManager().getSupportBlockRegion(blockLoc);
+        if (regionName != null) {
+            // This block supports a rental sign - protect it
             if (!event.getPlayer().hasPermission("regionrental.admin.breaksign")) {
                 event.setCancelled(true);
-                event.getPlayer().sendMessage(ChatColor.RED + "You cannot break rental signs!");
+                event.getPlayer().sendMessage(plugin.getConfigManager().getMessage("sign-support-protected"));
             }
         }
     }

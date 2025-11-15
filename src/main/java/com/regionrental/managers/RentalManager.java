@@ -58,8 +58,9 @@ public class RentalManager {
                 long endDate = rentalsConfig.getLong(path + ".end-date");
                 int extensionCount = rentalsConfig.getInt(path + ".extension-count", 0);
                 double totalPaid = rentalsConfig.getDouble(path + ".total-paid", 0);
-                
-                Rental rental = new Rental(regionName, playerUUID, playerName, startDate, endDate, extensionCount, totalPaid);
+                double initialPrice = rentalsConfig.getDouble(path + ".initial-price", totalPaid); // Default to totalPaid for backward compatibility
+
+                Rental rental = new Rental(regionName, playerUUID, playerName, startDate, endDate, extensionCount, totalPaid, initialPrice);
                 rentals.put(regionName, rental);
             } catch (Exception e) {
                 plugin.getLogger().warning("Failed to load rental for region " + regionName + ": " + e.getMessage());
@@ -76,13 +77,14 @@ public class RentalManager {
         for (Map.Entry<String, Rental> entry : rentals.entrySet()) {
             Rental rental = entry.getValue();
             String path = "rentals." + rental.getRegionName();
-            
+
             rentalsConfig.set(path + ".player-uuid", rental.getPlayerUUID().toString());
             rentalsConfig.set(path + ".player-name", rental.getPlayerName());
             rentalsConfig.set(path + ".start-date", rental.getStartDate());
             rentalsConfig.set(path + ".end-date", rental.getEndDate());
             rentalsConfig.set(path + ".extension-count", rental.getExtensionCount());
             rentalsConfig.set(path + ".total-paid", rental.getTotalPaid());
+            rentalsConfig.set(path + ".initial-price", rental.getInitialPrice());
         }
         
         try {

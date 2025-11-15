@@ -180,13 +180,12 @@ public class RegionRental extends JavaPlugin {
         getCommand("rrreload").setExecutor(new ReloadCommand(this));
         getCommand("rrcreatesign").setExecutor(new CreateSignCommand(this));
         getCommand("rrreset").setExecutor(new ResetCommand(this));
-        getCommand("rrretime").setExecutor(new RetimeCommand(this));
         getCommand("rrretrieve").setExecutor(new RetrieveCommand(this));
         getCommand("rrinfo").setExecutor(new InfoCommand(this));
         getCommand("rrlist").setExecutor(new ListCommand(this));
         getCommand("rrextend").setExecutor(new ExtendCommand(this));
         getCommand("rrduration").setExecutor(new DurationCommand(this));
-        getCommand("rrremove").setExecutor(new RemoveCommand(this)); // New remove command
+        getCommand("rrremove").setExecutor(new RemoveCommand(this));
     }
     
     private void registerAliasesIfPossible() {

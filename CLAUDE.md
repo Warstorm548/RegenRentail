@@ -73,9 +73,13 @@ The plugin uses a manager pattern where each manager handles a specific domain:
 
 2. **`SignManager`** - Sign creation and updating
    - Stores sign locations linked to regions in `signs.yml`
+   - **Support block protection:** Automatically detects and stores the block a sign is attached to/placed on
    - Updates sign text to show rental status (available/rented/time remaining)
    - Automatic periodic sign updates every 30 seconds
-   - **Key method:** `removeRegionSetup()` - Completely removes rental setup from region
+   - **Key methods:**
+     - `removeRegionSetup()` - Completely removes rental setup from region and restores support block
+     - `getSupportBlockRegion()` - Checks if a block is a protected support block
+     - `migrateSupportBlocks()` - Auto-migrates existing signs on plugin startup
 
 3. **`WorldGuardManager`** - WorldGuard API integration
    - Adds/removes players from WorldGuard region members
@@ -111,9 +115,13 @@ The plugin uses a manager pattern where each manager handles a specific domain:
 ### Configuration System
 
 Three separate configuration files for organization:
-- **`config.yml`** - Main settings (economy, durations, messages, per-region overrides, restoration settings)
-- **`signs.yml`** - Sign locations (managed by SignManager)
-- **`storage.yml`** - Stored items from expired rentals (managed by StorageManager)
+- **`config.yml`** - Main settings (economy, durations, extensions, messages, per-region overrides, restoration settings)
+  - Extension settings include: `refund-on-duration-reset` - Refunds extension costs when admin resets duration to default
+- **`signs.yml`** - Sign locations and support block data (managed by SignManager)
+  - Stores sign coordinates
+  - Stores support block coordinates, original type, and block data for restoration
+- **`storage.yml`** - Stored items from expired rentals (managed by StorageConfig)
+- **`rentals.yml`** - Active rental data including initialPrice field for tracking extension costs
 
 Config managers: `ConfigManager`, `SignsConfig`, `StorageConfig`
 
@@ -121,18 +129,17 @@ Config managers: `ConfigManager`, `SignsConfig`, `StorageConfig`
 
 All commands use `/rr` prefix to avoid conflicts. The plugin attempts to register short aliases (e.g., `/reload`, `/info`) but falls back to prefixed versions if conflicts exist.
 
-**Command classes in `commands/` package (10 total):**
+**Command classes in `commands/` package (9 total):**
 - `RRCommand` - Main help command dispatcher
 - `ReloadCommand` - Reload configuration
 - `CreateSignCommand` - Create rental signs
 - `ResetCommand` - Reset rentals with full refund
-- `RemoveCommand` - **NEW:** Remove RegionRental setup from regions
-- `RetimeCommand` - Reset rental time
+- `RemoveCommand` - Remove RegionRental setup from regions
 - `RetrieveCommand` - Retrieve stored items
 - `InfoCommand` - View rental information
 - `ListCommand` - List rentals
 - `ExtendCommand` - Extend rentals
-- `DurationCommand` - Modify rental duration
+- `DurationCommand` - Modify rental duration (add/remove/set/reset)
 
 ## Key Implementation Details
 
@@ -140,7 +147,12 @@ All commands use `/rr` prefix to avoid conflicts. The plugin attempts to registe
 Located in `SignInteractListener.java`:
 - **Right-click**: Rent if available, show info if rented
 - **Shift-click**: Extend rental (if owned and extension limit not reached)
-- Sign protection: Signs cannot be broken unless player has `regionrental.admin.breaksign`
+- **Sign protection**: Signs cannot be broken unless player has `regionrental.admin.breaksign`
+- **Support block protection**: Blocks that signs are attached to/placed on are also protected
+  - Wall signs: The block the sign is attached to is protected
+  - Standing signs: The block below the sign is protected
+  - Original block type and data saved for restoration
+  - Players cannot bypass sign protection by breaking support blocks
 
 ### Rental Lifecycle
 1. **Creation**: Player right-clicks sign → economy check → **WorldEdit captures region state** → rental created → player added to region → sign updated
@@ -148,8 +160,8 @@ Located in `SignInteractListener.java`:
 3. **Expiration**: Expiration manager runs → player removed from region → items stored → **WorldEdit restores blocks** → rental deleted → sign updated to "AVAILABLE"
 
 ### Admin Reset vs Remove
-- **`/rrreset <region>`** - Resets active rental with full refund, but keeps rental setup (sign, schematic)
-- **`/rrremove <region>`** - Completely removes rental setup (resets rental if active, removes sign, deletes schematic)
+- **`/rrreset <region>`** - Resets active rental with full refund, but keeps rental setup (sign, support block protection, schematic)
+- **`/rrremove <region>`** - Completely removes rental setup (resets rental if active, restores support block, removes sign, deletes schematic)
 
 ### Scheduled Tasks
 - **Expiration checker**: Every 1 minute (configurable via `expiration-check-interval`)
@@ -205,8 +217,11 @@ worldEditManager.deleteCapture(regionName);
 ### Refund System
 When admins reset rentals, always use the refund method:
 ```java
-// Returns Map with playerUUID, playerName, refundAmount
+// Full refund for complete rental reset
 Map<String, Object> refundDetails = rentalManager.resetRentalWithRefund(regionName);
+
+// Extension-only refund for duration reset (via /rrduration reset)
+double extensionCost = rental.getExtensionCost(); // Returns totalPaid - initialPrice
 ```
 
 ### Message Formatting
@@ -304,18 +319,17 @@ Add to `StorageManager.CONTAINER_TYPES` set (currently supports: chest, barrel, 
 ```
 src/main/java/com/regionrental/
 ├── RegionRental.java           # Main plugin class
-├── commands/                   # Command executors (10 classes)
+├── commands/                   # Command executors (9 classes)
 │   ├── RRCommand.java
 │   ├── ReloadCommand.java
 │   ├── CreateSignCommand.java
 │   ├── ResetCommand.java       # With full refund system
-│   ├── RemoveCommand.java      # NEW: Complete region cleanup
-│   ├── RetimeCommand.java
+│   ├── RemoveCommand.java      # Complete region cleanup
 │   ├── RetrieveCommand.java
 │   ├── InfoCommand.java
 │   ├── ListCommand.java
 │   ├── ExtendCommand.java
-│   └── DurationCommand.java
+│   └── DurationCommand.java    # Includes add/remove/set/reset subcommands
 ├── config/                     # Config managers (3 classes)
 │   ├── ConfigManager.java
 │   ├── SignsConfig.java
@@ -333,6 +347,59 @@ src/main/java/com/regionrental/
 ```
 
 ## Recent Features
+
+### Command Consolidation - Duration Reset
+- **Removed `RetimeCommand`** - Functionality merged into `DurationCommand`
+- **New `/rrduration reset <region>` subcommand** - Resets rental duration to default
+- **Extension refund system** - Optionally refunds extension costs when resetting duration
+- **Simplified interface** - No longer requires player name, only region name
+- **Config option:** `extension.refund-on-duration-reset` - Enables/disables extension refunds (default: true)
+- **Rental tracking** - Added `initialPrice` field to `Rental` class to track extension costs separately
+
+**Technical Implementation:**
+- `Rental.java`: Added `initialPrice` field and `getExtensionCost()` method
+- `RentalManager.java`: Updated save/load to include `initialPrice`
+- `DurationCommand.java`: Added `resetDuration()` method with optional refund logic
+- `ConfigManager.java`: Added `isRefundOnDurationReset()` getter
+- `plugin.yml`: Removed `rrretime` command, deprecated `regionrental.admin.retime` permission
+- Backward compatible with existing rental data (defaults `initialPrice` to `totalPaid`)
+
+**Command comparison:**
+- Old: `/rrretime <player> <region> [days]` - Required player name, custom days
+- New: `/rrduration reset <region>` - Only region name, uses default duration, optional refund
+
+### Support Block Protection (Sign Protection Enhancement)
+- **Automatically detects support blocks** when creating rental signs
+- Stores original block type and BlockData in `signs.yml` under `support-block` section
+- **Protects wall signs**: Block the sign is attached to cannot be broken
+- **Protects standing signs**: Block below the sign cannot be broken
+- **Restores on removal**: `/rrremove` restores the support block to its original state
+- **Migration system**: Existing signs are automatically migrated on plugin startup
+- Prevents players from bypassing sign protection by breaking support blocks
+- Admin permission `regionrental.admin.breaksign` allows breaking both signs and support blocks
+
+**Technical Implementation:**
+- `SignsConfig.java`: 6 new methods for support block data storage
+- `SignManager.java`: `getSupportBlock()` detects wall/standing sign support blocks
+- `SignManager.java`: `migrateSupportBlocks()` auto-migrates existing signs
+- `SignInteractListener.java`: Enhanced `onBlockBreak()` to check support blocks
+- New config message: `sign-support-protected`
+
+**Data Format in signs.yml:**
+```yaml
+signs:
+  region_name:
+    world: world
+    x: 100
+    y: 64
+    z: 200
+    support-block:
+      x: 100
+      y: 63
+      z: 200
+      original-type: STONE
+      original-data: "minecraft:stone"
+```
 
 ### Block Restoration (WorldEdit Integration)
 - Automatically captures region state when rental is created
@@ -360,6 +427,7 @@ src/main/java/com/regionrental/
 - Container scanning is synchronous (may cause lag on very large regions)
 - Extension limit is global (not per-region configurable)
 - Schematic serialization uses Java serialization (could be enhanced to Sponge format)
+- Support block detection requires sign to be properly attached when using `/rrcreatesign`
 
 ## Documentation Files
 

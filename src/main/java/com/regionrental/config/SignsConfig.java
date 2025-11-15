@@ -58,6 +58,56 @@ public class SignsConfig {
         config.set(path + ".z", location.getBlockZ());
         save();
     }
+
+    public void addSupportBlock(String region, Location supportLoc, String blockType, String blockData) {
+        String path = "signs." + region + ".support-block";
+        config.set(path + ".x", supportLoc.getBlockX());
+        config.set(path + ".y", supportLoc.getBlockY());
+        config.set(path + ".z", supportLoc.getBlockZ());
+        config.set(path + ".original-type", blockType);
+        config.set(path + ".original-data", blockData);
+        save();
+    }
+
+    public boolean hasSupportBlock(String region) {
+        return config.contains("signs." + region + ".support-block");
+    }
+
+    public Location getSupportBlockLocation(String region) {
+        if (!hasSupportBlock(region)) {
+            return null;
+        }
+
+        String path = "signs." + region + ".support-block";
+        Location signLoc = getSignLocation(region);
+        if (signLoc == null) {
+            return null;
+        }
+
+        int x = config.getInt(path + ".x");
+        int y = config.getInt(path + ".y");
+        int z = config.getInt(path + ".z");
+
+        return new Location(signLoc.getWorld(), x, y, z);
+    }
+
+    public Map<String, String> getSupportBlockData(String region) {
+        if (!hasSupportBlock(region)) {
+            return null;
+        }
+
+        String path = "signs." + region + ".support-block";
+        Map<String, String> data = new HashMap<>();
+        data.put("type", config.getString(path + ".original-type", "STONE"));
+        data.put("data", config.getString(path + ".original-data", ""));
+
+        return data;
+    }
+
+    public void removeSupportBlock(String region) {
+        config.set("signs." + region + ".support-block", null);
+        save();
+    }
     
     public void removeSign(String region) {
         config.set("signs." + region, null);
