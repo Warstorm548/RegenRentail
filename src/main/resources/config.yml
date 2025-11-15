@@ -95,22 +95,26 @@ durations:
 extension:
   # Enable rental extensions
   enabled: true
-  
+
   # Default extension duration in days
   extension-days: 7
-  
+
   # Price multiplier for extensions (1.0 = same as rental price)
   price-multiplier: 1.0
-  
+
   # Maximum number of extensions per rental
   max-extensions: 10
-  
+
   # Minimum time before expiry to allow extension (hours)
   min-time-before-extension: 0
-  
+
   # Maximum time before expiry to allow extension (hours)
   # Set to -1 for no limit
   max-time-before-extension: -1
+
+  # Refund extension costs when admin resets duration to default
+  # Only applies to /rrduration reset command
+  refund-on-duration-reset: true
 
 # ============================================
 # RENTAL LIMITS
@@ -352,7 +356,8 @@ messages:
   sign-removed: '&aRental sign removed!'
   sign-not-rental: '&cThis is not a rental sign!'
   sign-protected: '&cRental signs are protected!'
-  
+  sign-support-protected: '&cYou cannot break this block - it supports a rental sign!'
+
   # Admin messages
   rental-reset: '&aRental for &e{region}&a has been reset!'
   admin-reset-success: '&aSuccessfully reset rental for &e{region}&a. Player &e{player}&a has been refunded &e{amount}&a.'
