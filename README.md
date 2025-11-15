@@ -5,7 +5,7 @@
 Version: 1.0.0
 Minecraft: Paper/Spigot 1.21+
 Java: OpenJDK 21+
-Build System: Gradle
+Build System: Gradle 9.2.0
 
 ## ✅ All Features Implemented
 
@@ -93,7 +93,7 @@ RegionRental/
 ### Prerequisites
 
 1. **Java 21+** (OpenJDK recommended) - Required for compilation and runtime
-2. **Gradle** - Included via Gradle Wrapper (no installation needed)
+2. **Gradle 9.2.0** - Included via Gradle Wrapper (no installation needed)
 
 ### Build the Plugin
 
@@ -307,7 +307,7 @@ This plugin is provided for use on Minecraft servers.
 - Uses WorldEdit API for block restoration
 - Uses Vault API for economy integration
 - Compatible with LuckPerms permission system
-- Built with Gradle build system
+- Built with Gradle 9.2.0 build system
 
 ---
 
