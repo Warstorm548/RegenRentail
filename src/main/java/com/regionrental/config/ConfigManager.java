@@ -202,6 +202,7 @@ public class ConfigManager {
     public int getMaxExtensions() { return maxExtensions; }
     public List<Integer> getAvailableDurations() { return availableDurations; }
     public int getMaxRentalsPerPlayer() { return maxRentalsPerPlayer; }
+    public boolean isRefundOnDurationReset() { return config.getBoolean("extension.refund-on-duration-reset", true); }
     public List<String> getAvailableSignFormat() { return availableSignFormat; }
     public List<String> getRentedSignFormat() { return rentedSignFormat; }
     public boolean isBlockRestoration() { return blockRestoration; }

@@ -37,13 +37,7 @@ commands:
     usage: /rrreset <region>
     permission: regionrental.admin.reset
     aliases: [reset]
-    
-  rrretime:
-    description: Reset rental time
-    usage: /rrretime <player> <region> [days]
-    permission: regionrental.admin.retime
-    aliases: [retime]
-    
+
   rrretrieve:
     description: Retrieve stored items
     usage: /rrretrieve
@@ -70,7 +64,7 @@ commands:
     
   rrduration:
     description: Modify rental duration
-    usage: /rrduration <add|remove|set> <region> <time>
+    usage: /rrduration <add|remove|set|reset> <region> [<time>]
     permission: regionrental.admin.duration
     aliases: [duration]
 
@@ -95,7 +89,6 @@ permissions:
       regionrental.admin.reload: true
       regionrental.admin.createsign: true
       regionrental.admin.reset: true
-      regionrental.admin.retime: true
       regionrental.admin.duration: true
       regionrental.admin.remove: true
       regionrental.admin.bypass: true
@@ -143,11 +136,11 @@ permissions:
   regionrental.admin.reset:
     description: Reset rentals
     default: op
-    
+
   regionrental.admin.retime:
-    description: Reset rental time
+    description: (DEPRECATED - use regionrental.admin.duration) Reset rental time
     default: op
-    
+
   regionrental.admin.duration:
     description: Modify rental duration
     default: op

@@ -17,6 +17,7 @@ public class Rental {
     private long endDate;
     private int extensionCount;
     private double totalPaid;
+    private double initialPrice; // Track initial rental price separately for refund calculations
     private final Set<String> warningSent;
     
     // Constructor for new rentals
@@ -28,12 +29,13 @@ public class Rental {
         this.endDate = endDate;
         this.extensionCount = 0;
         this.totalPaid = price;
+        this.initialPrice = price; // Store initial price
         this.warningSent = new HashSet<>();
     }
     
     // Constructor for loading from storage
-    public Rental(String regionName, UUID playerUUID, String playerName, long startDate, long endDate, 
-                  int extensionCount, double totalPaid) {
+    public Rental(String regionName, UUID playerUUID, String playerName, long startDate, long endDate,
+                  int extensionCount, double totalPaid, double initialPrice) {
         this.regionName = regionName;
         this.playerUUID = playerUUID;
         this.playerName = playerName;
@@ -41,7 +43,15 @@ public class Rental {
         this.endDate = endDate;
         this.extensionCount = extensionCount;
         this.totalPaid = totalPaid;
+        this.initialPrice = initialPrice;
         this.warningSent = new HashSet<>();
+    }
+
+    // Backward compatibility constructor (for old data without initialPrice)
+    public Rental(String regionName, UUID playerUUID, String playerName, long startDate, long endDate,
+                  int extensionCount, double totalPaid) {
+        this(regionName, playerUUID, playerName, startDate, endDate, extensionCount, totalPaid, totalPaid);
+        // If no initialPrice stored, assume all of totalPaid is initial (no extensions tracked)
     }
     
     public boolean isExpired() {
@@ -94,6 +104,14 @@ public class Rental {
         warningSent.add(warningType);
     }
     
+    /**
+     * Gets the total cost of extensions (excludes initial rental price)
+     * @return The amount paid for extensions only
+     */
+    public double getExtensionCost() {
+        return totalPaid - initialPrice;
+    }
+
     // Getters
     public String getRegionName() { return regionName; }
     public UUID getPlayerUUID() { return playerUUID; }
@@ -102,6 +120,7 @@ public class Rental {
     public long getEndDate() { return endDate; }
     public int getExtensionCount() { return extensionCount; }
     public double getTotalPaid() { return totalPaid; }
+    public double getInitialPrice() { return initialPrice; }
     
     // Setters (limited)
     public void setEndDate(long endDate) { 

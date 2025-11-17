@@ -21,7 +21,8 @@ Build System: Gradle 9.2.0
 - ✅ **Configurable pricing** - Per-region or default
 - ✅ **Configurable durations** - Flexible time settings
 - ✅ **LuckPerms compatible** - Full permission support
-- ✅ **Sign protection** - Can't be broken
+- ✅ **Sign protection** - Can't be broken (includes support block protection)
+- ✅ **Support block protection** - Blocks supporting signs are also protected
 - ✅ **Auto expiration** - Checks every minute
 - ✅ **Custom messages** - All configurable
 - ✅ **Admin commands** - `/rr reload` and more
@@ -176,7 +177,11 @@ All commands start with `/rr` to avoid conflicts:
 - `/rrreload` - Reload configuration
 - `/rrcreatesign <region>` - Create a rental sign
 - `/rrreset <region>` - Reset a rental (with full refund)
-- `/rrretime <player> <region> [days]` - Reset rental time
+- `/rrduration <add|remove|set|reset> <region> [<time>]` - Modify rental duration
+  - `add` - Add time to rental
+  - `remove` - Remove time from rental
+  - `set` - Set absolute duration
+  - `reset` - Reset to default duration (refunds extensions if configured)
 - `/rrremove <region>` - Remove RegionRental setup from a region
 
 ## ⚙️ Configuration
@@ -187,6 +192,7 @@ The plugin creates three separate configuration files:
 - General settings (prefix, debug mode)
 - Economy settings (prices, currency format)
 - Duration settings (default days, extension days)
+- Extension settings (extension duration, price multiplier, max extensions, refund on reset)
 - Sign formats (customizable 4-line formats)
 - Storage settings (container types, auto-cleanup)
 - Messages (100% customizable with placeholders)
@@ -227,6 +233,11 @@ Automatically stores items from expired rentals
 - **Shift-click**: Extend your rental (with limits)
 - Signs update automatically every 30 seconds
 - Signs are protected from breaking (configurable)
+- **Support blocks are protected**: Players cannot break the block a sign is attached to or placed on
+  - For wall signs: The block the sign is attached to is protected
+  - For standing signs: The block below the sign is protected
+  - Original block state is saved and restored when rental setup is removed
+  - Automatic migration for existing signs on plugin startup
 
 ### Item Storage System
 When a rental expires:
@@ -249,6 +260,7 @@ When a rental expires:
 - Extension price multiplier
 - Automatic refunds on failed operations
 - **Full refunds on admin resets** - Players receive 100% refund when admin uses `/rrreset`
+- **Extension refunds on duration reset** - Optional refund of extension costs when admin uses `/rrduration reset` (configurable via `extension.refund-on-duration-reset`)
 
 ### Block Restoration (WorldEdit)
 - Automatically captures region state when rental starts
@@ -262,7 +274,16 @@ When a rental expires:
 - Automatically resets active rentals with full refund
 - Removes signs from configuration
 - Deletes WorldEdit schematics
+- **Restores support blocks** to their original state (type and orientation)
 - Useful for repurposing regions or server restructuring
+
+### Support Block Protection
+- **Automatic Detection**: When creating a rental sign, the plugin automatically detects and protects the block it's attached to or placed on
+- **Data Storage**: Original block type and orientation are saved in `signs.yml` for later restoration
+- **Protection**: Players cannot break support blocks without the `regionrental.admin.breaksign` permission
+- **Restoration**: When using `/rrremove`, the original block is restored before the sign is removed
+- **Migration**: Existing signs are automatically migrated to include support block protection on plugin startup
+- **Prevents Bypass**: Players can no longer bypass sign protection by breaking the supporting block
 
 ## 🐛 Troubleshooting
 

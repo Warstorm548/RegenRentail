@@ -2,11 +2,14 @@ package com.regionrental.commands;
 
 import com.regionrental.RegionRental;
 import com.regionrental.managers.Rental;
+import net.milkbowl.vault.economy.Economy;
 import org.bukkit.ChatColor;
+import org.bukkit.OfflinePlayer;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
 import org.bukkit.command.TabCompleter;
+import org.bukkit.entity.Player;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -30,39 +33,53 @@ public class DurationCommand implements CommandExecutor, TabCompleter {
             return true;
         }
         
-        // Usage: /rrduration <add|remove> <region> <time>
+        // Usage: /rrduration <add|remove|set|reset> <region> [<time>]
         // Example: /rrduration add shop1 2 days 3 hours 30 minutes
         // Example: /rrduration remove shop1 1 hour 30 mins
+        // Example: /rrduration set shop1 7 days
+        // Example: /rrduration reset shop1
         
-        if (args.length < 3) {
+        if (args.length < 2) {
             showUsage(sender);
             return true;
         }
-        
+
         String action = args[0].toLowerCase();
         String regionName = args[1];
-        
+
         // Check if region exists and is rented
         Rental rental = plugin.getRentalManager().getRental(regionName);
         if (rental == null) {
             sender.sendMessage(ChatColor.RED + "Region " + regionName + " is not currently rented!");
             return true;
         }
-        
+
+        // Handle reset action (doesn't require time parameter)
+        if (action.equals("reset")) {
+            resetDuration(sender, rental);
+            return true;
+        }
+
+        // For other actions, we need at least 3 arguments
+        if (args.length < 3) {
+            showUsage(sender);
+            return true;
+        }
+
         // Parse the time from remaining arguments
         StringBuilder timeString = new StringBuilder();
         for (int i = 2; i < args.length; i++) {
             timeString.append(args[i]).append(" ");
         }
-        
+
         long millisToModify = parseTimeString(timeString.toString().trim());
-        
+
         if (millisToModify <= 0) {
             sender.sendMessage(ChatColor.RED + "Invalid time format! Use: <number> <days|hours|minutes>");
             sender.sendMessage(ChatColor.YELLOW + "Example: 2 days 3 hours 30 minutes");
             return true;
         }
-        
+
         // Apply the modification
         switch (action) {
             case "add":
@@ -78,7 +95,7 @@ public class DurationCommand implements CommandExecutor, TabCompleter {
                 showUsage(sender);
                 return true;
         }
-        
+
         return true;
     }
     
@@ -150,7 +167,57 @@ public class DurationCommand implements CommandExecutor, TabCompleter {
             plugin.getLogger().info(sender.getName() + " set duration of " + rental.getRegionName() + " to " + newDuration);
         }
     }
-    
+
+    private void resetDuration(CommandSender sender, Rental rental) {
+        // Get default duration from config
+        int defaultDays = plugin.getConfigManager().getDefaultDuration();
+        long defaultMillis = defaultDays * 24L * 60L * 60L * 1000L;
+
+        // Check if extension refund is enabled
+        double refundAmount = 0.0;
+        if (plugin.getConfigManager().isRefundOnDurationReset()) {
+            refundAmount = rental.getExtensionCost();
+        }
+
+        // Refund extension money if applicable
+        if (refundAmount > 0 && plugin.getEconomy() != null) {
+            OfflinePlayer player = plugin.getServer().getOfflinePlayer(rental.getPlayerUUID());
+            plugin.getEconomy().depositPlayer(player, refundAmount);
+
+            String formattedAmount = String.format(plugin.getConfigManager().getCurrencyFormat(), refundAmount);
+
+            // Notify player if online
+            if (player.isOnline()) {
+                ((Player) player).sendMessage(ChatColor.GREEN + "Your extension costs for " +
+                    ChatColor.YELLOW + rental.getRegionName() +
+                    ChatColor.GREEN + " have been refunded: " + ChatColor.GOLD + formattedAmount);
+            }
+
+            sender.sendMessage(ChatColor.GREEN + "Refunded extension costs: " + ChatColor.GOLD + formattedAmount);
+        }
+
+        // Reset time to default duration
+        rental.resetTime(defaultDays);
+
+        // Update sign
+        plugin.getSignManager().updateSign(rental.getRegionName());
+
+        // Save
+        plugin.getRentalManager().saveAllRentals();
+
+        // Notify sender
+        sender.sendMessage(ChatColor.GREEN + "Reset duration for " + ChatColor.YELLOW + rental.getRegionName() +
+            ChatColor.GREEN + " to default: " + ChatColor.GOLD + defaultDays + " days");
+        sender.sendMessage(ChatColor.YELLOW + "New expiration: " + rental.getFormattedEndDate());
+
+        // Log the action
+        if (plugin.getConfigManager().isDebug()) {
+            plugin.getLogger().info(sender.getName() + " reset duration of " + rental.getRegionName() +
+                " to default (" + defaultDays + " days)" +
+                (refundAmount > 0 ? " with refund: " + refundAmount : ""));
+        }
+    }
+
     private long parseTimeString(String timeStr) {
         long totalMillis = 0;
         
@@ -213,6 +280,9 @@ public class DurationCommand implements CommandExecutor, TabCompleter {
         sender.sendMessage(ChatColor.GRAY + "  Example: /rrduration remove shop1 1 hour 30 mins");
         sender.sendMessage(ChatColor.YELLOW + "/rrduration set <region> <time>");
         sender.sendMessage(ChatColor.GRAY + "  Example: /rrduration set shop1 7 days");
+        sender.sendMessage(ChatColor.YELLOW + "/rrduration reset <region>");
+        sender.sendMessage(ChatColor.GRAY + "  Example: /rrduration reset shop1");
+        sender.sendMessage(ChatColor.GRAY + "  Resets to default duration, refunds extensions if configured");
         sender.sendMessage("");
         sender.sendMessage(ChatColor.AQUA + "Time formats: days, hours, minutes");
         sender.sendMessage(ChatColor.AQUA + "Short forms: d, h, m (e.g., 2d 3h 30m)");
@@ -228,7 +298,7 @@ public class DurationCommand implements CommandExecutor, TabCompleter {
         
         if (args.length == 1) {
             // First argument: action
-            List<String> actions = Arrays.asList("add", "remove", "set");
+            List<String> actions = Arrays.asList("add", "remove", "set", "reset");
             String partial = args[0].toLowerCase();
             for (String action : actions) {
                 if (action.startsWith(partial)) {
