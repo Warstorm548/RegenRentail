@@ -98,11 +98,14 @@ RegionRental/
 
 ### Build the Plugin
 
-1. **Clone or download this project**
+1. **Clone the repository:**
+```bash
+git clone https://github.com/Warstorm548/RegenRentail.git
+```
 
 2. **Navigate to the project directory:**
 ```bash
-cd RegionRental
+cd RegenRentail
 ```
 
 3. **Run the build script:**
