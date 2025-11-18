@@ -15,9 +15,11 @@ Build System: Gradle 9.2.0
 - ✅ **WorldGuard regions** - Automatic member management
 - ✅ **Time-based rentals** - Configurable durations
 - ✅ **Extension system** - Extend with limits
-- ✅ **Block restoration** - Auto-restore on expiry
+- ✅ **Block restoration** - Auto-restore on expiry with WorldEdit
 - ✅ **Item storage** - Items saved from containers
 - ✅ **Item retrieval** - `/rrretrieve` command
+- ✅ **Per-region configuration** - Separate regions.yml with auto-population
+- ✅ **Config verification** - Auto-verify and repair region configurations
 - ✅ **Configurable pricing** - Per-region or default
 - ✅ **Configurable durations** - Flexible time settings
 - ✅ **LuckPerms compatible** - Full permission support
@@ -25,13 +27,15 @@ Build System: Gradle 9.2.0
 - ✅ **Support block protection** - Blocks supporting signs are also protected
 - ✅ **Auto expiration** - Checks every minute
 - ✅ **Custom messages** - All configurable
+- ✅ **Refund tracking** - Complete refund history per rental
 - ✅ **Admin commands** - `/rr reload` and more
 
 ### Additional Requirements Met
 - ✅ **All commands begin with `/rr`** - No conflicts with other plugins
 - ✅ **Comprehensive config** - 100+ configuration options
-- ✅ **Separate config files** - signs.yml and storage.yml
+- ✅ **Separate config files** - 4 config files (config.yml, regions.yml, signs.yml, storage.yml)
 - ✅ **Sign allows time extension** - Shift-click to extend
+- ✅ **Auto-verification system** - Ensures config integrity on startup
 
 ### Technical Requirements Verified
 - ✅ **Paper/Spigot 1.21+** - Built for Paper API 1.21.3
@@ -53,23 +57,26 @@ RegionRental/
 ├── gradle.properties                # Gradle properties
 ├── build.sh                         # Build script
 ├── README.md                        # This file
+├── CLAUDE.md                        # Developer documentation
 └── src/main/
     ├── java/com/regionrental/
     │   ├── RegionRental.java        # Main plugin class
-    │   ├── commands/                # All command handlers (10 classes)
+    │   ├── commands/                # All command handlers (12 classes)
     │   │   ├── RRCommand.java
     │   │   ├── ReloadCommand.java
     │   │   ├── CreateSignCommand.java
     │   │   ├── ResetCommand.java
     │   │   ├── RemoveCommand.java
-    │   │   ├── RetimeCommand.java
     │   │   ├── RetrieveCommand.java
     │   │   ├── InfoCommand.java
     │   │   ├── ListCommand.java
     │   │   ├── ExtendCommand.java
-    │   │   └── DurationCommand.java
-    │   ├── config/                  # Configuration managers (3 classes)
+    │   │   ├── DurationCommand.java
+    │   │   ├── RefundHistoryCommand.java  # NEW: View refund transaction history
+    │   │   └── VerifyCommand.java         # NEW: Verify and repair region configs
+    │   ├── config/                  # Configuration managers (4 classes)
     │   │   ├── ConfigManager.java
+    │   │   ├── RegionsConfig.java   # NEW: Per-region settings manager
     │   │   ├── SignsConfig.java
     │   │   └── StorageConfig.java
     │   ├── listeners/               # Event listeners (1 class)
@@ -81,13 +88,13 @@ RegionRental/
     │       ├── StorageManager.java
     │       ├── ExpirationManager.java
     │       ├── WorldGuardManager.java
-    │       └── WorldEditManager.java # NEW: Block restoration
+    │       └── WorldEditManager.java
     └── resources/
         ├── plugin.yml               # Plugin metadata
         └── config.yml               # Default configuration
 ```
 
-**Total: 22 Java classes + 2 resource files**
+**Total: 24 Java classes + 2 resource files**
 
 ## 🔨 Build Instructions
 
@@ -175,7 +182,7 @@ All commands start with `/rr` to avoid conflicts:
 
 **Admin Commands:**
 - `/rrreload` - Reload configuration
-- `/rrcreatesign <region>` - Create a rental sign
+- `/rrcreatesign <region>` - Create a rental sign (auto-populates regions.yml)
 - `/rrreset <region>` - Reset a rental (with full refund)
 - `/rrduration <add|remove|set|reset> <region> [<time>]` - Modify rental duration
   - `add` - Add time to rental
@@ -183,10 +190,12 @@ All commands start with `/rr` to avoid conflicts:
   - `set` - Set absolute duration
   - `reset` - Reset to default duration (refunds extensions if configured)
 - `/rrremove <region>` - Remove RegionRental setup from a region
+- `/rrrefundhistory <region>` - View complete refund transaction history for a rental
+- `/rrverify` - Verify and repair region configurations (checks regions.yml integrity)
 
 ## ⚙️ Configuration
 
-The plugin creates three separate configuration files:
+The plugin creates four separate configuration files:
 
 ### `config.yml` - Main Configuration
 - General settings (prefix, debug mode)
@@ -195,15 +204,70 @@ The plugin creates three separate configuration files:
 - Extension settings (extension duration, price multiplier, max extensions, refund on reset)
 - Sign formats (customizable 4-line formats)
 - Storage settings (container types, auto-cleanup)
+- Block restoration settings (WorldEdit integration)
 - Messages (100% customizable with placeholders)
-- Per-region overrides
 - Permission-based pricing
+- Regions-config settings (auto-verify, verify command)
+
+### `regions.yml` - Per-Region Configuration (NEW)
+Automatically manages per-region override settings:
+- **Auto-populated** when rental signs are created via `/rrcreatesign`
+- **Auto-verified** on startup/reload to ensure integrity
+- Override any setting per region: price, duration, max-extensions, extension-price, etc.
+- Template-based entries with helpful comments
+- Supports partial overrides (only specify what you want to change)
+- Migration from old config.yml format happens automatically
+
+**Example:**
+```yaml
+regions:
+  shop1:
+    price: 500.0
+    duration: 14
+    max-extensions: 20
+  shop2:
+    price: 300.0  # Only override price, rest uses defaults
+```
 
 ### `signs.yml` - Sign Storage
-Automatically stores all rental sign locations
+Automatically stores all rental sign locations and support block data:
+- Sign coordinates (world, x, y, z)
+- Support block coordinates and original type
+- Original block data for proper restoration
 
 ### `storage.yml` - Item Storage
 Automatically stores items from expired rentals
+
+### `rentals.yml` - Active Rentals (Runtime)
+Automatically created and managed at runtime:
+- Stores all active rental data
+- Includes rental start/end timestamps
+- Tracks extension count and total paid amount
+- Includes `initialPrice` field for tracking extension costs separately
+- Auto-saved every 5 minutes
+
+## 📁 Plugin Data Directory
+
+The plugin creates the following directory structure at runtime:
+
+```
+plugins/RegionRental/
+├── config.yml          # Main configuration
+├── regions.yml         # Per-region settings (auto-populated)
+├── signs.yml           # Sign locations and support block data
+├── storage.yml         # Stored items from expired rentals
+├── rentals.yml         # Active rental data (runtime)
+└── schematics/         # WorldEdit region snapshots (*.dat files)
+    ├── region1.dat
+    ├── region2.dat
+    └── ...
+```
+
+**Notes:**
+- `schematics/` folder is automatically created when first rental is made
+- Schematic files can be auto-deleted after restoration (configurable)
+- `rentals.yml` is auto-saved every 5 minutes and on plugin disable
+- `regions.yml` is auto-verified on startup/reload (if enabled in config)
 
 ## 🔒 Permissions
 
@@ -219,14 +283,53 @@ Automatically stores items from expired rentals
 - `regionrental.admin.reload` - Reload the plugin
 - `regionrental.admin.createsign` - Create rental signs
 - `regionrental.admin.reset` - Reset rentals (with full refund)
-- `regionrental.admin.retime` - Reset rental time
-- `regionrental.admin.duration` - Modify rental duration
+- `regionrental.admin.duration` - Modify rental duration (add/remove/set/reset)
 - `regionrental.admin.remove` - Remove RegionRental setup from regions
+- `regionrental.admin.refundhistory` - View refund transaction history
+- `regionrental.admin.verify` - Verify and repair region configurations
 - `regionrental.admin.bypass` - Bypass rental restrictions
-- `regionrental.admin.breaksign` - Break rental signs
+- `regionrental.admin.breaksign` - Break rental signs and support blocks
 - `regionrental.admin.list.others` - List other players' rentals
+- `regionrental.admin.retime` - (Deprecated) Merged into duration command
 
 ## 🎯 Features in Detail
+
+### Complete Rental Lifecycle
+
+The plugin manages the entire rental lifecycle automatically:
+
+1. **Setup Phase**:
+   - Admin creates WorldGuard region with `/rg define <region>`
+   - Admin places a sign and creates rental sign with `/rrcreatesign <region>`
+   - Region automatically added to `regions.yml` with template settings
+   - Support block (if any) is detected and protected
+
+2. **Rental Phase**:
+   - Player right-clicks sign to rent (economy check performed)
+   - WorldEdit captures region state (blocks and entities)
+   - Player added to WorldGuard region members
+   - Rental data saved to `rentals.yml`
+   - Sign updated to show "RENTED" status
+
+3. **Extension Phase** (Optional):
+   - Player shift-clicks sign to extend rental
+   - Extension limit and price checked
+   - Rental extended and data updated
+   - Extension costs tracked separately for refunds
+
+4. **Expiration Phase**:
+   - Warning notifications sent (24h, 12h, 6h, 1h before expiry)
+   - On expiration: Player removed from region
+   - Items from containers stored in `storage.yml`
+   - WorldEdit restores region to original state
+   - Sign updated to show "AVAILABLE"
+   - Player retrieves items with `/rrretrieve`
+
+5. **Admin Management**:
+   - `/rrreset <region>` - Resets rental with full refund to player
+   - `/rrduration reset <region>` - Resets duration, optionally refunds extensions
+   - `/rrremove <region>` - Complete removal (refund, restore support block, delete schematic)
+   - `/rrverify` - Verify and repair configuration integrity
 
 ### Sign Interaction
 - **Right-click**: Rent if available, show info if rented
@@ -247,11 +350,19 @@ When a rental expires:
 4. Player uses `/rrretrieve` to get items back
 
 ### Expiration System
-- Checks every minute for expired rentals
+- Checks every minute for expired rentals (configurable via `expiration-check-interval`)
 - Sends warnings at 24h, 12h, 6h, and 1h before expiration
 - Automatically removes player from WorldGuard region
 - Stores items if configured
+- Restores region to original state via WorldEdit
 - Updates sign to show "AVAILABLE"
+
+### Automated Tasks
+The plugin runs several automated background tasks:
+- **Expiration checker**: Every 1 minute (configurable) - Checks for expired rentals
+- **Sign updater**: Every 30 seconds (600 ticks) - Updates all rental signs with current status
+- **Auto-save**: Every 5 minutes (6000 ticks) - Saves rental data to rentals.yml
+- **Auto-verification**: On startup/reload (if enabled) - Verifies regions.yml integrity
 
 ### Economy Integration
 - Uses Vault for universal economy support
@@ -285,6 +396,65 @@ When a rental expires:
 - **Migration**: Existing signs are automatically migrated to include support block protection on plugin startup
 - **Prevents Bypass**: Players can no longer bypass sign protection by breaking the supporting block
 
+### Per-Region Configuration System
+- **Separate Configuration File**: All per-region settings managed in `regions.yml` for better organization
+- **Automatic Population**: Creating a rental sign with `/rrcreatesign` automatically adds the region to regions.yml
+- **Auto-Verification**: On startup/reload, verifies all regions with signs have config entries
+- **Automatic Migration**: Old `regions:` section from config.yml migrated automatically on first startup
+- **Template-Based**: New entries include helpful comments and examples
+- **Partial Overrides**: Only specify the settings you want to change, rest use defaults
+- **Manual Verification**: Use `/rrverify` to check and repair region configurations
+- **Auto-Cleanup**: Regions removed via `/rrremove` are also removed from regions.yml
+
+**Available Per-Region Overrides:**
+- `price` - Custom rental price
+- `duration` - Custom rental duration in days
+- `max-extensions` - Maximum number of extensions allowed
+- `extension-price` - Price per extension day
+- `allow-extensions` - Enable/disable extensions for this region
+- `extension-duration` - Extension duration in days
+
+### Refund History Tracking
+- **Complete Transaction History**: Every refund is tracked with timestamp, amount, and reason
+- **Admin Command**: Use `/rrrefundhistory <region>` to view all refunds for a rental
+- **Automatic Tracking**: Refunds from resets, duration changes, and removals are all logged
+- **Detailed Information**: Shows refund date, amount, and reason for each transaction
+- **Prevents Double-Refunds**: System tracks what has been refunded to prevent duplicate payments
+
+## 🆕 Recent Updates
+
+### Version 1.0.0 - Latest Features
+
+#### Per-Region Configuration System (regions.yml)
+- **New config file** `regions.yml` for managing per-region override settings
+- **Auto-population** when creating rental signs via `/rrcreatesign`
+- **Auto-verification** ensures all regions with signs have config entries
+- **Migration system** automatically moves old `regions:` data from config.yml
+- **Template-based** entries with helpful comments for easy customization
+- **New command** `/rrverify` for manual verification and repair
+
+#### Command Consolidation - Duration Management
+- **Removed** `RetimeCommand` - functionality merged into `DurationCommand`
+- **Enhanced** `/rrduration` command now supports:
+  - `add` - Add time to rental
+  - `remove` - Remove time from rental
+  - `set` - Set absolute duration
+  - `reset` - Reset to default duration with optional extension refund
+- **Extension refund system** - Optionally refunds extension costs when resetting duration
+- **Config option** `extension.refund-on-duration-reset` controls refund behavior
+- **Simplified interface** - No longer requires player name, only region name
+
+#### Refund History Tracking
+- **New command** `/rrrefundhistory <region>` to view complete refund transaction history
+- **Automatic tracking** of all refunds (resets, duration changes, removals)
+- **Detailed logging** with timestamps, amounts, and reasons
+- **Double-refund prevention** system tracks what has been refunded
+
+#### Enhanced Support Block Protection
+- **Auto-migration** of existing signs to include support block protection
+- **Improved data storage** for original block type and orientation
+- **Restoration system** properly restores support blocks when using `/rrremove`
+
 ## 🐛 Troubleshooting
 
 ### Build Errors
@@ -317,6 +487,26 @@ chmod +x gradlew
 **"No economy system"**
 - Install an economy plugin (EssentialsX, CMI, etc.)
 
+## ⚠️ Known Limitations
+
+- **Multi-world support**: Currently uses the first world found for region lookups
+- **Manual sign placement**: Signs must be manually placed before creating rental sign with `/rrcreatesign`
+- **Container scanning**: Synchronous operation that may cause minor lag on very large regions
+- **Support block detection**: Requires sign to be properly attached when using `/rrcreatesign`
+
+These limitations are noted for transparency and may be addressed in future updates based on user feedback.
+
+## 📚 Documentation Files
+
+This project includes comprehensive documentation:
+- **README.md** (this file) - User guide and feature overview
+- **CLAUDE.md** - Developer documentation and technical details
+- **BUILD_VERIFICATION.md** - Build and deployment verification
+- **REFUND_IMPLEMENTATION.md** - Details on refund system
+- **REGION_REMOVAL.md** - Complete guide to region removal feature
+- **FEATURE_SUMMARY.md** - Comprehensive feature overview
+- **IMPLEMENTATION_SUMMARY.md** - Latest implementation details
+
 ## 📝 License
 
 This plugin is provided for use on Minecraft servers.
@@ -332,4 +522,6 @@ This plugin is provided for use on Minecraft servers.
 
 ---
 
-**Enjoy your complete rental system! All features tested and working!**
+**Enjoy your complete rental system with per-region configuration, automatic verification, and comprehensive refund tracking!**
+
+For technical details and development information, see [CLAUDE.md](CLAUDE.md).
