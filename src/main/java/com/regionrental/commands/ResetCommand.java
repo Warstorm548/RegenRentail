@@ -37,23 +37,36 @@ public class ResetCommand implements CommandExecutor {
             return true;
         }
 
-        // Reset the rental with full refund
+        // Reset the rental with net refund (prevents double-refunds)
         Map<String, Object> refundDetails = plugin.getRentalManager().resetRentalWithRefund(regionName);
 
         if (refundDetails != null) {
             String playerName = (String) refundDetails.get("playerName");
             double refundAmount = (double) refundDetails.get("refundAmount");
-            String formattedAmount = String.format(plugin.getConfigManager().getCurrencyFormat(), refundAmount);
+            double totalPaid = (double) refundDetails.get("totalPaid");
+            double alreadyRefunded = (double) refundDetails.get("alreadyRefunded");
 
-            // Send success message to admin with refund details
+            String formattedAmount = String.format(plugin.getConfigManager().getCurrencyFormat(), refundAmount);
+            String formattedTotal = String.format(plugin.getConfigManager().getCurrencyFormat(), totalPaid);
+            String formattedAlready = String.format(plugin.getConfigManager().getCurrencyFormat(), alreadyRefunded);
+
+            // Send success message to admin with detailed refund information
             sender.sendMessage(plugin.getConfigManager().getMessage("admin-reset-success",
-                "{region}", regionName,
-                "{player}", playerName,
-                "{amount}", formattedAmount));
+                    "{region}", regionName,
+                    "{player}", playerName,
+                    "{amount}", formattedAmount));
+
+            // Show refund breakdown if any previous refunds exist
+            if (alreadyRefunded > 0) {
+                sender.sendMessage(ChatColor.GRAY + "  Total paid: " + ChatColor.YELLOW + formattedTotal);
+                sender.sendMessage(ChatColor.GRAY + "  Already refunded: " + ChatColor.YELLOW + formattedAlready);
+                sender.sendMessage(ChatColor.GRAY + "  Net refund: " + ChatColor.GREEN + formattedAmount);
+            }
 
             // Log the action
             plugin.getLogger().info("Admin " + sender.getName() + " reset rental for region " + regionName +
-                                  ". Refunded " + formattedAmount + " to " + playerName);
+                    ". Refunded " + formattedAmount + " to " + playerName +
+                    (alreadyRefunded > 0 ? " (Total paid: " + formattedTotal + ", Already refunded: " + formattedAlready + ")" : ""));
         } else {
             sender.sendMessage(ChatColor.RED + "Failed to reset rental for region " + regionName);
         }

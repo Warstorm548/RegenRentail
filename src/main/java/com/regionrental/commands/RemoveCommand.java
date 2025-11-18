@@ -48,16 +48,28 @@ public class RemoveCommand implements CommandExecutor {
         // Check if region has an active rental
         Rental rental = plugin.getRentalManager().getRental(regionName);
         if (rental != null) {
-            // Reset the rental with full refund first
+            // Reset the rental with net refund first (prevents double-refunds)
             Map<String, Object> refundDetails = plugin.getRentalManager().resetRentalWithRefund(regionName);
 
             if (refundDetails != null) {
                 String playerName = (String) refundDetails.get("playerName");
                 double refundAmount = (double) refundDetails.get("refundAmount");
+                double totalPaid = (double) refundDetails.get("totalPaid");
+                double alreadyRefunded = (double) refundDetails.get("alreadyRefunded");
+
                 String formattedAmount = String.format(plugin.getConfigManager().getCurrencyFormat(), refundAmount);
+                String formattedTotal = String.format(plugin.getConfigManager().getCurrencyFormat(), totalPaid);
+                String formattedAlready = String.format(plugin.getConfigManager().getCurrencyFormat(), alreadyRefunded);
 
                 sender.sendMessage(ChatColor.YELLOW + "Active rental found. Player " + playerName +
-                                 " has been refunded " + formattedAmount);
+                        " has been refunded " + formattedAmount);
+
+                // Show refund breakdown if any previous refunds exist
+                if (alreadyRefunded > 0) {
+                    sender.sendMessage(ChatColor.GRAY + "  Total paid: " + ChatColor.YELLOW + formattedTotal);
+                    sender.sendMessage(ChatColor.GRAY + "  Already refunded: " + ChatColor.YELLOW + formattedAlready);
+                    sender.sendMessage(ChatColor.GRAY + "  Net refund: " + ChatColor.GREEN + formattedAmount);
+                }
             }
         }
 
