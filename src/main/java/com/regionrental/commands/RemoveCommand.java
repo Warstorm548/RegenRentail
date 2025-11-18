@@ -83,6 +83,13 @@ public class RemoveCommand implements CommandExecutor {
             schematicDeleted = true;
         }
 
+        // Remove region from regions.yml
+        boolean regionConfigRemoved = false;
+        if (plugin.getRegionsConfig().hasRegion(regionName)) {
+            plugin.getRegionsConfig().removeRegion(regionName);
+            regionConfigRemoved = true;
+        }
+
         // Send comprehensive success message
         StringBuilder message = new StringBuilder();
         message.append(plugin.getConfigManager().getMessage("region-removed",
@@ -94,6 +101,10 @@ public class RemoveCommand implements CommandExecutor {
 
         if (schematicDeleted) {
             message.append("\n").append(ChatColor.GREEN).append("  ✓ WorldEdit schematic deleted");
+        }
+
+        if (regionConfigRemoved) {
+            message.append("\n").append(ChatColor.GREEN).append("  ✓ Region configuration removed from regions.yml");
         }
 
         if (rental != null) {

@@ -405,17 +405,34 @@ messages:
   help-footer: '&6======================='
 
 # ============================================
-# PER-REGION SETTINGS
+# REGIONS CONFIGURATION FILE SETTINGS
 # ============================================
-# Override default settings for specific regions
-regions:
-  # Example configuration for a specific region
-  # shop1:
-  #   price: 500.0
-  #   duration: 14
-  #   max-extensions: 20
-  #   extension-price: 250.0
-  #   allow-extensions: true
+regions-config:
+  # Automatically verify and repair regions.yml on startup/reload
+  # Ensures all regions with signs have configuration entries
+  auto-verify-regions: true
+
+  # Enable /rrverify command for manual verification
+  # Useful when auto-verify is disabled or for on-demand checks
+  enable-verify-command: true
+
+# ============================================
+# PER-REGION SETTINGS (DEPRECATED)
+# ============================================
+# IMPORTANT: Region-specific settings have been moved to regions.yml
+# This file is automatically managed when you create/remove rental signs.
+# Edit regions.yml to override settings for specific regions.
+#
+# regions.yml supports these per-region overrides:
+#   price: <amount>              # Rental price
+#   duration: <days>             # Rental duration in days
+#   max-extensions: <number>     # Maximum extensions allowed
+#   extension-price: <amount>    # Price per extension day
+#   allow-extensions: <true|false> # Allow extensions
+#   extension-duration: <days>   # Extension duration in days
+#
+# Migration: Any existing regions: data will be automatically migrated
+# to regions.yml on first startup and removed from this file.
 
 # ============================================
 # PERMISSION-BASED PRICING

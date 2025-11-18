@@ -2,6 +2,7 @@ package com.regionrental;
 
 import com.regionrental.commands.*;
 import com.regionrental.config.ConfigManager;
+import com.regionrental.config.RegionsConfig;
 import com.regionrental.config.SignsConfig;
 import com.regionrental.config.StorageConfig;
 import com.regionrental.listeners.SignInteractListener;
@@ -26,6 +27,7 @@ public class RegionRental extends JavaPlugin {
     private ConfigManager configManager;
     private SignsConfig signsConfig;
     private StorageConfig storageConfig;
+    private RegionsConfig regionsConfig;
     private RentalManager rentalManager;
     private SignManager signManager;
     private StorageManager storageManager;
@@ -102,13 +104,16 @@ public class RegionRental extends JavaPlugin {
         if (storageConfig != null) {
             storageConfig.save();
         }
-        
+        if (regionsConfig != null) {
+            regionsConfig.save();
+        }
+
         // Cancel tasks
         Bukkit.getScheduler().cancelTasks(this);
-        
+
         // Unregister aliases
         unregisterAliases();
-        
+
         getLogger().info("RegionRental has been disabled!");
     }
     
@@ -118,6 +123,16 @@ public class RegionRental extends JavaPlugin {
             configManager = new ConfigManager(this);
             signsConfig = new SignsConfig(this);
             storageConfig = new StorageConfig(this);
+            regionsConfig = new RegionsConfig(this);
+
+            // Migrate regions from config.yml to regions.yml (one-time)
+            regionsConfig.migrateFromMainConfig(getConfig());
+
+            // Verify regions.yml is in sync with signs.yml (if auto-verify enabled)
+            if (configManager.isAutoVerifyRegions()) {
+                regionsConfig.verifyAndRepairRegions();
+            }
+
             return true;
         } catch (Exception e) {
             getLogger().log(Level.SEVERE, "Failed to initialize configurations", e);
@@ -187,6 +202,7 @@ public class RegionRental extends JavaPlugin {
         getCommand("rrduration").setExecutor(new DurationCommand(this));
         getCommand("rrremove").setExecutor(new RemoveCommand(this));
         getCommand("rrrefundhistory").setExecutor(new RefundHistoryCommand(this));
+        getCommand("rrverify").setExecutor(new VerifyCommand(this));
     }
     
     private void registerAliasesIfPossible() {
@@ -214,7 +230,8 @@ public class RegionRental extends JavaPlugin {
                 {"list", "rrlist"},
                 {"extend", "rrextend"},
                 {"duration", "rrduration"},
-                {"remove", "rrremove"}
+                {"remove", "rrremove"},
+                {"verify", "rrverify"}
             };
             
             boolean allAliasesRegistered = true;
@@ -327,15 +344,21 @@ public class RegionRental extends JavaPlugin {
         configManager.reload();
         signsConfig.reload();
         storageConfig.reload();
-        
+        regionsConfig.reload();
+
         // Reload data
         rentalManager.loadAllRentals();
         signManager.loadAllSigns();
-        
+
+        // Verify regions if auto-verify enabled
+        if (configManager.isAutoVerifyRegions()) {
+            regionsConfig.verifyAndRepairRegions();
+        }
+
         // Re-register aliases
         unregisterAliases();
         registerAliasesIfPossible();
-        
+
         getLogger().info("Plugin reloaded successfully!");
     }
     
@@ -355,7 +378,11 @@ public class RegionRental extends JavaPlugin {
     public StorageConfig getStorageConfig() {
         return storageConfig;
     }
-    
+
+    public RegionsConfig getRegionsConfig() {
+        return regionsConfig;
+    }
+
     public RentalManager getRentalManager() {
         return rentalManager;
     }

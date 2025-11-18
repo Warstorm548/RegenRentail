@@ -55,9 +55,14 @@ public class CreateSignCommand implements CommandExecutor {
         
         // Create the rental sign
         plugin.getSignManager().createSign(regionName, targetBlock.getLocation());
-        player.sendMessage(plugin.getConfigManager().getMessage("sign-created", 
+
+        // Auto-populate region in regions.yml
+        plugin.getRegionsConfig().addRegion(regionName);
+
+        player.sendMessage(plugin.getConfigManager().getMessage("sign-created",
             "{region}", regionName));
-        
+        player.sendMessage(ChatColor.GRAY + "Region added to regions.yml with default settings.");
+
         return true;
     }
 }
