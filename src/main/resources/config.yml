@@ -117,6 +117,26 @@ extension:
   refund-on-duration-reset: true
 
 # ============================================
+# DURATION COMMAND SETTINGS
+# ============================================
+duration:
+  # Refund players proportionally when time is removed via /rrduration remove
+  refund-on-time-removal: true
+
+  # Charge players when admin adds time via /rrduration add <region> <time> --charge
+  # If false, admin additions are always free
+  charge-for-add: false
+
+  # Bypass extension limits for charged admin additions
+  # When true, time added with --charge flag doesn't count toward extension limit
+  add-bypass-extension-limit: true
+
+  # Price per day for charged admin additions
+  # If 0, uses extension pricing (calculated from region price and duration)
+  # If > 0, uses this fixed price per day
+  add-price-per-day: 0.0
+
+# ============================================
 # RENTAL LIMITS
 # ============================================
 limits:
@@ -343,7 +363,19 @@ messages:
   duration-set: '&aSet rental duration for &6{region}&a to &e{time}'
   duration-invalid: '&cInvalid duration format! Example: 2 days 3 hours 30 minutes'
   duration-too-short: '&cDuration would expire the rental immediately!'
-  
+
+  # Duration command refund/charge messages
+  duration-add-charged: '&aAdded &e{days}&a days to &e{region}&a. Player &e{player}&a was charged &e{amount}&a.'
+  duration-add-free: '&aAdded &e{days}&a to &e{region}&a (no charge).'
+  duration-remove-refunded: '&aRemoved &e{days}&a days from &e{region}&a. Player &e{player}&a was refunded &e{amount}&a.'
+  duration-remove-no-refund: '&aRemoved &e{days}&a days from &e{region}&a (no refund issued).'
+
+  # Refund tracking messages
+  refund-issued: '&aRefund issued to &e{player}&a: &e{amount}&a (Reason: {reason})'
+  refund-already-given: '&cCannot refund. Total refunded (&e{refunded}&c) would exceed total paid (&e{paid}&c).'
+  refund-history-header: '&a&lRefund History for &e{region}'
+  refund-partial: '&aProportional refund for &e{days}&a days removed: &e{amount}'
+
   # Storage messages
   items-stored: '&aYour &e{count}&a items from &6{region}&a have been stored!'
   items-stored-pages: '&aYour items are stored across &e{pages}&a pages!'

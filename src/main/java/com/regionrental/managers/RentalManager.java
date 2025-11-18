@@ -43,14 +43,14 @@ public class RentalManager {
     
     public void loadAllRentals() {
         rentals.clear();
-        
+
         if (!rentalsConfig.contains("rentals")) {
             return;
         }
-        
+
         for (String regionName : rentalsConfig.getConfigurationSection("rentals").getKeys(false)) {
             String path = "rentals." + regionName;
-            
+
             try {
                 UUID playerUUID = UUID.fromString(rentalsConfig.getString(path + ".player-uuid"));
                 String playerName = rentalsConfig.getString(path + ".player-name");
@@ -58,22 +58,39 @@ public class RentalManager {
                 long endDate = rentalsConfig.getLong(path + ".end-date");
                 int extensionCount = rentalsConfig.getInt(path + ".extension-count", 0);
                 double totalPaid = rentalsConfig.getDouble(path + ".total-paid", 0);
-                double initialPrice = rentalsConfig.getDouble(path + ".initial-price", totalPaid); // Default to totalPaid for backward compatibility
+                double initialPrice = rentalsConfig.getDouble(path + ".initial-price", totalPaid);
 
-                Rental rental = new Rental(regionName, playerUUID, playerName, startDate, endDate, extensionCount, totalPaid, initialPrice);
+                // Load refund tracking data (backwards compatible)
+                double totalRefunded = rentalsConfig.getDouble(path + ".total-refunded", 0.0);
+                List<Rental.RefundRecord> refundHistory = new ArrayList<>();
+
+                if (rentalsConfig.contains(path + ".refund-history")) {
+                    List<Map<?, ?>> refundList = rentalsConfig.getMapList(path + ".refund-history");
+                    for (Map<?, ?> refundData : refundList) {
+                        double amount = ((Number) refundData.get("amount")).doubleValue();
+                        long timestamp = ((Number) refundData.get("timestamp")).longValue();
+                        String reason = (String) refundData.get("reason");
+                        String adminName = (String) refundData.get("admin");
+
+                        refundHistory.add(new Rental.RefundRecord(amount, timestamp, reason, adminName));
+                    }
+                }
+
+                Rental rental = new Rental(regionName, playerUUID, playerName, startDate, endDate,
+                        extensionCount, totalPaid, initialPrice, totalRefunded, refundHistory);
                 rentals.put(regionName, rental);
             } catch (Exception e) {
                 plugin.getLogger().warning("Failed to load rental for region " + regionName + ": " + e.getMessage());
             }
         }
-        
+
         plugin.getLogger().info("Loaded " + rentals.size() + " rentals");
     }
     
     public void saveAllRentals() {
         // Clear existing data
         rentalsConfig = new YamlConfiguration();
-        
+
         for (Map.Entry<String, Rental> entry : rentals.entrySet()) {
             Rental rental = entry.getValue();
             String path = "rentals." + rental.getRegionName();
@@ -85,8 +102,21 @@ public class RentalManager {
             rentalsConfig.set(path + ".extension-count", rental.getExtensionCount());
             rentalsConfig.set(path + ".total-paid", rental.getTotalPaid());
             rentalsConfig.set(path + ".initial-price", rental.getInitialPrice());
+            rentalsConfig.set(path + ".total-refunded", rental.getTotalRefunded());
+
+            // Save refund history
+            List<Map<String, Object>> refundHistoryData = new ArrayList<>();
+            for (Rental.RefundRecord record : rental.getRefundHistory()) {
+                Map<String, Object> refundData = new HashMap<>();
+                refundData.put("amount", record.getAmount());
+                refundData.put("timestamp", record.getTimestamp());
+                refundData.put("reason", record.getReason());
+                refundData.put("admin", record.getAdminName());
+                refundHistoryData.add(refundData);
+            }
+            rentalsConfig.set(path + ".refund-history", refundHistoryData);
         }
-        
+
         try {
             rentalsConfig.save(rentalsFile);
         } catch (IOException e) {
@@ -193,11 +223,139 @@ public class RentalManager {
 
         plugin.getLogger().info("Rental expired for region " + regionName);
     }
-    
+
     /**
-     * Resets a rental with full refund (for admin use)
+     * Issues a refund to a player with safety checks and audit trail
+     * @param rental The rental to refund
+     * @param amount The amount to refund
+     * @param reason The reason for the refund (e.g., "duration_reset", "time_removal", "admin_reset")
+     * @param adminName The admin issuing the refund
+     * @return Map with refund details (success, actualAmount, message) or null if refund failed
+     */
+    public Map<String, Object> issueRefund(Rental rental, double amount, String reason, String adminName) {
+        if (rental == null || amount <= 0) {
+            return null;
+        }
+
+        // Safety check: Never refund more than net refundable amount
+        double maxRefund = rental.getNetRefundableAmount();
+        double actualRefund = Math.min(amount, maxRefund);
+
+        if (actualRefund <= 0) {
+            // Nothing to refund
+            Map<String, Object> result = new HashMap<>();
+            result.put("success", false);
+            result.put("actualAmount", 0.0);
+            result.put("message", "No refundable amount remaining");
+            return result;
+        }
+
+        // Issue refund via Vault
+        if (plugin.getEconomy() != null) {
+            plugin.getEconomy().depositPlayer(plugin.getServer().getOfflinePlayer(rental.getPlayerUUID()), actualRefund);
+
+            // Record refund in rental history
+            rental.recordRefund(actualRefund, reason, adminName);
+
+            // Save rental data
+            saveAllRentals();
+
+            // Log to console
+            String formattedAmount = String.format(plugin.getConfigManager().getCurrencyFormat(), actualRefund);
+            plugin.getLogger().info("Refund issued to " + rental.getPlayerName() + " for " + rental.getRegionName() + ": " +
+                    formattedAmount + " (Reason: " + reason + " by " + adminName + ")");
+
+            // Notify player if online
+            Player player = plugin.getServer().getPlayer(rental.getPlayerUUID());
+            if (player != null && player.isOnline()) {
+                player.sendMessage(plugin.getConfigManager().getMessage("refund-issued",
+                        "{player}", rental.getPlayerName(),
+                        "{amount}", formattedAmount,
+                        "{reason}", reason));
+            }
+
+            Map<String, Object> result = new HashMap<>();
+            result.put("success", true);
+            result.put("actualAmount", actualRefund);
+            result.put("message", "Refund issued successfully");
+            return result;
+        }
+
+        return null;
+    }
+
+    /**
+     * Calculates proportional refund based on time removed
+     * @param rental The rental to calculate refund for
+     * @param daysRemoved Number of days being removed
+     * @return The proportional refund amount
+     */
+    public double calculateProportionalRefund(Rental rental, int daysRemoved) {
+        if (rental == null || daysRemoved <= 0) {
+            return 0.0;
+        }
+
+        // Get total rental duration in milliseconds
+        long totalDuration = rental.getEndDate() - rental.getStartDate();
+        long daysInMs = daysRemoved * 24L * 60L * 60L * 1000L;
+
+        // Calculate proportion of time being removed
+        double proportion = Math.min(1.0, (double) daysInMs / (double) totalDuration);
+
+        // Calculate refund from net paid amount (paid - already refunded)
+        double netPaid = rental.getTotalPaid() - rental.getTotalRefunded();
+        return Math.max(0, netPaid * proportion);
+    }
+
+    /**
+     * Charges a player for admin-added time
+     * @param rental The rental to add time to
+     * @param days Number of days to add
+     * @param player The player to charge
+     * @return true if successful, false otherwise
+     */
+    public boolean chargeDurationAdd(Rental rental, int days, Player player) {
+        if (rental == null || days <= 0 || player == null) {
+            return false;
+        }
+
+        // Get extension price per day from config
+        double extensionPrice = plugin.getConfigManager().getExtensionPrice(rental.getRegionName());
+        double totalCost = extensionPrice * days;
+
+        // Check if player has enough money
+        if (plugin.getEconomy() != null) {
+            if (plugin.getEconomy().getBalance(player) < totalCost) {
+                return false;
+            }
+
+            // Withdraw money
+            plugin.getEconomy().withdrawPlayer(player, totalCost);
+
+            // Add time with charge (does NOT increment extension count)
+            rental.addTimeWithCharge(days, totalCost);
+
+            // Save
+            saveAllRentals();
+
+            // Update sign
+            plugin.getSignManager().updateSign(rental.getRegionName());
+
+            // Log
+            String formattedAmount = String.format(plugin.getConfigManager().getCurrencyFormat(), totalCost);
+            plugin.getLogger().info("Player " + player.getName() + " charged " + formattedAmount +
+                    " for " + days + " days added to " + rental.getRegionName());
+
+            return true;
+        }
+
+        return false;
+    }
+
+    /**
+     * Resets a rental with net refund (prevents double-refunds) for admin use
      * @param regionName The region to reset
-     * @return A map containing refund details (playerUUID, playerName, refundAmount) or null if rental doesn't exist
+     * @return A map containing refund details (playerUUID, playerName, refundAmount, alreadyRefunded) or null if rental doesn't exist
      */
     public Map<String, Object> resetRentalWithRefund(String regionName) {
         Rental rental = rentals.get(regionName);
@@ -209,19 +367,25 @@ public class RentalManager {
         // Get rental information before expiring
         UUID playerUUID = rental.getPlayerUUID();
         String playerName = rental.getPlayerName();
-        double refundAmount = rental.getTotalPaid();
+        double totalPaid = rental.getTotalPaid();
+        double alreadyRefunded = rental.getTotalRefunded();
+        double netRefund = rental.getNetRefundableAmount();
 
-        // Refund the full amount to the player
-        if (refundAmount > 0 && plugin.getEconomy() != null) {
-            plugin.getEconomy().depositPlayer(plugin.getServer().getOfflinePlayer(playerUUID), refundAmount);
+        // Issue net refund using the centralized refund system
+        if (netRefund > 0) {
+            Map<String, Object> refundResult = issueRefund(rental, netRefund, "admin_reset", "Admin");
 
-            // Notify player if online
-            Player player = plugin.getServer().getPlayer(playerUUID);
-            if (player != null && player.isOnline()) {
-                String formattedAmount = String.format(plugin.getConfigManager().getCurrencyFormat(), refundAmount);
-                player.sendMessage(plugin.getConfigManager().getMessage("rental-reset-refund",
-                    "{region}", regionName,
-                    "{amount}", formattedAmount));
+            if (refundResult != null && (boolean) refundResult.get("success")) {
+                double actualRefund = (double) refundResult.get("actualAmount");
+
+                // Notify player if online (additional notification for admin reset)
+                Player player = plugin.getServer().getPlayer(playerUUID);
+                if (player != null && player.isOnline()) {
+                    String formattedAmount = String.format(plugin.getConfigManager().getCurrencyFormat(), actualRefund);
+                    player.sendMessage(plugin.getConfigManager().getMessage("rental-reset-refund",
+                            "{region}", regionName,
+                            "{amount}", formattedAmount));
+                }
             }
         }
 
@@ -232,7 +396,9 @@ public class RentalManager {
         Map<String, Object> refundDetails = new HashMap<>();
         refundDetails.put("playerUUID", playerUUID);
         refundDetails.put("playerName", playerName);
-        refundDetails.put("refundAmount", refundAmount);
+        refundDetails.put("refundAmount", netRefund);
+        refundDetails.put("totalPaid", totalPaid);
+        refundDetails.put("alreadyRefunded", alreadyRefunded);
 
         return refundDetails;
     }

@@ -74,6 +74,12 @@ commands:
     permission: regionrental.admin.remove
     aliases: [remove]
 
+  rrrefundhistory:
+    description: View refund history for a rental region
+    usage: /rrrefundhistory <region>
+    permission: regionrental.admin.refundhistory
+    aliases: [refundhistory]
+
 permissions:
   regionrental.*:
     description: All RegionRental permissions
@@ -91,6 +97,7 @@ permissions:
       regionrental.admin.reset: true
       regionrental.admin.duration: true
       regionrental.admin.remove: true
+      regionrental.admin.refundhistory: true
       regionrental.admin.bypass: true
       regionrental.admin.breaksign: true
       regionrental.admin.list.others: true

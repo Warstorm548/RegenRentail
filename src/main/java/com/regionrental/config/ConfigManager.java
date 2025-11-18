@@ -155,7 +155,19 @@ public class ConfigManager {
         messages.put("region-removed", "&aRegionRental setup completely removed from &e{region}&a:");
         messages.put("rental-info", "&6=== Rental Info for {region} ===");
         messages.put("config-reloaded", "&aConfiguration reloaded!");
-        
+
+        // Refund tracking messages
+        messages.put("refund-issued", "&aRefund issued to &e{player}&a: &e{amount}&a (Reason: {reason})");
+        messages.put("refund-already-given", "&cCannot refund. Total refunded (&e{refunded}&c) would exceed total paid (&e{paid}&c).");
+        messages.put("refund-history-header", "&a&lRefund History for &e{region}");
+        messages.put("refund-partial", "&aProportional refund for &e{days}&a days removed: &e{amount}");
+
+        // Duration command messages
+        messages.put("duration-add-charged", "&aAdded &e{days}&a days to &e{region}&a. Player &e{player}&a was charged &e{amount}&a.");
+        messages.put("duration-add-free", "&aAdded &e{days}&a to &e{region}&a (no charge).");
+        messages.put("duration-remove-refunded", "&aRemoved &e{days}&a days from &e{region}&a. Player &e{player}&a was refunded &e{amount}&a.");
+        messages.put("duration-remove-no-refund", "&aRemoved &e{days}&a days from &e{region}&a (no refund issued).");
+
         // Override with config values
         if (config.contains("messages")) {
             for (String key : config.getConfigurationSection("messages").getKeys(false)) {
@@ -210,4 +222,30 @@ public class ConfigManager {
     public boolean isItemStorage() { return itemStorage; }
     public boolean isSignProtection() { return signProtection; }
     public Map<String, Double> getPermissionPrices() { return permissionPrices; }
+
+    // Duration-related refund and charge settings
+    public boolean isRefundOnTimeRemoval() { return config.getBoolean("duration.refund-on-time-removal", true); }
+    public boolean isChargeForDurationAdd() { return config.getBoolean("duration.charge-for-add", false); }
+    public boolean isDurationAddBypassExtensionLimit() { return config.getBoolean("duration.add-bypass-extension-limit", true); }
+    public double getDurationAddPricePerDay() { return config.getDouble("duration.add-price-per-day", 0.0); }
+
+    // Extension price calculation helper
+    public double getExtensionPrice(String region) {
+        // If custom price per day is configured, use it
+        double pricePerDay = getDurationAddPricePerDay();
+        if (pricePerDay > 0) {
+            return pricePerDay;
+        }
+
+        // Otherwise, calculate from region price and duration
+        double regionPrice = getPriceForRegion(region);
+        int duration = getDurationForRegion(region);
+
+        if (duration <= 0) {
+            return regionPrice; // Fallback to full price
+        }
+
+        // Return price per day
+        return regionPrice / duration;
+    }
 }

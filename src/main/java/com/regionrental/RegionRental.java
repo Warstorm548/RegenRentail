@@ -186,6 +186,7 @@ public class RegionRental extends JavaPlugin {
         getCommand("rrextend").setExecutor(new ExtendCommand(this));
         getCommand("rrduration").setExecutor(new DurationCommand(this));
         getCommand("rrremove").setExecutor(new RemoveCommand(this));
+        getCommand("rrrefundhistory").setExecutor(new RefundHistoryCommand(this));
     }
     
     private void registerAliasesIfPossible() {
