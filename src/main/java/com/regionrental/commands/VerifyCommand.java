@@ -36,7 +36,7 @@ public class VerifyCommand implements CommandExecutor {
         sender.sendMessage(ChatColor.GOLD + "" + ChatColor.BOLD + "=== Region Configuration Verification ===");
         sender.sendMessage("");
 
-        // Get verification report BEFORE repair
+        // Get verification report
         Map<String, Object> report = plugin.getRegionsConfig().getVerificationReport();
 
         int totalSigns = (int) report.get("totalSigns");
@@ -44,48 +44,46 @@ public class VerifyCommand implements CommandExecutor {
         List<String> missingConfigs = (List<String>) report.get("missingConfigs");
         List<String> orphanedConfigs = (List<String>) report.get("orphanedConfigs");
 
+        int usingDefaults = missingConfigs.size();
+        int withCustomSettings = totalSigns - usingDefaults;
+
         // Display summary
         sender.sendMessage(ChatColor.AQUA + "Summary:");
-        sender.sendMessage(ChatColor.GRAY + "  Regions with signs: " + ChatColor.WHITE + totalSigns);
-        sender.sendMessage(ChatColor.GRAY + "  Regions configured: " + ChatColor.WHITE + totalConfigs);
+        sender.sendMessage(ChatColor.GRAY + "  Total regions with signs: " + ChatColor.WHITE + totalSigns);
+        sender.sendMessage(ChatColor.GRAY + "  Using custom overrides:   " + ChatColor.WHITE + withCustomSettings);
+        sender.sendMessage(ChatColor.GRAY + "  Using default settings:   " + ChatColor.WHITE + usingDefaults);
         sender.sendMessage("");
 
-        // Check for issues
-        boolean hasIssues = !missingConfigs.isEmpty() || !orphanedConfigs.isEmpty();
-
-        if (!hasIssues) {
-            sender.sendMessage(ChatColor.GREEN + "✓ No issues found!");
-            sender.sendMessage(ChatColor.GREEN + "  All regions with signs have configuration entries.");
-            return true;
-        }
-
-        // Display missing configs
+        // Display regions using defaults
         if (!missingConfigs.isEmpty()) {
-            sender.sendMessage(ChatColor.YELLOW + "Missing Configurations (" + missingConfigs.size() + "):");
-            sender.sendMessage(ChatColor.GRAY + "  These regions have signs but no config in regions.yml:");
+            sender.sendMessage(ChatColor.GREEN + "Regions Using Defaults (" + missingConfigs.size() + "):");
+            sender.sendMessage(ChatColor.GRAY + "  These regions use default values from config.yml:");
             for (String region : missingConfigs) {
                 sender.sendMessage(ChatColor.GRAY + "    - " + ChatColor.WHITE + region);
             }
+            sender.sendMessage(ChatColor.YELLOW + "  Use /rroverride to set custom values for these regions");
+            sender.sendMessage("");
+        } else {
+            sender.sendMessage(ChatColor.YELLOW + "All regions with signs have custom overrides configured!");
             sender.sendMessage("");
         }
 
-        // Display orphaned configs
+        // Display orphaned configs (potential issue)
         if (!orphanedConfigs.isEmpty()) {
             sender.sendMessage(ChatColor.GOLD + "Orphaned Configurations (" + orphanedConfigs.size() + "):");
-            sender.sendMessage(ChatColor.GRAY + "  These configs exist but have no rental sign:");
+            sender.sendMessage(ChatColor.GRAY + "  These custom configs exist but have no rental sign:");
             for (String region : orphanedConfigs) {
                 sender.sendMessage(ChatColor.GRAY + "    - " + ChatColor.WHITE + region);
             }
-            sender.sendMessage(ChatColor.GRAY + "  (Can be manually removed or will be used when signs are created)");
+            sender.sendMessage(ChatColor.YELLOW + "  Use /rroverride remove <region> to clean up unused configs");
             sender.sendMessage("");
         }
 
-        // Perform repair
-        if (!missingConfigs.isEmpty()) {
-            sender.sendMessage(ChatColor.AQUA + "Running auto-repair...");
-            plugin.getRegionsConfig().verifyAndRepairRegions();
-            sender.sendMessage(ChatColor.GREEN + "✓ Added " + missingConfigs.size() + " missing configuration(s)");
-            sender.sendMessage(ChatColor.GRAY + "  Check regions.yml to customize settings for these regions.");
+        // Summary message
+        if (orphanedConfigs.isEmpty()) {
+            sender.sendMessage(ChatColor.GREEN + "✓ No issues found - all configs are linked to signs");
+        } else {
+            sender.sendMessage(ChatColor.YELLOW + "⚠ Found " + orphanedConfigs.size() + " orphaned config(s) - consider cleanup");
         }
 
         sender.sendMessage("");

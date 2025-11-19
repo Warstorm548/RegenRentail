@@ -40,6 +40,7 @@ commands:
     list: rrlist
     extend: rrextend
     duration: rrduration
+    override: rroverride
 
 # ============================================
 # ECONOMY SETTINGS
@@ -408,28 +409,32 @@ messages:
 # REGIONS CONFIGURATION FILE SETTINGS
 # ============================================
 regions-config:
-  # Automatically verify and repair regions.yml on startup/reload
-  # Ensures all regions with signs have configuration entries
+  # Automatically verify regions.yml on startup/reload
+  # Reports orphaned configs (custom settings without signs)
   auto-verify-regions: true
 
   # Enable /rrverify command for manual verification
-  # Useful when auto-verify is disabled or for on-demand checks
+  # Shows which regions use defaults vs custom overrides
   enable-verify-command: true
 
 # ============================================
-# PER-REGION SETTINGS (DEPRECATED)
+# PER-REGION CUSTOM OVERRIDES
 # ============================================
-# IMPORTANT: Region-specific settings have been moved to regions.yml
-# This file is automatically managed when you create/remove rental signs.
-# Edit regions.yml to override settings for specific regions.
+# IMPORTANT: Use /rroverride commands to set region-specific settings
+# Regions NOT in regions.yml will use the default values above
 #
-# regions.yml supports these per-region overrides:
-#   price: <amount>              # Rental price
-#   duration: <days>             # Rental duration in days
-#   max-extensions: <number>     # Maximum extensions allowed
-#   extension-price: <amount>    # Price per extension day
-#   allow-extensions: <true|false> # Allow extensions
-#   extension-duration: <days>   # Extension duration in days
+# Commands to customize regions:
+#   /rroverride price <region> <amount>
+#   /rroverride duration <region> <days>
+#   /rroverride maxextensions <region> <count>
+#   /rroverride extensionprice <region> <amount>
+#   /rroverride allowextensions <region> <true|false>
+#   /rroverride extensionduration <region> <days>
+#   /rroverride list [region]              # View current overrides
+#   /rroverride remove <region>            # Remove all overrides
+#
+# Regions with custom overrides are stored in regions.yml
+# Use /rrverify to see which regions use defaults vs custom settings
 #
 # Migration: Any existing regions: data will be automatically migrated
 # to regions.yml on first startup and removed from this file.
