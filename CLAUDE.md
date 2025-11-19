@@ -48,6 +48,45 @@ build/libs/RegionRental-1.0.0.jar
 ./gradlew eclipse     # For Eclipse
 ```
 
+## Version Management
+
+This project follows **Semantic Versioning (SemVer)** with the format: `MAJOR.MINOR.PATCH`
+
+### Versioning Scheme
+
+At the end of each development session, the version number should be updated based on the type of changes made:
+
+**1. Major Update (X.0.0)**
+- Increments the first digit by 1
+- Resets both MINOR and PATCH to 0
+- Example: `1.2.3` → `2.0.0`
+- Use for: Breaking changes, major feature overhauls, API changes
+
+**2. Minor Update (x.X.0)**
+- Increments the second digit by 1
+- Resets PATCH to 0
+- Example: `1.2.3` → `1.3.0`
+- Use for: New features, significant enhancements, new commands
+
+**3. Patch Update (x.x.X)**
+- Increments the third digit by 1
+- No resets
+- Example: `1.2.3` → `1.2.4`
+- Use for: Bug fixes, minor tweaks, documentation updates
+
+### Files to Update
+
+When updating the version, modify these files:
+- `build.gradle.kts` - Line 7: `version = "X.X.X"`
+- `src/main/resources/plugin.yml` - Line 2: `version: X.X.X`
+- `README.md` - Line 5: `Version: X.X.X`
+- `README.md` - Lines 129, 136: JAR filename references
+- Output JAR: `build/libs/RegionRental-X.X.X.jar`
+
+### Current Version
+- **Version:** 1.1.0
+- **Last Updated:** Implementation of command-based override system
+
 ## Architecture Overview
 
 ### Main Plugin Class
@@ -532,3 +571,4 @@ signs:
 - `REGION_REMOVAL.md` - Complete guide to region removal feature
 - `FEATURE_SUMMARY.md` - Comprehensive feature overview
 - `IMPLEMENTATION_SUMMARY.md` - Latest implementation details
+- ask me if i would like to update the verion number at the end of each editing session provide the options major update witch will corelate to the frist number in a 3 digit verion code, minor update for the secound number and 3rd number will be patchs. the number will go up by one with each version update if a minor update is done reset the 3rd number to 0 if its a major update so treat the same as minor update but instead reset the minor and patchs number to zero.
