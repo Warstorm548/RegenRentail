@@ -33,16 +33,18 @@ public class RegionsConfig {
                 config = YamlConfiguration.loadConfiguration(configFile);
                 config.options().header(
                     "RegionRental - Per-Region Configuration\n" +
-                    "This file is automatically populated when you create rental signs.\n" +
-                    "Only override the settings you want to change - all others use defaults from config.yml\n" +
+                    "Use /rroverride commands to set custom values for specific regions.\n" +
+                    "Regions not listed here will use default settings from config.yml\n" +
                     "\n" +
-                    "Available settings per region:\n" +
-                    "  price: <amount>              # Rental price (default from config.yml)\n" +
-                    "  duration: <days>             # Rental duration in days (default from config.yml)\n" +
-                    "  max-extensions: <number>     # Maximum extensions allowed (default from config.yml)\n" +
-                    "  extension-price: <amount>    # Price per extension day (default: auto-calculated)\n" +
-                    "  allow-extensions: <true|false> # Allow extensions (default from config.yml)\n" +
-                    "  extension-duration: <days>   # Extension duration in days (default from config.yml)\n"
+                    "Commands:\n" +
+                    "  /rroverride price <region> <amount>\n" +
+                    "  /rroverride duration <region> <days>\n" +
+                    "  /rroverride maxextensions <region> <count>\n" +
+                    "  /rroverride extensionprice <region> <amount>\n" +
+                    "  /rroverride allowextensions <region> <true|false>\n" +
+                    "  /rroverride extensionduration <region> <days>\n" +
+                    "  /rroverride remove <region>              # Remove all overrides\n" +
+                    "  /rroverride list [region]                # View overrides\n"
                 );
                 config.createSection("regions");
                 save();
@@ -66,38 +68,6 @@ public class RegionsConfig {
 
     public void reload() {
         config = YamlConfiguration.loadConfiguration(configFile);
-    }
-
-    /**
-     * Add a region with commented template
-     */
-    public void addRegion(String region) {
-        if (hasRegion(region)) {
-            return; // Already exists, don't overwrite
-        }
-
-        String path = "regions." + region;
-
-        // Add commented template
-        List<String> comments = Arrays.asList(
-            "Uncomment and modify settings below to override defaults",
-            "price: 100.0           # Default from config.yml",
-            "duration: 7            # Default from config.yml",
-            "max-extensions: 10     # Default from config.yml",
-            "extension-price: 0.0   # Auto-calculated if 0",
-            "allow-extensions: true # Default from config.yml",
-            "extension-duration: 7  # Default from config.yml"
-        );
-
-        // Create empty section
-        config.createSection(path);
-        config.set(path + "._comment", comments);
-
-        save();
-
-        if (plugin.getConfigManager().isDebug()) {
-            plugin.getLogger().info("Added region '" + region + "' to regions.yml with default template");
-        }
     }
 
     /**
@@ -192,6 +162,86 @@ public class RegionsConfig {
     }
 
     /**
+     * Set region price override
+     */
+    public void setRegionPrice(String region, double price) {
+        String path = "regions." + region + ".price";
+        config.set(path, price);
+        save();
+    }
+
+    /**
+     * Set region duration override
+     */
+    public void setRegionDuration(String region, int days) {
+        String path = "regions." + region + ".duration";
+        config.set(path, days);
+        save();
+    }
+
+    /**
+     * Set region max extensions override
+     */
+    public void setRegionMaxExtensions(String region, int maxExtensions) {
+        String path = "regions." + region + ".max-extensions";
+        config.set(path, maxExtensions);
+        save();
+    }
+
+    /**
+     * Set region extension price override
+     */
+    public void setRegionExtensionPrice(String region, double price) {
+        String path = "regions." + region + ".extension-price";
+        config.set(path, price);
+        save();
+    }
+
+    /**
+     * Set region allow extensions override
+     */
+    public void setRegionAllowExtensions(String region, boolean allow) {
+        String path = "regions." + region + ".allow-extensions";
+        config.set(path, allow);
+        save();
+    }
+
+    /**
+     * Set region extension duration override
+     */
+    public void setRegionExtensionDuration(String region, int days) {
+        String path = "regions." + region + ".extension-duration";
+        config.set(path, days);
+        save();
+    }
+
+    /**
+     * Get all override settings for a specific region
+     * Returns empty map if region has no overrides
+     */
+    public Map<String, Object> getRegionOverrides(String region) {
+        Map<String, Object> overrides = new HashMap<>();
+
+        if (!hasRegion(region)) {
+            return overrides;
+        }
+
+        String path = "regions." + region;
+        ConfigurationSection section = config.getConfigurationSection(path);
+
+        if (section == null) {
+            return overrides;
+        }
+
+        // Get all keys and values for this region
+        for (String key : section.getKeys(false)) {
+            overrides.put(key, section.get(key));
+        }
+
+        return overrides;
+    }
+
+    /**
      * Get all configured regions
      */
     public Set<String> getAllRegions() {
@@ -275,8 +325,8 @@ public class RegionsConfig {
     }
 
     /**
-     * Verify regions.yml has entries for all regions with signs
-     * Re-adds missing regions with template
+     * Verify regions.yml - reports on orphaned configs (configs without signs)
+     * Note: Regions without configs will use defaults from config.yml
      */
     public void verifyAndRepairRegions() {
         // Get all regions that have rental signs
@@ -289,45 +339,33 @@ public class RegionsConfig {
             return;
         }
 
-        List<String> reAddedRegions = new ArrayList<>();
+        Set<String> configuredRegions = getAllRegions();
         List<String> orphanedConfigs = new ArrayList<>();
 
-        // Check for missing region configs (sign exists but no config)
-        for (String regionName : allSigns.keySet()) {
-            if (!hasRegion(regionName)) {
-                addRegion(regionName);  // Add with default commented template
-                reAddedRegions.add(regionName);
-            }
-        }
-
-        // Check for orphaned configs (config exists but no sign) - debug only
-        if (plugin.getConfigManager().isDebug()) {
-            Set<String> configuredRegions = getAllRegions();
-            for (String regionName : configuredRegions) {
-                if (!allSigns.containsKey(regionName)) {
-                    orphanedConfigs.add(regionName);
-                }
+        // Check for orphaned configs (config exists but no sign)
+        for (String regionName : configuredRegions) {
+            if (!allSigns.containsKey(regionName)) {
+                orphanedConfigs.add(regionName);
             }
         }
 
         // Log results
-        if (!reAddedRegions.isEmpty()) {
-            plugin.getLogger().warning("Region verification: Found " + reAddedRegions.size() +
-                " region(s) missing from regions.yml - re-added with defaults:");
-            for (String region : reAddedRegions) {
-                plugin.getLogger().warning("  - " + region);
-            }
-        } else if (plugin.getConfigManager().isDebug()) {
-            plugin.getLogger().info("Region verification: All regions have configuration entries");
-        }
-
-        if (!orphanedConfigs.isEmpty() && plugin.getConfigManager().isDebug()) {
+        if (!orphanedConfigs.isEmpty()) {
             plugin.getLogger().info("Region verification: Found " + orphanedConfigs.size() +
-                " orphaned config(s) (no sign):");
+                " orphaned config(s) (custom overrides exist but no sign):");
             for (String region : orphanedConfigs) {
                 plugin.getLogger().info("  - " + region);
             }
-            plugin.getLogger().info("These can be safely removed or will be used when signs are created");
+            plugin.getLogger().info("These configs are safe but may be unused. Use /rroverride remove <region> to clean up.");
+        } else if (plugin.getConfigManager().isDebug()) {
+            plugin.getLogger().info("Region verification: No orphaned configs found");
+        }
+
+        // Count regions using defaults
+        int usingDefaults = allSigns.size() - configuredRegions.size();
+        if (usingDefaults > 0 && plugin.getConfigManager().isDebug()) {
+            plugin.getLogger().info("Region verification: " + usingDefaults + " region(s) using default settings");
+            plugin.getLogger().info("Use /rroverride commands to set custom values for specific regions");
         }
     }
 

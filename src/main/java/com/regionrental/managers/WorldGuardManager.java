@@ -170,4 +170,29 @@ public class WorldGuardManager {
         }
         return false;
     }
+
+    /**
+     * Alias for regionExists() to match command naming
+     */
+    public boolean doesRegionExist(String regionName) {
+        return regionExists(regionName);
+    }
+
+    /**
+     * Get all region names across all worlds for tab completion
+     */
+    public java.util.Set<String> getAllRegionNames() {
+        java.util.Set<String> regionNames = new java.util.HashSet<>();
+
+        for (World world : Bukkit.getWorlds()) {
+            RegionManager regionManager = WorldGuard.getInstance().getPlatform()
+                    .getRegionContainer().get(BukkitAdapter.adapt(world));
+
+            if (regionManager == null) continue;
+
+            regionNames.addAll(regionManager.getRegions().keySet());
+        }
+
+        return regionNames;
+    }
 }

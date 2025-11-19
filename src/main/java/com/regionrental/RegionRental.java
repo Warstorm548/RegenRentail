@@ -199,10 +199,15 @@ public class RegionRental extends JavaPlugin {
         getCommand("rrinfo").setExecutor(new InfoCommand(this));
         getCommand("rrlist").setExecutor(new ListCommand(this));
         getCommand("rrextend").setExecutor(new ExtendCommand(this));
-        getCommand("rrduration").setExecutor(new DurationCommand(this));
+        DurationCommand durationCommand = new DurationCommand(this);
+        getCommand("rrduration").setExecutor(durationCommand);
+        getCommand("rrduration").setTabCompleter(durationCommand);
         getCommand("rrremove").setExecutor(new RemoveCommand(this));
         getCommand("rrrefundhistory").setExecutor(new RefundHistoryCommand(this));
         getCommand("rrverify").setExecutor(new VerifyCommand(this));
+        OverrideCommand overrideCommand = new OverrideCommand(this);
+        getCommand("rroverride").setExecutor(overrideCommand);
+        getCommand("rroverride").setTabCompleter(overrideCommand);
     }
     
     private void registerAliasesIfPossible() {
