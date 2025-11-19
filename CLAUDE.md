@@ -532,3 +532,4 @@ signs:
 - `REGION_REMOVAL.md` - Complete guide to region removal feature
 - `FEATURE_SUMMARY.md` - Comprehensive feature overview
 - `IMPLEMENTATION_SUMMARY.md` - Latest implementation details
+- ask me if i would like to update the verion number at the end of each editing session provide the options major update witch will corelate to the frist number in a 3 digit verion code, minor update for the secound number and 3rd number will be patchs. the number will go up by one with each version update if a minor update is done reset the 3rd number to 0 if its a major update so treat the same as minor update but instead reset the minor and patchs number to zero.
