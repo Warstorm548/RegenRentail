@@ -195,11 +195,52 @@ public class ConfigManager {
     }
     
     public double getPriceForRegion(String region) {
+        // Check RegionsConfig first if available
+        if (plugin.getRegionsConfig() != null) {
+            return plugin.getRegionsConfig().getRegionPrice(region, defaultPrice);
+        }
+        // Fallback to old config.yml method or default
         return regionPrices.getOrDefault(region, defaultPrice);
     }
-    
+
     public int getDurationForRegion(String region) {
+        // Check RegionsConfig first if available
+        if (plugin.getRegionsConfig() != null) {
+            return plugin.getRegionsConfig().getRegionDuration(region, defaultDuration);
+        }
+        // Fallback to old config.yml method or default
         return config.getInt("regions." + region + ".duration", defaultDuration);
+    }
+
+    public int getMaxExtensionsForRegion(String region) {
+        if (plugin.getRegionsConfig() != null) {
+            return plugin.getRegionsConfig().getRegionMaxExtensions(region, maxExtensions);
+        }
+        return maxExtensions;
+    }
+
+    public double getExtensionPriceForRegion(String region) {
+        // Get extension price per day from RegionsConfig or calculate it
+        double calculatedPrice = getExtensionPrice(region);
+        if (plugin.getRegionsConfig() != null) {
+            return plugin.getRegionsConfig().getRegionExtensionPrice(region, calculatedPrice);
+        }
+        return calculatedPrice;
+    }
+
+    public boolean getAllowExtensionsForRegion(String region) {
+        boolean defaultAllow = config.getBoolean("extension.enabled", true);
+        if (plugin.getRegionsConfig() != null) {
+            return plugin.getRegionsConfig().getRegionAllowExtensions(region, defaultAllow);
+        }
+        return defaultAllow;
+    }
+
+    public int getExtensionDurationForRegion(String region) {
+        if (plugin.getRegionsConfig() != null) {
+            return plugin.getRegionsConfig().getRegionExtensionDuration(region, extensionDuration);
+        }
+        return extensionDuration;
     }
     
     // Getters
@@ -248,4 +289,8 @@ public class ConfigManager {
         // Return price per day
         return regionPrice / duration;
     }
+
+    // Region verification settings
+    public boolean isAutoVerifyRegions() { return config.getBoolean("regions-config.auto-verify-regions", true); }
+    public boolean isEnableVerifyCommand() { return config.getBoolean("regions-config.enable-verify-command", true); }
 }

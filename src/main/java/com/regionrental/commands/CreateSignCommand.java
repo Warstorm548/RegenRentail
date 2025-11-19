@@ -55,9 +55,11 @@ public class CreateSignCommand implements CommandExecutor {
         
         // Create the rental sign
         plugin.getSignManager().createSign(regionName, targetBlock.getLocation());
-        player.sendMessage(plugin.getConfigManager().getMessage("sign-created", 
+
+        player.sendMessage(plugin.getConfigManager().getMessage("sign-created",
             "{region}", regionName));
-        
+        player.sendMessage(ChatColor.GRAY + "Use /rroverride to set custom rental settings for this region.");
+
         return true;
     }
 }

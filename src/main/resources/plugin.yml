@@ -1,5 +1,5 @@
 name: RegionRental
-version: 1.0.0
+version: 1.1.0
 main: com.regionrental.RegionRental
 api-version: '1.21'
 author: YourName
@@ -80,6 +80,18 @@ commands:
     permission: regionrental.admin.refundhistory
     aliases: [refundhistory]
 
+  rrverify:
+    description: Verify and repair region configurations
+    usage: /rrverify
+    permission: regionrental.admin.verify
+    aliases: [verify]
+
+  rroverride:
+    description: Set per-region custom rental settings
+    usage: /rroverride <subcommand> [args]
+    permission: regionrental.admin.override
+    aliases: [override]
+
 permissions:
   regionrental.*:
     description: All RegionRental permissions
@@ -98,6 +110,8 @@ permissions:
       regionrental.admin.duration: true
       regionrental.admin.remove: true
       regionrental.admin.refundhistory: true
+      regionrental.admin.verify: true
+      regionrental.admin.override: true
       regionrental.admin.bypass: true
       regionrental.admin.breaksign: true
       regionrental.admin.list.others: true
@@ -154,6 +168,14 @@ permissions:
 
   regionrental.admin.remove:
     description: Remove RegionRental setup from a region
+    default: op
+
+  regionrental.admin.verify:
+    description: Verify and repair region configurations
+    default: op
+
+  regionrental.admin.override:
+    description: Set per-region custom rental settings
     default: op
 
   regionrental.admin.bypass:

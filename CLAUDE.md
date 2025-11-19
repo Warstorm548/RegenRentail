@@ -114,32 +114,42 @@ The plugin uses a manager pattern where each manager handles a specific domain:
 
 ### Configuration System
 
-Three separate configuration files for organization:
-- **`config.yml`** - Main settings (economy, durations, extensions, messages, per-region overrides, restoration settings)
+Four separate configuration files for organization:
+- **`config.yml`** - Main settings (economy, durations, extensions, messages, restoration settings)
   - Extension settings include: `refund-on-duration-reset` - Refunds extension costs when admin resets duration to default
+  - **NOTE:** Per-region settings managed via `/rroverride` commands (stored in regions.yml)
+- **`regions.yml`** - Per-region custom overrides (managed by RegionsConfig via commands)
+  - Configured using `/rroverride` commands (NOT auto-populated)
+  - Override settings: price, duration, max-extensions, extension-price, allow-extensions, extension-duration
+  - Regions NOT in this file use default values from config.yml
+  - Auto-verification system reports orphaned configs (configs without signs)
+  - Migration: Old `regions:` section from config.yml automatically migrated
 - **`signs.yml`** - Sign locations and support block data (managed by SignManager)
   - Stores sign coordinates
   - Stores support block coordinates, original type, and block data for restoration
 - **`storage.yml`** - Stored items from expired rentals (managed by StorageConfig)
 - **`rentals.yml`** - Active rental data including initialPrice field for tracking extension costs
 
-Config managers: `ConfigManager`, `SignsConfig`, `StorageConfig`
+Config managers: `ConfigManager`, `RegionsConfig`, `SignsConfig`, `StorageConfig`
 
 ### Command Structure
 
 All commands use `/rr` prefix to avoid conflicts. The plugin attempts to register short aliases (e.g., `/reload`, `/info`) but falls back to prefixed versions if conflicts exist.
 
-**Command classes in `commands/` package (9 total):**
+**Command classes in `commands/` package (12 total):**
 - `RRCommand` - Main help command dispatcher
 - `ReloadCommand` - Reload configuration
-- `CreateSignCommand` - Create rental signs
+- `CreateSignCommand` - Create rental signs (signs use defaults until overrides set)
 - `ResetCommand` - Reset rentals with full refund
-- `RemoveCommand` - Remove RegionRental setup from regions
+- `RemoveCommand` - Remove RegionRental setup from regions (removes from regions.yml)
 - `RetrieveCommand` - Retrieve stored items
 - `InfoCommand` - View rental information
 - `ListCommand` - List rentals
 - `ExtendCommand` - Extend rentals
 - `DurationCommand` - Modify rental duration (add/remove/set/reset)
+- `RefundHistoryCommand` - View refund history for a rental
+- `VerifyCommand` - Verify region configurations (reports defaults vs custom overrides)
+- `OverrideCommand` - Set per-region custom settings **[NEW]**
 
 ## Key Implementation Details
 
@@ -310,6 +320,7 @@ Add to `StorageManager.CONTAINER_TYPES` set (currently supports: chest, barrel, 
 ### Plugin Data Directory
 `plugins/RegionRental/`
 - `config.yml` - Main configuration
+- `regions.yml` - Per-region override settings (auto-populated)
 - `signs.yml` - Sign locations
 - `storage.yml` - Stored items
 - `rentals.yml` - Active rentals
@@ -319,7 +330,7 @@ Add to `StorageManager.CONTAINER_TYPES` set (currently supports: chest, barrel, 
 ```
 src/main/java/com/regionrental/
 ├── RegionRental.java           # Main plugin class
-├── commands/                   # Command executors (9 classes)
+├── commands/                   # Command executors (12 classes)
 │   ├── RRCommand.java
 │   ├── ReloadCommand.java
 │   ├── CreateSignCommand.java
@@ -329,9 +340,13 @@ src/main/java/com/regionrental/
 │   ├── InfoCommand.java
 │   ├── ListCommand.java
 │   ├── ExtendCommand.java
-│   └── DurationCommand.java    # Includes add/remove/set/reset subcommands
-├── config/                     # Config managers (3 classes)
+│   ├── DurationCommand.java    # Includes add/remove/set/reset subcommands
+│   ├── RefundHistoryCommand.java  # View refund transaction history
+│   ├── VerifyCommand.java      # Verify region configs (shows defaults vs overrides)
+│   └── OverrideCommand.java    # Set per-region custom settings (NEW)
+├── config/                     # Config managers (4 classes)
 │   ├── ConfigManager.java
+│   ├── RegionsConfig.java      # Per-region settings manager (NEW)
 │   ├── SignsConfig.java
 │   └── StorageConfig.java
 ├── listeners/                  # Event listeners (1 class)
@@ -367,6 +382,86 @@ src/main/java/com/regionrental/
 **Command comparison:**
 - Old: `/rrretime <player> <region> [days]` - Required player name, custom days
 - New: `/rrduration reset <region>` - Only region name, uses default duration, optional refund
+
+### Per-Region Configuration System (regions.yml)
+- **Separate config file** for per-region custom overrides
+- **Command-based configuration** using `/rroverride` commands
+- **Defaults for all regions** - regions NOT in regions.yml use config.yml defaults
+- **Migration system** automatically moves old `regions:` data from config.yml
+- **Verification via `/rrverify`** shows which regions use defaults vs custom settings
+- **Auto-removal** from regions.yml when `/rrremove` is used
+
+**Available per-region overrides:**
+- `price` - Rental price (overrides default)
+- `duration` - Rental duration in days
+- `max-extensions` - Maximum extensions allowed
+- `extension-price` - Price per extension day (auto-calculated if 0)
+- `allow-extensions` - Enable/disable extensions for region
+- `extension-duration` - Extension duration in days
+
+**Override Commands:**
+```bash
+/rroverride price <region> <amount>             # Set custom rental price
+/rroverride duration <region> <days>            # Set custom duration
+/rroverride maxextensions <region> <count>      # Set max extensions
+/rroverride extensionprice <region> <amount>    # Set extension price (0 for auto)
+/rroverride allowextensions <region> true|false # Enable/disable extensions
+/rroverride extensionduration <region> <days>   # Set extension duration
+/rroverride remove <region>                     # Remove all overrides (use defaults)
+/rroverride list [region]                       # View overrides for region or all regions
+```
+
+**Technical Implementation:**
+- `OverrideCommand.java`: New command for setting region overrides
+- `RegionsConfig.java`: Config manager with getter/setter methods for overrides
+- `ConfigManager.java`: Queries RegionsConfig first, falls back to defaults
+- `CreateSignCommand.java`: Does NOT auto-populate (signs use defaults)
+- `RemoveCommand.java`: Removes region from regions.yml on setup removal
+- `VerifyCommand.java`: Reports regions using defaults vs custom overrides
+- `RegionRental.java`: Initializes RegionsConfig, runs verification on startup/reload
+- Migration runs once on first startup if config.yml has `regions:` section
+
+**Config options (in config.yml):**
+```yaml
+regions-config:
+  auto-verify-regions: true       # Auto-verify on startup/reload (reports orphaned configs)
+  enable-verify-command: true     # Enable /rrverify command
+```
+
+**Verification behavior:**
+- **On startup/reload** (if auto-verify enabled): Reports orphaned configs (configs without signs)
+- **Regions without configs**: NOT an issue - they use default values from config.yml
+- **Orphaned configs**: Configs exist but no sign (can be cleaned up with `/rroverride remove`)
+- **Manual check**: `/rrverify` shows detailed breakdown of defaults vs custom overrides
+
+**Workflow:**
+1. Create rental sign: `/rrcreatesign testregion` (uses defaults from config.yml)
+2. Set custom price: `/rroverride price testregion 500.0`
+3. Sign automatically updates to show new price
+4. View overrides: `/rroverride list testregion`
+5. Remove overrides: `/rroverride remove testregion` (reverts to defaults)
+
+**Data format (regions.yml):**
+```yaml
+regions:
+  shop1:
+    price: 500.0
+    duration: 14
+    max-extensions: 20
+    extension-price: 250.0
+    allow-extensions: true
+    extension-duration: 7
+
+  shop2:
+    price: 300.0  # Only overriding price - other settings use defaults
+```
+
+**Benefits:**
+- Clean separation of region-specific settings
+- In-game configuration via commands (no manual file editing)
+- Clear defaults - regions not listed use config.yml values
+- Verification system prevents orphaned configs
+- Signs automatically update when overrides are set
 
 ### Support Block Protection (Sign Protection Enhancement)
 - **Automatically detects support blocks** when creating rental signs
