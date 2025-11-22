@@ -84,8 +84,8 @@ When updating the version, modify these files:
 - Output JAR: `build/libs/RegionRental-X.X.X.jar`
 
 ### Current Version
-- **Version:** 1.2.5
-- **Last Updated:** Fix player inventory blocking bug (allow placing in own inventory)
+- **Version:** 1.2.6
+- **Last Updated:** Fix container item duplication bug (count and store clean containers)
 
 ## Architecture Overview
 
