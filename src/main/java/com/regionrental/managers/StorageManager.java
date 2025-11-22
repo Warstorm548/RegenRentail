@@ -121,6 +121,12 @@ public class StorageManager implements Listener {
             return allItems;
         }
 
+        // Get the schematic to compare against (for player-placed container detection)
+        Clipboard clipboard = plugin.getWorldEditManager().getClipboard(regionName);
+        if (clipboard == null) {
+            plugin.getLogger().warning("No schematic found for region " + regionName + " - counting all containers");
+        }
+
         // Get region bounds
         BlockVector3 min = region.getMinimumPoint();
         BlockVector3 max = region.getMaximumPoint();
@@ -148,9 +154,33 @@ public class StorageManager implements Listener {
                                 }
                             }
 
-                            // Count this container for later storage
-                            containerCounts.put(block.getType(),
-                                containerCounts.getOrDefault(block.getType(), 0) + 1);
+                            // Only count player-placed containers (not from schematic)
+                            boolean isPlayerPlaced = false;
+                            if (clipboard != null) {
+                                // Compare to schematic to determine if player-placed
+                                BlockVector3 pos = BlockVector3.at(x, y, z);
+                                BlockState originalBlockState = clipboard.getBlock(pos);
+
+                                // Convert WorldEdit BlockState to Bukkit Material
+                                String originalBlockType = originalBlockState.getBlockType().getId();
+                                Material originalMaterial = Material.matchMaterial(
+                                    originalBlockType.replace("minecraft:", "").toUpperCase()
+                                );
+
+                                // Container is player-placed if it's different from schematic
+                                if (originalMaterial == null || block.getType() != originalMaterial) {
+                                    isPlayerPlaced = true;
+                                }
+                            } else {
+                                // No schematic - count all containers (fallback behavior)
+                                isPlayerPlaced = true;
+                            }
+
+                            // Count this container for later storage if player-placed
+                            if (isPlayerPlaced) {
+                                containerCounts.put(block.getType(),
+                                    containerCounts.getOrDefault(block.getType(), 0) + 1);
+                            }
 
                             // Clear the container
                             inv.clear();

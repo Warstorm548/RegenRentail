@@ -84,8 +84,8 @@ When updating the version, modify these files:
 - Output JAR: `build/libs/RegionRental-X.X.X.jar`
 
 ### Current Version
-- **Version:** 1.2.6
-- **Last Updated:** Fix container item duplication bug (count and store clean containers)
+- **Version:** 1.2.7
+- **Last Updated:** Fix schematic container counting bug (only count player-placed containers)
 
 ## Architecture Overview
 
