@@ -166,6 +166,15 @@ public class WorldEditManager {
     }
 
     /**
+     * Gets the captured clipboard for a region
+     * @param regionName The WorldGuard region name
+     * @return The clipboard, or null if not found
+     */
+    public Clipboard getClipboard(String regionName) {
+        return savedRegions.get(regionName);
+    }
+
+    /**
      * Deletes a captured region state
      */
     public void deleteCapture(String regionName) {

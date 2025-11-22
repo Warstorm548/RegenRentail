@@ -84,8 +84,8 @@ When updating the version, modify these files:
 - Output JAR: `build/libs/RegionRental-X.X.X.jar`
 
 ### Current Version
-- **Version:** 1.1.0
-- **Last Updated:** Implementation of command-based override system
+- **Version:** 1.2.2
+- **Last Updated:** Block stacking bug fix (removed cosmetic lore)
 
 ## Architecture Overview
 

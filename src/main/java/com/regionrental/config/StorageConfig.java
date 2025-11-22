@@ -52,9 +52,14 @@ public class StorageConfig {
     }
     
     public void storeItems(UUID playerUUID, String region, List<ItemStack> items) {
+        storeItems(playerUUID, region, items, new ArrayList<>());
+    }
+
+    public void storeItems(UUID playerUUID, String region, List<ItemStack> containerItems, List<ItemStack> blockItems) {
         String path = "storage." + playerUUID.toString() + "." + region;
         config.set(path + ".timestamp", System.currentTimeMillis());
-        config.set(path + ".items", items);
+        config.set(path + ".items", containerItems);
+        config.set(path + ".blocks", blockItems);
         save();
     }
     
@@ -84,17 +89,23 @@ public class StorageConfig {
     public List<ItemStack> getAllStoredItems(UUID playerUUID) {
         List<ItemStack> allItems = new ArrayList<>();
         String basePath = "storage." + playerUUID.toString();
-        
+
         if (!config.contains(basePath)) {
             return allItems;
         }
-        
+
         for (String region : config.getConfigurationSection(basePath).getKeys(false)) {
+            // Get container items
             @SuppressWarnings("unchecked")
             List<ItemStack> items = (List<ItemStack>) config.getList(basePath + "." + region + ".items", new ArrayList<>());
             allItems.addAll(items);
+
+            // Get block items
+            @SuppressWarnings("unchecked")
+            List<ItemStack> blocks = (List<ItemStack>) config.getList(basePath + "." + region + ".blocks", new ArrayList<>());
+            allItems.addAll(blocks);
         }
-        
+
         return allItems;
     }
     

@@ -261,6 +261,8 @@ public class ConfigManager {
     public boolean isBlockRestoration() { return blockRestoration; }
     public boolean isAutoDeleteSchematics() { return autoDeleteSchematics; }
     public boolean isItemStorage() { return itemStorage; }
+    public boolean isBlockStorage() { return config.getBoolean("storage.store-player-blocks", true); }
+    public List<String> getBlockBlacklist() { return config.getStringList("storage.block-blacklist"); }
     public boolean isSignProtection() { return signProtection; }
     public Map<String, Double> getPermissionPrices() { return permissionPrices; }
 
