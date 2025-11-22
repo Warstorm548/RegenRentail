@@ -101,6 +101,7 @@ public class StorageManager implements Listener {
      */
     public List<ItemStack> collectItemsFromRegion(String regionName) {
         List<ItemStack> allItems = new ArrayList<>();
+        Map<Material, Integer> containerCounts = new HashMap<>(); // Track container types and counts
 
         World world = findWorldForRegion(regionName);
         if (world == null) {
@@ -147,12 +148,31 @@ public class StorageManager implements Listener {
                                 }
                             }
 
+                            // Count this container for later storage
+                            containerCounts.put(block.getType(),
+                                containerCounts.getOrDefault(block.getType(), 0) + 1);
+
                             // Clear the container
                             inv.clear();
                             container.update();
                         }
                     }
                 }
+            }
+        }
+
+        // Add clean container items to the list (no NBT, stackable)
+        for (Map.Entry<Material, Integer> entry : containerCounts.entrySet()) {
+            Material containerType = entry.getKey();
+            int count = entry.getValue();
+
+            // Add as stackable items (max stack size 64)
+            while (count > 0) {
+                int stackSize = Math.min(count, 64);
+                ItemStack cleanContainer = new ItemStack(containerType, stackSize);
+                // No metadata, no NBT - just a clean item
+                allItems.add(cleanContainer);
+                count -= stackSize;
             }
         }
 
@@ -297,6 +317,11 @@ public class StorageManager implements Listener {
 
                     // Compare blocks - store if different
                     if (originalMaterial == null || currentMaterial != originalMaterial) {
+                        // Skip containers - they're handled by collectItemsFromRegion()
+                        if (containerTypes.contains(currentMaterial)) {
+                            continue;
+                        }
+
                         // Block was placed by player (different from schematic)
                         ItemStack blockItem = blockToItemStack(currentBlock, regionName, x, y, z);
                         if (blockItem != null) {
