@@ -534,7 +534,25 @@ public class StorageManager implements Listener {
         }
         // Allow taking items from other slots
     }
-    
+
+    /**
+     * Scans a retrieval GUI inventory and returns all remaining items
+     * Only scans slots 0-44 (item slots), skips navigation buttons in 45-53
+     */
+    private List<ItemStack> getRemainingItemsFromGUI(Inventory inventory) {
+        List<ItemStack> remaining = new ArrayList<>();
+
+        // Scan only item slots (0-44), navigation buttons are in 45-53
+        for (int i = 0; i < 45; i++) {
+            ItemStack item = inventory.getItem(i);
+            if (item != null && item.getType() != Material.AIR) {
+                remaining.add(item.clone());
+            }
+        }
+
+        return remaining;
+    }
+
     @EventHandler
     public void onInventoryClose(InventoryCloseEvent event) {
         if (!(event.getInventory().getHolder() instanceof StorageGUIHolder)) {
@@ -547,14 +565,29 @@ public class StorageManager implements Listener {
         
         Player player = (Player) event.getPlayer();
         UUID playerUUID = player.getUniqueId();
-        
+
+        // Get the closing inventory
+        Inventory closingInventory = event.getInventory();
+
         // Clean up session
         StorageGUISession session = activeGUISessions.remove(playerUUID);
-        
-        if (session != null && session.isFirstOpen) {
-            // Clear storage after first retrieval
-            plugin.getStorageConfig().clearPlayerStorage(playerUUID);
-            player.sendMessage(plugin.getConfigManager().getMessage("items-retrieved"));
+
+        if (session != null) {
+            // Scan for remaining items in the GUI
+            List<ItemStack> remainingItems = getRemainingItemsFromGUI(closingInventory);
+
+            if (remainingItems.isEmpty()) {
+                // All items were taken - clear storage completely
+                plugin.getStorageConfig().clearPlayerStorage(playerUUID);
+                player.sendMessage(plugin.getConfigManager().getMessage("items-retrieved"));
+            } else {
+                // Some items remain - save them back to storage
+                plugin.getStorageConfig().updatePartialStorage(playerUUID, remainingItems);
+
+                int itemsTaken = session.items.size() - remainingItems.size();
+                player.sendMessage(ChatColor.YELLOW + "Retrieved " + itemsTaken + " items. " +
+                                 remainingItems.size() + " items remain in storage. Use /rrretrieve to get them.");
+            }
         }
     }
     
@@ -578,14 +611,13 @@ public class StorageManager implements Listener {
         final UUID playerUUID;
         final List<ItemStack> items;
         int currentPage;
-        boolean isFirstOpen = true;
-        
+
         StorageGUISession(UUID playerUUID, List<ItemStack> items) {
             this.playerUUID = playerUUID;
             this.items = items;
             this.currentPage = 0;
         }
-        
+
         int getTotalPages() {
             return Math.max(1, (items.size() - 1) / 45 + 1);
         }

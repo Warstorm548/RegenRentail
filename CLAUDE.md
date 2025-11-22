@@ -84,8 +84,8 @@ When updating the version, modify these files:
 - Output JAR: `build/libs/RegionRental-X.X.X.jar`
 
 ### Current Version
-- **Version:** 1.2.2
-- **Last Updated:** Block stacking bug fix (removed cosmetic lore)
+- **Version:** 1.2.3
+- **Last Updated:** Retrieval GUI item loss bug fix (track taken items)
 
 ## Architecture Overview
 

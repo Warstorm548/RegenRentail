@@ -113,7 +113,28 @@ public class StorageConfig {
         config.set("storage." + playerUUID.toString(), null);
         save();
     }
-    
+
+    /**
+     * Updates storage with remaining items after partial retrieval
+     * If no items remain, clears storage completely
+     * @param playerUUID The player's UUID
+     * @param remainingItems List of items that weren't taken from the GUI
+     */
+    public void updatePartialStorage(UUID playerUUID, List<ItemStack> remainingItems) {
+        if (remainingItems.isEmpty()) {
+            // No items left, clear completely
+            clearPlayerStorage(playerUUID);
+            return;
+        }
+
+        // Clear existing storage first
+        clearPlayerStorage(playerUUID);
+
+        // Re-store remaining items under a generic region name
+        // Note: Original region information is lost, but players just want their items back
+        storeItems(playerUUID, "partial_retrieval", remainingItems, new ArrayList<>());
+    }
+
     public boolean hasStoredItems(UUID playerUUID) {
         return config.contains("storage." + playerUUID.toString());
     }
