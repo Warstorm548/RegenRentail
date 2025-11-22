@@ -197,9 +197,9 @@ public class RentalManager {
         // Remove player from region
         plugin.getWorldGuardManager().removePlayerFromRegion(regionName, rental.getPlayerUUID());
 
-        // Store items if enabled
+        // Store container items and player-placed blocks (must happen BEFORE restoration)
         if (plugin.getConfigManager().isItemStorage()) {
-            plugin.getStorageManager().storeItemsFromRegion(regionName, rental.getPlayerUUID());
+            plugin.getStorageManager().storeItemsAndBlocksFromRegion(regionName, rental.getPlayerUUID());
         }
 
         // Restore region blocks with WorldEdit (if enabled)

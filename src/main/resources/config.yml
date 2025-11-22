@@ -197,10 +197,30 @@ signs:
 storage:
   # Enable item storage when rental expires
   enabled: true
-  
+
   # Store items from these container types
   store-from-containers: true
-  
+
+  # Store player-placed blocks (blocks different from schematic)
+  # Requires block restoration to be enabled
+  store-player-blocks: true
+
+  # Blocks to exclude from player block storage (too common/cheap)
+  # These blocks will not be stored even if placed by players
+  block-blacklist:
+    - AIR
+    - CAVE_AIR
+    - VOID_AIR
+    - DIRT
+    - GRASS_BLOCK
+    - STONE
+    - COBBLESTONE
+    - GRAVEL
+    - SAND
+    - SANDSTONE
+    - WATER
+    - LAVA
+
   # Container types to scan
   container-types:
     - CHEST
