@@ -23,6 +23,7 @@ import org.bukkit.event.inventory.InventoryCloseEvent;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.InventoryHolder;
 import org.bukkit.inventory.ItemStack;
+import org.bukkit.inventory.meta.BlockStateMeta;
 import org.bukkit.inventory.meta.ItemMeta;
 
 import java.util.*;
@@ -130,6 +131,11 @@ public class StorageManager implements Listener {
                     Block block = loc.getBlock();
 
                     if (containerTypes.contains(block.getType())) {
+                        // Skip shulker boxes - they preserve items when stored as blocks (vanilla behavior)
+                        if (isShulkerBox(block.getType())) {
+                            continue;
+                        }
+
                         if (block.getState() instanceof Container) {
                             Container container = (Container) block.getState();
                             Inventory inv = container.getInventory();
@@ -320,6 +326,37 @@ public class StorageManager implements Listener {
     }
 
     /**
+     * Preserves container state (NBT data, inventory) on an ItemStack
+     * For shulker boxes: preserves full inventory contents
+     * For other containers: preserves custom names and other metadata
+     */
+    private void preserveContainerState(ItemStack item, Block block) {
+        if (!(block.getState() instanceof Container)) {
+            return;
+        }
+
+        Container container = (Container) block.getState();
+        ItemMeta itemMeta = item.getItemMeta();
+
+        if (itemMeta == null) {
+            return;
+        }
+
+        // Preserve container BlockState (includes inventory for shulker boxes)
+        if (itemMeta instanceof BlockStateMeta) {
+            BlockStateMeta blockStateMeta = (BlockStateMeta) itemMeta;
+            blockStateMeta.setBlockState(container);
+        }
+
+        // Preserve custom name if present
+        if (container.getCustomName() != null) {
+            itemMeta.setDisplayName(container.getCustomName());
+        }
+
+        item.setItemMeta(itemMeta);
+    }
+
+    /**
      * Converts a block to an ItemStack with metadata
      */
     private ItemStack blockToItemStack(Block block, String regionName, int x, int y, int z) {
@@ -330,12 +367,12 @@ public class StorageManager implements Listener {
             return null;
         }
 
-        // Skip container blocks (their items are already handled separately)
-        if (containerTypes.contains(type)) {
-            return null;
-        }
-
         ItemStack item = new ItemStack(type, 1);
+
+        // Preserve container state for containers (NBT data, inventory for shulker boxes)
+        if (containerTypes.contains(type)) {
+            preserveContainerState(item, block);
+        }
 
         // Add metadata showing it's a player-placed block
         ItemMeta meta = item.getItemMeta();
@@ -344,6 +381,12 @@ public class StorageManager implements Listener {
             lore.add(ChatColor.BLUE + "Player-Placed Block");
             lore.add(ChatColor.GRAY + "From: " + regionName);
             lore.add(ChatColor.GRAY + "Location: " + x + ", " + y + ", " + z);
+
+            // For shulker boxes, add note about preserved contents
+            if (isShulkerBox(type)) {
+                lore.add(ChatColor.GREEN + "Contents Preserved");
+            }
+
             meta.setLore(lore);
             item.setItemMeta(meta);
         }
@@ -369,6 +412,13 @@ public class StorageManager implements Listener {
         }
 
         return blacklist;
+    }
+
+    /**
+     * Checks if a material is a shulker box (any color)
+     */
+    private boolean isShulkerBox(Material material) {
+        return material.name().endsWith("SHULKER_BOX");
     }
 
     public void openRetrievalGUI(Player player) {

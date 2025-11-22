@@ -84,8 +84,8 @@ When updating the version, modify these files:
 - Output JAR: `build/libs/RegionRental-X.X.X.jar`
 
 ### Current Version
-- **Version:** 1.2.0
-- **Last Updated:** Player-placed block storage feature
+- **Version:** 1.2.1
+- **Last Updated:** Container storage bug fix and shulker box enhancement
 
 ## Architecture Overview
 
