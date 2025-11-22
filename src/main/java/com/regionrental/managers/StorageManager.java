@@ -547,7 +547,8 @@ public class StorageManager implements Listener {
         }
 
         // Block placing items into GUI item slots (0-44)
-        if (slot >= 0 && slot < 45) {
+        // ONLY if clicking in the GUI (top inventory), NOT in player inventory (bottom)
+        if (event.getClickedInventory() == event.getView().getTopInventory() && slot >= 0 && slot < 45) {
             // Block number key swaps (swap with hotbar)
             if (clickType == ClickType.NUMBER_KEY) {
                 event.setCancelled(true);
@@ -555,7 +556,7 @@ public class StorageManager implements Listener {
                 return;
             }
 
-            // Block if player has item on cursor (trying to place it)
+            // Block if player has item on cursor (trying to place it in the GUI)
             ItemStack cursor = event.getCursor();
             if (cursor != null && cursor.getType() != Material.AIR) {
                 event.setCancelled(true);
@@ -563,9 +564,11 @@ public class StorageManager implements Listener {
                 return;
             }
 
-            // Allow taking items (cursor is empty, clicking on item)
+            // Allow taking items (cursor is empty, clicking on item in GUI)
             // This is the default Minecraft behavior - don't cancel
         }
+        // If player clicks their own inventory (bottom), allow all actions
+        // This lets them place items they picked up from the GUI
     }
 
     /**

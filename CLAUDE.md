@@ -84,8 +84,8 @@ When updating the version, modify these files:
 - Output JAR: `build/libs/RegionRental-X.X.X.jar`
 
 ### Current Version
-- **Version:** 1.2.4
-- **Last Updated:** Block players from adding items to retrieval GUI (take-only)
+- **Version:** 1.2.5
+- **Last Updated:** Fix player inventory blocking bug (allow placing in own inventory)
 
 ## Architecture Overview
 
