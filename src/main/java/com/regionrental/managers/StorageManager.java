@@ -374,23 +374,6 @@ public class StorageManager implements Listener {
             preserveContainerState(item, block);
         }
 
-        // Add metadata showing it's a player-placed block
-        ItemMeta meta = item.getItemMeta();
-        if (meta != null) {
-            List<String> lore = new ArrayList<>();
-            lore.add(ChatColor.BLUE + "Player-Placed Block");
-            lore.add(ChatColor.GRAY + "From: " + regionName);
-            lore.add(ChatColor.GRAY + "Location: " + x + ", " + y + ", " + z);
-
-            // For shulker boxes, add note about preserved contents
-            if (isShulkerBox(type)) {
-                lore.add(ChatColor.GREEN + "Contents Preserved");
-            }
-
-            meta.setLore(lore);
-            item.setItemMeta(meta);
-        }
-
         return item;
     }
 
