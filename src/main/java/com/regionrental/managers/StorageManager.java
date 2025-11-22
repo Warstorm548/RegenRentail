@@ -18,6 +18,7 @@ import org.bukkit.block.Container;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
+import org.bukkit.event.inventory.ClickType;
 import org.bukkit.event.inventory.InventoryClickEvent;
 import org.bukkit.event.inventory.InventoryCloseEvent;
 import org.bukkit.inventory.Inventory;
@@ -516,11 +517,22 @@ public class StorageManager implements Listener {
         }
         
         int slot = event.getSlot();
-        
+        ClickType clickType = event.getClick();
+
+        // Block shift-click from player inventory to GUI
+        if (event.getClickedInventory() != event.getView().getTopInventory()) {
+            // Clicked in player inventory (bottom)
+            if (clickType.isShiftClick()) {
+                event.setCancelled(true);
+                player.sendMessage(ChatColor.RED + "You cannot add items to the retrieval GUI!");
+                return;
+            }
+        }
+
         // Handle navigation buttons
         if (slot >= 45 && slot <= 53) {
             event.setCancelled(true);
-            
+
             if (slot == 45 && session.currentPage > 0) {
                 // Previous page
                 openGUIPage(player, session, session.currentPage - 1);
@@ -531,8 +543,29 @@ public class StorageManager implements Listener {
                 // Close button
                 player.closeInventory();
             }
+            return;
         }
-        // Allow taking items from other slots
+
+        // Block placing items into GUI item slots (0-44)
+        if (slot >= 0 && slot < 45) {
+            // Block number key swaps (swap with hotbar)
+            if (clickType == ClickType.NUMBER_KEY) {
+                event.setCancelled(true);
+                player.sendMessage(ChatColor.RED + "You cannot add items to the retrieval GUI!");
+                return;
+            }
+
+            // Block if player has item on cursor (trying to place it)
+            ItemStack cursor = event.getCursor();
+            if (cursor != null && cursor.getType() != Material.AIR) {
+                event.setCancelled(true);
+                player.sendMessage(ChatColor.RED + "You cannot add items to the retrieval GUI!");
+                return;
+            }
+
+            // Allow taking items (cursor is empty, clicking on item)
+            // This is the default Minecraft behavior - don't cancel
+        }
     }
 
     /**
