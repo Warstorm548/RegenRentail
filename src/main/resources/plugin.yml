@@ -1,5 +1,5 @@
 name: RegionRental
-version: 1.2.7
+version: 1.2.8
 main: com.regionrental.RegionRental
 api-version: '1.21'
 author: YourName
