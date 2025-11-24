@@ -329,7 +329,18 @@ public class RegionRental extends JavaPlugin {
         DynamicCommand cmd = new DynamicCommand(commandName, this);
         cmd.setExecutor(executor);
         cmd.setPermission(permission);
-        cmd.setDescription("RegionRental command");
+
+        // Only set description for main command to appear in /help
+        // Subcommands get no description so they don't clutter /help menu
+        if (subcommand.isEmpty()) {
+            // Main help command - show in /help with active prefix
+            cmd.setDescription("RegionRental (prefix: " + prefix + ") - Type /" + prefix + " for help");
+            cmd.setUsage("/" + prefix);
+        } else {
+            // Subcommands - empty description keeps them out of /help
+            cmd.setDescription("");
+            cmd.setUsage("/" + commandName);
+        }
 
         // Register with CommandMap
         if (commandMap.register(getName(), cmd)) {
