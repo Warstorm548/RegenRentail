@@ -247,6 +247,9 @@ public class RegionRental extends JavaPlugin {
 
         // Log final status
         logPrefixStatus(configuredPrefix);
+
+        // Update /rr command description to show active prefix
+        updateHelpCommandDescription();
     }
 
     /**
@@ -372,6 +375,29 @@ public class RegionRental extends JavaPlugin {
         }
 
         getLogger().info("Commands are now available! Example: /" + activePrefix + "info");
+    }
+
+    /**
+     * Updates the /rr command description to show the active prefix
+     * This ensures /help displays the correct prefix players should use
+     */
+    private void updateHelpCommandDescription() {
+        org.bukkit.command.PluginCommand rrCommand = getCommand("rr");
+        if (rrCommand != null) {
+            String description;
+            if (activePrefix.equals("rr")) {
+                // Using default rr prefix
+                description = "RegionRental - Rent WorldGuard regions. Type /rr for help";
+            } else {
+                // Using custom prefix - update description to show it
+                description = "RegionRental (active prefix: /" + activePrefix + ") - Type /" + activePrefix + " for help";
+            }
+            rrCommand.setDescription(description);
+
+            if (configManager.isDebug()) {
+                getLogger().info("Updated /rr command description: " + description);
+            }
+        }
     }
 
     /**
@@ -534,6 +560,9 @@ public class RegionRental extends JavaPlugin {
         // Re-register aliases
         unregisterAliases();
         registerAliasesIfPossible();
+
+        // Update /rr command description in case prefix changed
+        updateHelpCommandDescription();
 
         getLogger().info("Plugin reloaded successfully!");
     }
