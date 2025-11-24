@@ -37,7 +37,12 @@ public class RegionRental extends JavaPlugin {
     
     // Economy
     private Economy economy;
-    
+
+    // Track command prefix
+    private String activePrefix;
+    private boolean usingFallback = false;
+    private List<String> registeredCommands = new ArrayList<>();
+
     // Track if aliases are enabled
     private boolean aliasesEnabled = false;
     private List<String> registeredAliases = new ArrayList<>();
@@ -188,26 +193,181 @@ public class RegionRental extends JavaPlugin {
     }
     
     private void registerCommands() {
-        // Main command handler
-        getCommand("rr").setExecutor(new RRCommand(this));
+        CommandMap commandMap = getCommandMap();
+        if (commandMap == null) {
+            getLogger().severe("Could not access CommandMap! Commands will not be registered.");
+            return;
+        }
 
-        // Register all subcommands with rr prefix
-        getCommand("rrreload").setExecutor(new ReloadCommand(this));
-        getCommand("rrcreatesign").setExecutor(new CreateSignCommand(this));
-        getCommand("rrreset").setExecutor(new ResetCommand(this));
-        getCommand("rrretrieve").setExecutor(new RetrieveCommand(this));
-        getCommand("rrinfo").setExecutor(new InfoCommand(this));
-        getCommand("rrlist").setExecutor(new ListCommand(this));
-        getCommand("rrextend").setExecutor(new ExtendCommand(this));
+        // Get configured prefix from config
+        String configuredPrefix = configManager.getCommandPrefix();
+
+        // Determine which prefix to use based on conflicts
+        activePrefix = determineActivePrefix(commandMap, configuredPrefix);
+
+        getLogger().info("Registering commands with prefix: '" + activePrefix + "'");
+
+        // Register all commands with determined prefix
+        registerCommandWithPrefix(commandMap, activePrefix, "", new RRCommand(this), "regionrental.user");
+        registerCommandWithPrefix(commandMap, activePrefix, "reload", new ReloadCommand(this), "regionrental.admin.reload");
+        registerCommandWithPrefix(commandMap, activePrefix, "createsign", new CreateSignCommand(this), "regionrental.admin.createsign");
+        registerCommandWithPrefix(commandMap, activePrefix, "reset", new ResetCommand(this), "regionrental.admin.reset");
+        registerCommandWithPrefix(commandMap, activePrefix, "retrieve", new RetrieveCommand(this), "regionrental.retrieve");
+        registerCommandWithPrefix(commandMap, activePrefix, "info", new InfoCommand(this), "regionrental.info");
+        registerCommandWithPrefix(commandMap, activePrefix, "list", new ListCommand(this), "regionrental.list");
+        registerCommandWithPrefix(commandMap, activePrefix, "extend", new ExtendCommand(this), "regionrental.extend");
+
         DurationCommand durationCommand = new DurationCommand(this);
-        getCommand("rrduration").setExecutor(durationCommand);
-        getCommand("rrduration").setTabCompleter(durationCommand);
-        getCommand("rrremove").setExecutor(new RemoveCommand(this));
-        getCommand("rrrefundhistory").setExecutor(new RefundHistoryCommand(this));
-        getCommand("rrverify").setExecutor(new VerifyCommand(this));
+        registerCommandWithPrefix(commandMap, activePrefix, "duration", durationCommand, "regionrental.admin.duration");
+
+        registerCommandWithPrefix(commandMap, activePrefix, "remove", new RemoveCommand(this), "regionrental.admin.remove");
+        registerCommandWithPrefix(commandMap, activePrefix, "refundhistory", new RefundHistoryCommand(this), "regionrental.admin.refundhistory");
+        registerCommandWithPrefix(commandMap, activePrefix, "verify", new VerifyCommand(this), "regionrental.admin.verify");
+
         OverrideCommand overrideCommand = new OverrideCommand(this);
-        getCommand("rroverride").setExecutor(overrideCommand);
-        getCommand("rroverride").setTabCompleter(overrideCommand);
+        registerCommandWithPrefix(commandMap, activePrefix, "override", overrideCommand, "regionrental.admin.override");
+
+        // Always register 'rr' prefix as fallback if not already the active prefix
+        if (!activePrefix.equals("rr")) {
+            getLogger().info("Registering 'rr' prefix as fallback for backward compatibility");
+            registerCommandWithPrefix(commandMap, "rr", "", new RRCommand(this), "regionrental.user");
+            registerCommandWithPrefix(commandMap, "rr", "reload", new ReloadCommand(this), "regionrental.admin.reload");
+            registerCommandWithPrefix(commandMap, "rr", "createsign", new CreateSignCommand(this), "regionrental.admin.createsign");
+            registerCommandWithPrefix(commandMap, "rr", "reset", new ResetCommand(this), "regionrental.admin.reset");
+            registerCommandWithPrefix(commandMap, "rr", "retrieve", new RetrieveCommand(this), "regionrental.retrieve");
+            registerCommandWithPrefix(commandMap, "rr", "info", new InfoCommand(this), "regionrental.info");
+            registerCommandWithPrefix(commandMap, "rr", "list", new ListCommand(this), "regionrental.list");
+            registerCommandWithPrefix(commandMap, "rr", "extend", new ExtendCommand(this), "regionrental.extend");
+            registerCommandWithPrefix(commandMap, "rr", "duration", new DurationCommand(this), "regionrental.admin.duration");
+            registerCommandWithPrefix(commandMap, "rr", "remove", new RemoveCommand(this), "regionrental.admin.remove");
+            registerCommandWithPrefix(commandMap, "rr", "refundhistory", new RefundHistoryCommand(this), "regionrental.admin.refundhistory");
+            registerCommandWithPrefix(commandMap, "rr", "verify", new VerifyCommand(this), "regionrental.admin.verify");
+            registerCommandWithPrefix(commandMap, "rr", "override", new OverrideCommand(this), "regionrental.admin.override");
+        }
+
+        // Log final status
+        logPrefixStatus(configuredPrefix);
+    }
+
+    /**
+     * Determines the active prefix to use based on conflicts
+     */
+    private String determineActivePrefix(CommandMap commandMap, String configuredPrefix) {
+        // If configured prefix has no conflicts, use it
+        if (!checkPrefixConflicts(commandMap, configuredPrefix)) {
+            return configuredPrefix;
+        }
+
+        // Configured prefix has conflicts, log warning
+        getLogger().warning("Custom prefix '" + configuredPrefix + "' conflicts with existing commands!");
+        getLogger().warning("Attempting to use 'rr' fallback prefix...");
+        usingFallback = true;
+
+        // Check if 'rr' has conflicts
+        if (!checkPrefixConflicts(commandMap, "rr")) {
+            return "rr";
+        }
+
+        // Both configured and 'rr' have conflicts, generate suffixed version
+        getLogger().warning("Fallback prefix 'rr' also has conflicts!");
+        getLogger().warning("Generating auto-suffixed prefix...");
+        return generateSuffixedPrefix(commandMap, "rr");
+    }
+
+    /**
+     * Checks if a prefix would conflict with existing commands
+     */
+    private boolean checkPrefixConflicts(CommandMap commandMap, String prefix) {
+        // Check main command
+        if (commandMap.getCommand(prefix) != null) {
+            return true;
+        }
+
+        // Check all subcommands
+        String[] subcommands = {
+            "reload", "createsign", "reset", "retrieve", "info", "list",
+            "extend", "duration", "remove", "refundhistory", "verify", "override"
+        };
+
+        for (String sub : subcommands) {
+            String fullCommand = prefix + sub;
+            if (commandMap.getCommand(fullCommand) != null) {
+                getLogger().warning("  Conflict detected: /" + fullCommand);
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /**
+     * Generates a suffix-based prefix (rr1, rr2, etc.) until no conflicts exist
+     */
+    private String generateSuffixedPrefix(CommandMap commandMap, String basePrefix) {
+        for (int i = 1; i <= 99; i++) {
+            String suffixedPrefix = basePrefix + i;
+            if (!checkPrefixConflicts(commandMap, suffixedPrefix)) {
+                getLogger().info("Using auto-generated prefix: '" + suffixedPrefix + "'");
+                return suffixedPrefix;
+            }
+        }
+
+        // Fallback to a random string if all numbers are taken (very unlikely)
+        String randomPrefix = basePrefix + System.currentTimeMillis() % 1000;
+        getLogger().warning("Using randomized prefix: '" + randomPrefix + "'");
+        return randomPrefix;
+    }
+
+    /**
+     * Registers a single command with the given prefix
+     */
+    private void registerCommandWithPrefix(CommandMap commandMap, String prefix, String subcommand,
+                                           org.bukkit.command.CommandExecutor executor, String permission) {
+        String commandName = subcommand.isEmpty() ? prefix : prefix + subcommand;
+
+        // Create a custom command instance
+        DynamicCommand cmd = new DynamicCommand(commandName, this);
+        cmd.setExecutor(executor);
+        cmd.setPermission(permission);
+        cmd.setDescription("RegionRental command");
+
+        // Register with CommandMap
+        if (commandMap.register(getName(), cmd)) {
+            registeredCommands.add(commandName);
+            if (configManager.isDebug()) {
+                getLogger().info("  Registered: /" + commandName);
+            }
+        } else {
+            getLogger().warning("  Failed to register: /" + commandName);
+        }
+    }
+
+    /**
+     * Logs the final prefix status to console
+     */
+    private void logPrefixStatus(String configuredPrefix) {
+        if (activePrefix.equals(configuredPrefix) && !usingFallback) {
+            getLogger().info("✓ Using custom prefix '" + activePrefix + "' for all commands");
+            if (!activePrefix.equals("rr")) {
+                getLogger().info("✓ Fallback 'rr' prefix also registered for backward compatibility");
+            }
+        } else if (usingFallback && activePrefix.equals("rr")) {
+            getLogger().warning("⚠ Custom prefix '" + configuredPrefix + "' had conflicts");
+            getLogger().info("✓ Using fallback prefix 'rr'");
+        } else {
+            getLogger().warning("⚠ Both custom prefix '" + configuredPrefix + "' and 'rr' had conflicts");
+            getLogger().info("✓ Using auto-generated prefix '" + activePrefix + "'");
+            getLogger().info("  Fallback 'rr' will be registered when conflicts resolve");
+        }
+
+        getLogger().info("Commands are now available! Example: /" + activePrefix + "info");
+    }
+
+    /**
+     * Returns the currently active command prefix
+     */
+    public String getActivePrefix() {
+        return activePrefix != null ? activePrefix : "rr";
     }
     
     private void registerAliasesIfPossible() {
@@ -423,7 +583,7 @@ public class RegionRental extends JavaPlugin {
     // Inner class for command aliases
     private static class CommandAlias extends Command {
         private final Command original;
-        
+
         public CommandAlias(String name, Command original) {
             super(name);
             this.original = original;
@@ -431,10 +591,42 @@ public class RegionRental extends JavaPlugin {
             this.usageMessage = original.getUsage();
             this.setPermission(original.getPermission());
         }
-        
+
         @Override
         public boolean execute(org.bukkit.command.CommandSender sender, String commandLabel, String[] args) {
             return original.execute(sender, commandLabel, args);
+        }
+    }
+
+    // Inner class for dynamic command registration
+    private static class DynamicCommand extends Command {
+        private final RegionRental plugin;
+        private org.bukkit.command.CommandExecutor executor;
+
+        public DynamicCommand(String name, RegionRental plugin) {
+            super(name);
+            this.plugin = plugin;
+        }
+
+        public void setExecutor(org.bukkit.command.CommandExecutor executor) {
+            this.executor = executor;
+        }
+
+        @Override
+        public boolean execute(org.bukkit.command.CommandSender sender, String commandLabel, String[] args) {
+            if (executor != null) {
+                return executor.onCommand(sender, this, commandLabel, args);
+            }
+            return false;
+        }
+
+        @Override
+        public java.util.List<String> tabComplete(org.bukkit.command.CommandSender sender, String alias, String[] args)
+                throws IllegalArgumentException {
+            if (executor instanceof org.bukkit.command.TabCompleter) {
+                return ((org.bukkit.command.TabCompleter) executor).onTabComplete(sender, this, alias, args);
+            }
+            return super.tabComplete(sender, alias, args);
         }
     }
 }

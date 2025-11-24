@@ -1,5 +1,5 @@
 name: RegionRental
-version: 1.2.8
+version: 1.2.9
 main: com.regionrental.RegionRental
 api-version: '1.21'
 author: YourName
@@ -14,83 +14,10 @@ depend:
 softdepend:
   - LuckPerms
 
-commands:
-  rr:
-    description: Main RegionRental command
-    usage: /rr [help|info|list]
-    permission: regionrental.user
-    
-  rrreload:
-    description: Reload the plugin configuration
-    usage: /rrreload
-    permission: regionrental.admin.reload
-    aliases: [reload]
-    
-  rrcreatesign:
-    description: Create a rental sign
-    usage: /rrcreatesign <region>
-    permission: regionrental.admin.createsign
-    aliases: [createsign]
-    
-  rrreset:
-    description: Reset a rental
-    usage: /rrreset <region>
-    permission: regionrental.admin.reset
-    aliases: [reset]
-
-  rrretrieve:
-    description: Retrieve stored items
-    usage: /rrretrieve
-    permission: regionrental.retrieve
-    aliases: [retrieve]
-    
-  rrinfo:
-    description: View rental information
-    usage: /rrinfo <region>
-    permission: regionrental.info
-    aliases: [info]
-    
-  rrlist:
-    description: List your rentals
-    usage: /rrlist [player]
-    permission: regionrental.list
-    aliases: [list]
-    
-  rrextend:
-    description: Extend a rental
-    usage: /rrextend <region>
-    permission: regionrental.extend
-    aliases: [extend]
-    
-  rrduration:
-    description: Modify rental duration
-    usage: /rrduration <add|remove|set|reset> <region> [<time>]
-    permission: regionrental.admin.duration
-    aliases: [duration]
-
-  rrremove:
-    description: Remove RegionRental setup from a region
-    usage: /rrremove <region>
-    permission: regionrental.admin.remove
-    aliases: [remove]
-
-  rrrefundhistory:
-    description: View refund history for a rental region
-    usage: /rrrefundhistory <region>
-    permission: regionrental.admin.refundhistory
-    aliases: [refundhistory]
-
-  rrverify:
-    description: Verify and repair region configurations
-    usage: /rrverify
-    permission: regionrental.admin.verify
-    aliases: [verify]
-
-  rroverride:
-    description: Set per-region custom rental settings
-    usage: /rroverride <subcommand> [args]
-    permission: regionrental.admin.override
-    aliases: [override]
+# Commands are registered dynamically at runtime with configurable prefix
+# Default prefix: 'rr' (can be changed in config.yml)
+# Commands will be registered as: /{prefix}info, /{prefix}extend, etc.
+# The 'rr' prefix is always kept as a fallback for backward compatibility
 
 permissions:
   regionrental.*:
@@ -177,6 +104,14 @@ permissions:
   regionrental.admin.override:
     description: Set per-region custom rental settings
     default: op
+
+  regionrental.admin.refundhistory:
+    description: View refund history for rentals
+    default: op
+
+  regionrental.user:
+    description: Basic user permission for help commands
+    default: true
 
   regionrental.admin.bypass:
     description: Bypass rental restrictions

@@ -24,11 +24,30 @@ general:
 # COMMAND SETTINGS
 # ============================================
 commands:
-  # Enable short command aliases (only work if no conflicts)
-  # If false or conflicts detected, all commands use /rr prefix
-  enable-aliases: true
-  
+  # Custom command prefix (default: "rr")
+  # All commands will use this prefix: /{prefix}info, /{prefix}extend, etc.
+  # Examples: "rr" → /rrinfo, "rental" → /rentalinfo, "rent" → /rentinfo
+  #
+  # Validation rules:
+  #   - Lowercase letters and numbers only (a-z, 0-9)
+  #   - Length: 2-10 characters
+  #   - Invalid prefixes will default to "rr"
+  #
+  # Conflict handling:
+  #   - If custom prefix conflicts: automatically falls back to "rr"
+  #   - If "rr" also conflicts: uses "rr1", "rr2", etc.
+  #   - Original "rr" prefix always kept as fallback for compatibility
+  #
+  # NOTE: Changing prefix requires server restart
+  prefix: 'rr'
+
+  # Enable short command aliases (DEPRECATED - will be removed in future version)
+  # Prefix-only mode is now recommended for better compatibility
+  # If false or conflicts detected, all commands use configured prefix
+  enable-aliases: false
+
   # List of aliases to attempt registering (if no conflicts)
+  # DEPRECATED: This feature will be removed in a future version
   # Format: shortname: fullcommand
   aliases:
     reload: rrreload

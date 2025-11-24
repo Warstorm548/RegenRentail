@@ -15,6 +15,7 @@ public class ConfigManager {
     
     // Cached values
     private String prefix;
+    private String commandPrefix;
     private boolean debug;
     private int expirationCheckInterval;
     
@@ -64,6 +65,10 @@ public class ConfigManager {
         prefix = color(config.getString("general.prefix", "&8[&6RegionRental&8]&r "));
         debug = config.getBoolean("general.debug", false);
         expirationCheckInterval = config.getInt("general.expiration-check-interval", 1);
+
+        // Command prefix setting
+        String configuredPrefix = config.getString("commands.prefix", "rr");
+        commandPrefix = validatePrefix(configuredPrefix);
         
         // Economy settings
         economyEnabled = config.getBoolean("economy.enabled", true);
@@ -193,7 +198,47 @@ public class ConfigManager {
     private String color(String text) {
         return ChatColor.translateAlternateColorCodes('&', text);
     }
-    
+
+    /**
+     * Validates and sanitizes the command prefix.
+     * Rules:
+     * - Lowercase only (auto-converts)
+     * - Alphanumeric only (a-z, 0-9)
+     * - Length: 2-10 characters
+     * - Defaults to "rr" if invalid
+     *
+     * @param prefix The prefix to validate
+     * @return The validated prefix or "rr" if invalid
+     */
+    private String validatePrefix(String prefix) {
+        if (prefix == null || prefix.isEmpty()) {
+            plugin.getLogger().warning("Command prefix is empty! Defaulting to 'rr'");
+            return "rr";
+        }
+
+        // Convert to lowercase
+        String validated = prefix.toLowerCase();
+
+        // Check length
+        if (validated.length() < 2 || validated.length() > 10) {
+            plugin.getLogger().warning("Command prefix '" + prefix + "' is invalid (must be 2-10 characters). Defaulting to 'rr'");
+            return "rr";
+        }
+
+        // Check alphanumeric only
+        if (!validated.matches("[a-z0-9]+")) {
+            plugin.getLogger().warning("Command prefix '" + prefix + "' is invalid (must be lowercase letters/numbers only). Defaulting to 'rr'");
+            return "rr";
+        }
+
+        // Log if prefix was changed from configured value
+        if (!validated.equals(prefix)) {
+            plugin.getLogger().info("Command prefix '" + prefix + "' converted to lowercase: '" + validated + "'");
+        }
+
+        return validated;
+    }
+
     public double getPriceForRegion(String region) {
         // Check RegionsConfig first if available
         if (plugin.getRegionsConfig() != null) {
@@ -245,6 +290,7 @@ public class ConfigManager {
     
     // Getters
     public String getPrefix() { return prefix; }
+    public String getCommandPrefix() { return commandPrefix; }
     public boolean isDebug() { return debug; }
     public int getExpirationCheckInterval() { return expirationCheckInterval; }
     public boolean isEconomyEnabled() { return economyEnabled; }
