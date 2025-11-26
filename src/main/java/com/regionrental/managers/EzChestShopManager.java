@@ -8,11 +8,7 @@ import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.World;
 import org.bukkit.block.Block;
-import org.bukkit.block.Container;
-import org.bukkit.entity.ArmorStand;
-import org.bukkit.entity.Item;
 import org.bukkit.entity.Player;
-import org.bukkit.event.block.BlockBreakEvent;
 import org.bukkit.plugin.Plugin;
 
 import java.lang.reflect.Method;
@@ -31,10 +27,9 @@ public class EzChestShopManager {
     private final RegionRental plugin;
     private boolean ezChestShopEnabled;
 
-    // Reflection cache
+    // Reflection cache for shop detection
     private Class<?> shopContainerClass;
     private Method getShopMethod;
-    private Method deleteShopMethod;
     private Method isShopMethod;
 
     // Container types that can be EzChestShop shops
@@ -107,17 +102,7 @@ public class EzChestShopManager {
                 plugin.getLogger().fine("isShop(Location) not found");
             }
 
-            try {
-                deleteShopMethod = shopContainerClass.getMethod("deleteShop", Location.class);
-            } catch (NoSuchMethodException e) {
-                try {
-                    deleteShopMethod = shopContainerClass.getMethod("removeShop", Location.class);
-                } catch (NoSuchMethodException e2) {
-                    plugin.getLogger().warning("No shop deletion method found");
-                }
-            }
-
-            if ((getShopMethod != null || isShopMethod != null)) {
+            if (getShopMethod != null || isShopMethod != null) {
                 ezChestShopEnabled = true;
                 plugin.getLogger().info("EzChestShop integration enabled successfully");
             } else {
@@ -173,130 +158,38 @@ public class EzChestShopManager {
             plugin.getLogger().info("[Debug] Removing shop at " + formatLocation(location));
         }
 
-        boolean shopRemoved = false;
-
-        // Try direct API deletion
-        if (deleteShopMethod != null) {
-            try {
-                deleteShopMethod.invoke(null, location);
-                if (!hasShopAt(location)) {
-                    if (debug) {
-                        plugin.getLogger().info("[Debug] Shop removed via API at " + formatLocation(location));
-                    }
-                    shopRemoved = true;
-                }
-            } catch (Exception e) {
-                plugin.getLogger().warning("API deletion failed: " + e.getMessage());
-            }
-        }
-
-        // Fallback: block break method
-        if (!shopRemoved) {
-            shopRemoved = removeShopViaBlockBreak(location);
-        }
-
-        // Schedule hologram cleanup after a short delay (3 ticks = 0.15s)
-        // Delay ensures EzChestShop has processed the BlockBreakEvent first
-        if (shopRemoved) {
-            Location shopLocation = location.clone();
-            Bukkit.getScheduler().runTaskLater(plugin, () -> {
-                removeHologramEntities(shopLocation);
-            }, 3L);
-        }
-
-        return shopRemoved;
-    }
-
-    private boolean removeShopViaBlockBreak(Location location) {
-        Block block = location.getBlock();
-        Material originalType = block.getType();
-
-        if (!SHOP_CONTAINER_TYPES.contains(originalType)) {
-            return false;
-        }
-
-        boolean debug = plugin.getConfigManager().isDebugMode();
+        // Execute /ecs remove command
+        // This lets EzChestShop handle all cleanup including holograms, data, etc.
+        String command = String.format("ecs remove %d %d %d %s",
+            location.getBlockX(),
+            location.getBlockY(),
+            location.getBlockZ(),
+            location.getWorld().getName());
 
         try {
-            // Clear inventory to prevent drops
-            if (block.getState() instanceof Container container) {
-                container.getInventory().clear();
-            }
-
-            // Save block data for potential restoration
-            org.bukkit.block.data.BlockData blockData = block.getBlockData().clone();
-
-            // Fire BlockBreakEvent so EzChestShop's listener can delete shop data
-            Player breaker = Bukkit.getOnlinePlayers().stream().findFirst().orElse(null);
-            if (breaker != null) {
-                BlockBreakEvent breakEvent = new BlockBreakEvent(block, breaker);
-                breakEvent.setDropItems(false);  // Prevent item drops
-                Bukkit.getPluginManager().callEvent(breakEvent);
-
-                if (debug) {
-                    plugin.getLogger().info("[Debug] Fired BlockBreakEvent for shop removal at " + formatLocation(location));
-                }
-            }
-
-            // Now break the block (EzChestShop has already processed the event above)
-            block.setType(Material.AIR);
-
-            // Restore block if WorldEdit won't
-            if (!plugin.getConfigManager().isBlockRestoration()) {
-                Bukkit.getScheduler().runTaskLater(plugin, () -> {
-                    if (block.getType() == Material.AIR) {
-                        block.setBlockData(blockData);
-                    }
-                }, 3L);
-            }
+            Bukkit.dispatchCommand(Bukkit.getConsoleSender(), command);
 
             if (debug) {
-                plugin.getLogger().info("[Debug] Block-break removal completed at " + formatLocation(location));
+                plugin.getLogger().info("[Debug] Executed command: /" + command);
             }
-            return true;
+
+            // Verify shop was removed
+            boolean removed = !hasShopAt(location);
+
+            if (removed && debug) {
+                plugin.getLogger().info("[Debug] Shop successfully removed at " + formatLocation(location));
+            } else if (!removed) {
+                plugin.getLogger().warning("Shop removal command failed at " + formatLocation(location));
+            }
+
+            return removed;
 
         } catch (Exception e) {
-            plugin.getLogger().warning("Block-break removal failed: " + e.getMessage());
+            plugin.getLogger().warning("Failed to execute shop removal command: " + e.getMessage());
             return false;
         }
     }
 
-    /**
-     * Remove hologram entities (armor stands and floating items) near a shop location.
-     * EzChestShop uses invisible armor stands and items for hologram displays.
-     *
-     * @param location The location where the shop was removed
-     */
-    private void removeHologramEntities(Location location) {
-        boolean debug = plugin.getConfigManager().isDebugMode();
-        World world = location.getWorld();
-        if (world == null) return;
-
-        // Search center: 0.5 blocks offset (center of block) + 1.5 blocks up (where holograms typically appear)
-        Location searchCenter = location.clone().add(0.5, 1.5, 0.5);
-
-        // Search radius: 1.5 horizontal, 2.5 vertical to catch all hologram entities
-        world.getNearbyEntities(searchCenter, 1.5, 2.5, 1.5).forEach(entity -> {
-            // Remove invisible/marker armor stands (hologram text lines)
-            if (entity instanceof ArmorStand armorStand) {
-                if (!armorStand.isVisible() || armorStand.isMarker() || armorStand.isSmall() || !armorStand.hasGravity()) {
-                    if (debug) {
-                        plugin.getLogger().info("[Debug] Removing hologram armor stand at " + formatLocation(entity.getLocation()));
-                    }
-                    armorStand.remove();
-                }
-            }
-            // Remove floating items (hologram item displays)
-            if (entity instanceof Item item) {
-                if (item.getPickupDelay() >= 32767 || item.isInvulnerable() || !item.hasGravity()) {
-                    if (debug) {
-                        plugin.getLogger().info("[Debug] Removing floating hologram item at " + formatLocation(entity.getLocation()));
-                    }
-                    item.remove();
-                }
-            }
-        });
-    }
 
     /**
      * Remove all chest shops from a WorldGuard region.
@@ -421,7 +314,6 @@ public class EzChestShopManager {
         this.ezChestShopEnabled = false;
         this.shopContainerClass = null;
         this.getShopMethod = null;
-        this.deleteShopMethod = null;
         this.isShopMethod = null;
         initializeReflection();
     }
