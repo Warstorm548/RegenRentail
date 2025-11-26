@@ -32,7 +32,7 @@ public class EzChestShopManager {
     private Object shopContainerInstance;
     private Method isShopMethod;
     private Method deleteShopMethod;
-    private Method hideForAllMethod;
+    private Method hideAllPlayerMethod; // Per-player hologram hiding (more reliable than hideForAll)
     private boolean apiInitialized = false;
 
     public EzChestShopManager(RegionRental plugin) {
@@ -96,9 +96,9 @@ public class EzChestShopManager {
             isShopMethod = shopContainerClass.getMethod("isShop", Location.class);
             deleteShopMethod = shopContainerClass.getMethod("deleteShop", Location.class);
 
-            // Load ShopHologram class for hologram cleanup
+            // Load ShopHologram class for per-player hologram cleanup
             Class<?> shopHologramClass = Class.forName("me.deadlight.ezchestshop.utils.holograms.ShopHologram");
-            hideForAllMethod = shopHologramClass.getMethod("hideForAll", Location.class);
+            hideAllPlayerMethod = shopHologramClass.getMethod("hideAll", org.bukkit.entity.Player.class);
 
             plugin.getLogger().fine("EzChestShop API reflection initialized successfully");
             return true;
@@ -247,22 +247,45 @@ public class EzChestShopManager {
                 return false;
             }
 
-            // STEP 1: Hide holograms for all players BEFORE deletion
-            hideForAllMethod.invoke(null, location); // static method, pass null for instance
+            // STEP 1: Hide all holograms for each online player (more reliable than hideForAll)
+            hideHologramsForAllPlayers();
 
             // STEP 2: Delete the shop from database and memory
             deleteShopMethod.invoke(shopContainerInstance, location);
 
-            // STEP 3: Hide holograms again as safety measure (handles async packet timing)
-            hideForAllMethod.invoke(null, location);
+            // STEP 3: Schedule retry cleanup after 0.5s (catches async hologram loading)
+            Bukkit.getScheduler().runTaskLater(plugin, this::hideHologramsForAllPlayers, 10L);
 
-            plugin.getLogger().fine("Successfully removed EzChestShop and holograms at " + formatLocation(location));
+            // STEP 4: Final cleanup after 2s (safety net for late-loading holograms)
+            Bukkit.getScheduler().runTaskLater(plugin, this::hideHologramsForAllPlayers, 40L);
+
+            plugin.getLogger().fine("Successfully removed EzChestShop and scheduled hologram cleanup at " + formatLocation(location));
             return true;
 
         } catch (Exception e) {
             plugin.getLogger().log(Level.WARNING,
                     "Failed to remove shop at " + formatLocation(location) + " via reflection", e);
             return false;
+        }
+    }
+
+    /**
+     * Hide all holograms for all online players
+     * More reliable than hideForAll(Location) which relies on internal cached data
+     */
+    private void hideHologramsForAllPlayers() {
+        if (!apiInitialized || hideAllPlayerMethod == null) {
+            return;
+        }
+
+        for (org.bukkit.entity.Player player : Bukkit.getOnlinePlayers()) {
+            try {
+                // Call ShopHologram.hideAll(Player) for each player
+                hideAllPlayerMethod.invoke(null, player); // static method
+            } catch (Exception e) {
+                // Ignore individual player failures (player might have disconnected)
+                plugin.getLogger().fine("Failed to hide holograms for player " + player.getName());
+            }
         }
     }
 
@@ -286,7 +309,7 @@ public class EzChestShopManager {
         this.shopContainerInstance = null;
         this.isShopMethod = null;
         this.deleteShopMethod = null;
-        this.hideForAllMethod = null;
+        this.hideAllPlayerMethod = null;
 
         // Reinitialize
         setupEzChestShop();
