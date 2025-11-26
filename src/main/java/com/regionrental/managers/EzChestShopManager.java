@@ -32,6 +32,7 @@ public class EzChestShopManager {
     private Object shopContainerInstance;
     private Method isShopMethod;
     private Method deleteShopMethod;
+    private Method hideForAllMethod;
     private boolean apiInitialized = false;
 
     public EzChestShopManager(RegionRental plugin) {
@@ -94,6 +95,10 @@ public class EzChestShopManager {
             // Cache the methods we'll need
             isShopMethod = shopContainerClass.getMethod("isShop", Location.class);
             deleteShopMethod = shopContainerClass.getMethod("deleteShop", Location.class);
+
+            // Load ShopHologram class for hologram cleanup
+            Class<?> shopHologramClass = Class.forName("me.deadlight.ezchestshop.utils.holograms.ShopHologram");
+            hideForAllMethod = shopHologramClass.getMethod("hideForAll", Location.class);
 
             plugin.getLogger().fine("EzChestShop API reflection initialized successfully");
             return true;
@@ -242,10 +247,16 @@ public class EzChestShopManager {
                 return false;
             }
 
-            // Delete the shop using EzChestShop's API
+            // STEP 1: Hide holograms for all players BEFORE deletion
+            hideForAllMethod.invoke(null, location); // static method, pass null for instance
+
+            // STEP 2: Delete the shop from database and memory
             deleteShopMethod.invoke(shopContainerInstance, location);
 
-            plugin.getLogger().fine("Successfully removed EzChestShop at " + formatLocation(location));
+            // STEP 3: Hide holograms again as safety measure (handles async packet timing)
+            hideForAllMethod.invoke(null, location);
+
+            plugin.getLogger().fine("Successfully removed EzChestShop and holograms at " + formatLocation(location));
             return true;
 
         } catch (Exception e) {
@@ -275,6 +286,7 @@ public class EzChestShopManager {
         this.shopContainerInstance = null;
         this.isShopMethod = null;
         this.deleteShopMethod = null;
+        this.hideForAllMethod = null;
 
         // Reinitialize
         setupEzChestShop();
