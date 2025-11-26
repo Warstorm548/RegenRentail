@@ -341,4 +341,9 @@ public class ConfigManager {
     // Region verification settings
     public boolean isAutoVerifyRegions() { return config.getBoolean("regions-config.auto-verify-regions", true); }
     public boolean isEnableVerifyCommand() { return config.getBoolean("regions-config.enable-verify-command", true); }
+
+    // EzChestShop integration settings
+    public boolean isEzChestShopEnabled() { return config.getBoolean("integration.ezchestshop.enabled", true); }
+    public boolean isEzChestShopNotifyOnRemoval() { return config.getBoolean("integration.ezchestshop.notify-on-removal", true); }
+    public String getEzChestShopRemovalMessage() { return config.getString("integration.ezchestshop.removal-message", "&eChest shops in &6{region}&e have been removed due to rental expiration."); }
 }

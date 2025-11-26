@@ -34,7 +34,8 @@ public class RegionRental extends JavaPlugin {
     private ExpirationManager expirationManager;
     private WorldGuardManager worldGuardManager;
     private WorldEditManager worldEditManager;
-    
+    private EzChestShopManager ezChestShopManager;
+
     // Economy
     private Economy economy;
 
@@ -180,6 +181,9 @@ public class RegionRental extends JavaPlugin {
         // Initialize WorldGuard and WorldEdit managers first
         worldGuardManager = new WorldGuardManager(this);
         worldEditManager = new WorldEditManager(this);
+
+        // Initialize integration managers
+        ezChestShopManager = new EzChestShopManager(this);
 
         // Initialize other managers
         rentalManager = new RentalManager(this);
@@ -548,6 +552,11 @@ public class RegionRental extends JavaPlugin {
         storageConfig.reload();
         regionsConfig.reload();
 
+        // Reload integration managers
+        if (ezChestShopManager != null) {
+            ezChestShopManager.reload();
+        }
+
         // Reload data
         rentalManager.loadAllRentals();
         signManager.loadAllSigns();
@@ -610,6 +619,10 @@ public class RegionRental extends JavaPlugin {
 
     public WorldEditManager getWorldEditManager() {
         return worldEditManager;
+    }
+
+    public EzChestShopManager getEzChestShopManager() {
+        return ezChestShopManager;
     }
 
     public Economy getEconomy() {

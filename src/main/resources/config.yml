@@ -457,6 +457,21 @@ regions-config:
   enable-verify-command: true
 
 # ============================================
+# PLUGIN INTEGRATIONS
+# ============================================
+integration:
+  # EzChestShop Integration
+  ezchestshop:
+    # Enable automatic shop removal when rentals expire
+    enabled: true
+
+    # Notify player when shops are removed
+    notify-on-removal: true
+
+    # Custom message for shop removal (supports {region} placeholder)
+    removal-message: '&eChest shops in &6{region}&e have been removed due to rental expiration.'
+
+# ============================================
 # PER-REGION CUSTOM OVERRIDES
 # ============================================
 # IMPORTANT: Use /rroverride commands to set region-specific settings

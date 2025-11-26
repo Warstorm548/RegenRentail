@@ -4,7 +4,7 @@ plugins {
 }
 
 group = "com.regionrental"
-version = "1.2.11"
+version = "1.3.0"
 
 repositories {
     mavenCentral()
@@ -80,6 +80,9 @@ dependencies {
 
     // LuckPerms API
     compileOnly("net.luckperms:api:5.4")
+
+    // EzChestShop API (optional integration)
+    compileOnly("com.github.nouish:EzChestShop:1.9.2")
 }
 
 java {

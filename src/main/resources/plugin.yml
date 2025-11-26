@@ -1,5 +1,5 @@
 name: RegionRental
-version: 1.2.11
+version: 1.3.0
 main: com.regionrental.RegionRental
 api-version: '1.21'
 author: YourName
@@ -13,6 +13,7 @@ depend:
 
 softdepend:
   - LuckPerms
+  - EzChestShop
 
 commands:
   rr:
