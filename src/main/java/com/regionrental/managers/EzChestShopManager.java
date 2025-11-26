@@ -10,6 +10,7 @@ import org.bukkit.World;
 import org.bukkit.block.Block;
 import org.bukkit.block.Container;
 import org.bukkit.entity.Player;
+import org.bukkit.event.block.BlockBreakEvent;
 import org.bukkit.plugin.Plugin;
 
 import java.lang.reflect.Method;
@@ -174,10 +175,22 @@ public class EzChestShopManager {
                 container.getInventory().clear();
             }
 
-            // Save block data
+            // Save block data for potential restoration
             org.bukkit.block.data.BlockData blockData = block.getBlockData().clone();
 
-            // Break block - triggers EzChestShop's BlockBreakEvent
+            // Fire BlockBreakEvent so EzChestShop's listener can delete shop data
+            Player breaker = Bukkit.getOnlinePlayers().stream().findFirst().orElse(null);
+            if (breaker != null) {
+                BlockBreakEvent breakEvent = new BlockBreakEvent(block, breaker);
+                breakEvent.setDropItems(false);  // Prevent item drops
+                Bukkit.getPluginManager().callEvent(breakEvent);
+
+                if (debug) {
+                    plugin.getLogger().info("[Debug] Fired BlockBreakEvent for shop removal at " + formatLocation(location));
+                }
+            }
+
+            // Now break the block (EzChestShop has already processed the event above)
             block.setType(Material.AIR);
 
             // Restore block if WorldEdit won't
@@ -190,7 +203,7 @@ public class EzChestShopManager {
             }
 
             if (debug) {
-                plugin.getLogger().info("[Debug] Block-break removal at " + formatLocation(location));
+                plugin.getLogger().info("[Debug] Block-break removal completed at " + formatLocation(location));
             }
             return true;
 
