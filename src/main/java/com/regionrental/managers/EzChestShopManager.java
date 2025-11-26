@@ -9,6 +9,8 @@ import org.bukkit.Material;
 import org.bukkit.World;
 import org.bukkit.block.Block;
 import org.bukkit.block.Container;
+import org.bukkit.entity.ArmorStand;
+import org.bukkit.entity.Item;
 import org.bukkit.entity.Player;
 import org.bukkit.event.block.BlockBreakEvent;
 import org.bukkit.plugin.Plugin;
@@ -140,6 +142,8 @@ public class EzChestShopManager {
             plugin.getLogger().info("[Debug] Removing shop at " + formatLocation(location));
         }
 
+        boolean shopRemoved = false;
+
         // Try direct API deletion
         if (deleteShopMethod != null) {
             try {
@@ -148,7 +152,7 @@ public class EzChestShopManager {
                     if (debug) {
                         plugin.getLogger().info("[Debug] Shop removed via API at " + formatLocation(location));
                     }
-                    return true;
+                    shopRemoved = true;
                 }
             } catch (Exception e) {
                 plugin.getLogger().warning("API deletion failed: " + e.getMessage());
@@ -156,7 +160,20 @@ public class EzChestShopManager {
         }
 
         // Fallback: block break method
-        return removeShopViaBlockBreak(location);
+        if (!shopRemoved) {
+            shopRemoved = removeShopViaBlockBreak(location);
+        }
+
+        // Schedule hologram cleanup after a short delay (3 ticks = 0.15s)
+        // Delay ensures EzChestShop has processed the BlockBreakEvent first
+        if (shopRemoved) {
+            Location shopLocation = location.clone();
+            Bukkit.getScheduler().runTaskLater(plugin, () -> {
+                removeHologramEntities(shopLocation);
+            }, 3L);
+        }
+
+        return shopRemoved;
     }
 
     private boolean removeShopViaBlockBreak(Location location) {
@@ -211,6 +228,43 @@ public class EzChestShopManager {
             plugin.getLogger().warning("Block-break removal failed: " + e.getMessage());
             return false;
         }
+    }
+
+    /**
+     * Remove hologram entities (armor stands and floating items) near a shop location.
+     * EzChestShop uses invisible armor stands and items for hologram displays.
+     *
+     * @param location The location where the shop was removed
+     */
+    private void removeHologramEntities(Location location) {
+        boolean debug = plugin.getConfigManager().isDebugMode();
+        World world = location.getWorld();
+        if (world == null) return;
+
+        // Search center: 0.5 blocks offset (center of block) + 1.5 blocks up (where holograms typically appear)
+        Location searchCenter = location.clone().add(0.5, 1.5, 0.5);
+
+        // Search radius: 1.5 horizontal, 2.5 vertical to catch all hologram entities
+        world.getNearbyEntities(searchCenter, 1.5, 2.5, 1.5).forEach(entity -> {
+            // Remove invisible/marker armor stands (hologram text lines)
+            if (entity instanceof ArmorStand armorStand) {
+                if (!armorStand.isVisible() || armorStand.isMarker() || armorStand.isSmall() || !armorStand.hasGravity()) {
+                    if (debug) {
+                        plugin.getLogger().info("[Debug] Removing hologram armor stand at " + formatLocation(entity.getLocation()));
+                    }
+                    armorStand.remove();
+                }
+            }
+            // Remove floating items (hologram item displays)
+            if (entity instanceof Item item) {
+                if (item.getPickupDelay() >= 32767 || item.isInvulnerable() || !item.hasGravity()) {
+                    if (debug) {
+                        plugin.getLogger().info("[Debug] Removing floating hologram item at " + formatLocation(entity.getLocation()));
+                    }
+                    item.remove();
+                }
+            }
+        });
     }
 
     /**
