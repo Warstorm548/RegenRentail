@@ -2,7 +2,7 @@
 
 **Complete WorldGuard Region Rental System with Clickable Signs**
 
-Version: 1.2.7
+Version: 1.3.6
 Minecraft: Paper/Spigot 1.21+
 Java: OpenJDK 21+
 Build System: Gradle 9.2.0
@@ -28,6 +28,7 @@ Build System: Gradle 9.2.0
 - ✅ **Auto expiration** - Checks every minute
 - ✅ **Custom messages** - All configurable
 - ✅ **Refund tracking** - Complete refund history per rental
+- ✅ **EzChestShop integration** - Automatic shop removal on expiration
 - ✅ **Admin commands** - `/rr reload` and more
 
 ### Additional Requirements Met
@@ -82,20 +83,21 @@ RegionRental/
     │   │   └── StorageConfig.java
     │   ├── listeners/               # Event listeners (1 class)
     │   │   └── SignInteractListener.java
-    │   └── managers/                # Core managers (7 classes)
+    │   └── managers/                # Core managers (8 classes)
     │       ├── Rental.java          # Data model
     │       ├── RentalManager.java
     │       ├── SignManager.java
     │       ├── StorageManager.java
     │       ├── ExpirationManager.java
     │       ├── WorldGuardManager.java
-    │       └── WorldEditManager.java
+    │       ├── WorldEditManager.java
+    │       └── EzChestShopManager.java  # EzChestShop integration
     └── resources/
         ├── plugin.yml               # Plugin metadata
         └── config.yml               # Default configuration
 ```
 
-**Total: 25 Java classes + 2 resource files**
+**Total: 26 Java classes + 2 resource files**
 
 ## 🔨 Build Instructions
 
@@ -126,14 +128,14 @@ Or build directly with Gradle:
 
 4. **Find your JAR file:**
 ```
-build/libs/RegionRental-1.2.7.jar
+build/libs/RegionRental-1.3.6.jar
 ```
 
 ## 🚀 Installation
 
 1. **Copy the JAR to your server:**
 ```bash
-cp build/libs/RegionRental-1.2.7.jar /path/to/server/plugins/
+cp build/libs/RegionRental-1.3.6.jar /path/to/server/plugins/
 ```
 
 2. **Install required dependencies:**
@@ -142,6 +144,7 @@ cp build/libs/RegionRental-1.2.7.jar /path/to/server/plugins/
    - WorldEdit 7.3.16+
    - Any economy plugin (EssentialsX, CMI, etc.)
    - (Optional) LuckPerms for advanced permissions
+   - (Optional) EzChestShop for automatic shop removal on rental expiration
 
 3. **Restart your server**
 
@@ -215,6 +218,7 @@ The plugin creates four separate configuration files:
 - Sign formats (customizable 4-line formats)
 - Storage settings (container types, auto-cleanup)
 - Block restoration settings (WorldEdit integration)
+- Integration settings (EzChestShop removal, notifications)
 - Messages (100% customizable with placeholders)
 - Permission-based pricing
 - Regions-config settings (auto-verify, verify command)
@@ -341,6 +345,7 @@ The plugin manages the entire rental lifecycle automatically:
    - Warning notifications sent (24h, 12h, 6h, 1h before expiry)
    - On expiration: Player removed from region
    - Items from containers stored in `storage.yml`
+   - EzChestShop shops removed from region (if enabled)
    - WorldEdit restores region to original state
    - Sign updated to show "AVAILABLE"
    - Player retrieves items with `/rrretrieve`
@@ -400,6 +405,41 @@ The plugin runs several automated background tasks:
 - Schematics stored in `plugins/RegionRental/schematics/`
 - Configurable auto-delete of schematics after restoration
 - Optional entity and biome restoration
+
+### EzChestShop Integration
+RegionRental seamlessly integrates with the EzChestShop plugin to automatically remove chest shops when rentals expire:
+
+**Features:**
+- **Automatic Detection**: Detects EzChestShop at runtime (no compile-time dependency required)
+- **Smart Removal**: Automatically removes all chest shops in expired rental regions
+- **Hologram Cleanup**: Ensures shop holograms are completely removed (no visual glitches)
+- **Timing**: Shops removed AFTER items are scanned/stored but BEFORE WorldEdit restoration
+- **Optional Notifications**: Configurable player notifications when shops are removed
+- **Conditional Restoration**: Only restores chest blocks if WorldEdit restoration is disabled
+
+**How It Works:**
+1. When a rental expires, RegionRental scans the region for chest-type containers
+2. For each chest, checks if it has an EzChestShop shop using reflection API
+3. If shop detected: Clears chest inventory (items already saved by StorageManager)
+4. Physically breaks the chest block, triggering EzChestShop's cleanup event
+5. EzChestShop automatically removes the shop data and holograms
+6. If WorldEdit is disabled: Waits 3 ticks and restores the chest block
+7. If WorldEdit is enabled: Leaves as AIR, WorldEdit restores from schematic
+
+**Configuration:**
+```yaml
+integration:
+  ezchestshop:
+    enabled: true                                   # Enable/disable integration
+    notify-on-removal: true                         # Notify player when shops removed
+    removal-message: '&eChest shops in &6{region}&e have been removed due to rental expiration.'
+```
+
+**Technical Details:**
+- Uses reflection to access EzChestShop's internal API (compatible with version 1.9.2+)
+- No compile-time dependency - works even if EzChestShop is not installed
+- Block break/replace approach ensures reliable cleanup without API version issues
+- Supports chest, trapped chest, and barrel shop types
 
 ### Region Removal
 - Use `/rrremove <region>` to completely remove rental setup
@@ -462,6 +502,34 @@ The plugin runs several automated background tasks:
 - **Prevents Double-Refunds**: System tracks what has been refunded to prevent duplicate payments
 
 ## 🆕 Recent Updates
+
+### Version 1.3.3 - EzChestShop Integration
+
+#### EzChestShop Plugin Support
+- **Automatic shop removal** on rental expiration for seamless cleanup
+- **Runtime detection** using reflection-based API (no compile-time dependency required)
+- **Smart cleanup approach** using block break/replace for reliable shop and hologram removal
+- **Conditional restoration** - Only restores chest blocks if WorldEdit restoration is disabled
+- **Configurable notifications** - Optional player notifications when shops are removed
+- **Perfect timing** - Shops removed after storage scan but before WorldEdit restoration
+- **Compatible with EzChestShop 1.9.2+** with automatic version detection
+
+#### Technical Implementation
+- **Reflection API** for accessing EzChestShop's internal ShopContainer class
+- **Block break/replace pattern** triggers EzChestShop's BlockBreakEvent for automatic cleanup
+- **No hologram glitches** - EzChestShop's event handler removes all holograms automatically
+- **Inventory protection** - Clears chest inventory before breaking (items already saved)
+- **3-tick delay** for chest restoration when WorldEdit is disabled
+- **Configuration options** in config.yml under `integration.ezchestshop`
+
+#### Configuration Options
+```yaml
+integration:
+  ezchestshop:
+    enabled: true                    # Enable/disable integration
+    notify-on-removal: true          # Notify player when shops removed
+    removal-message: '&eChest shops in &6{region}&e have been removed.'
+```
 
 ### Version 1.1.0 - Command-Based Override System
 

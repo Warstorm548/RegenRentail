@@ -202,6 +202,22 @@ public class RentalManager {
             plugin.getStorageManager().storeItemsAndBlocksFromRegion(regionName, rental.getPlayerUUID());
         }
 
+        // Remove EzChestShop shops from region (AFTER storage scan, BEFORE restoration)
+        if (plugin.getEzChestShopManager() != null && plugin.getEzChestShopManager().isEnabled()) {
+            int shopsRemoved = plugin.getEzChestShopManager().removeShopsInRegion(regionName);
+
+            // Notify player if configured and shops were removed
+            if (shopsRemoved > 0 && plugin.getConfigManager().isEzChestShopNotifyOnRemoval()) {
+                org.bukkit.entity.Player player = org.bukkit.Bukkit.getPlayer(rental.getPlayerUUID());
+                if (player != null && player.isOnline()) {
+                    String message = plugin.getConfigManager().getEzChestShopRemovalMessage();
+                    message = org.bukkit.ChatColor.translateAlternateColorCodes('&',
+                        plugin.getConfigManager().getPrefix() + message.replace("{region}", regionName));
+                    player.sendMessage(message);
+                }
+            }
+        }
+
         // Restore region blocks with WorldEdit (if enabled)
         if (plugin.getConfigManager().isBlockRestoration()) {
             boolean restored = plugin.getWorldEditManager().restoreRegion(regionName);
