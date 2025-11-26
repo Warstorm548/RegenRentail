@@ -63,12 +63,32 @@ public class EzChestShopManager {
             }
         }
 
-        if (ezChestShop == null || !ezChestShop.isEnabled()) {
+        if (ezChestShop == null) {
             plugin.getLogger().info("EzChestShop not detected - shop removal integration disabled");
             plugin.getLogger().info("Tried names: " + String.join(", ", possibleNames));
             return;
         }
 
+        // Check if plugin is enabled - if not, schedule delayed initialization
+        if (!ezChestShop.isEnabled()) {
+            plugin.getLogger().info("EzChestShop found but not yet enabled - will retry in 1 second...");
+            final Plugin finalEzChestShop = ezChestShop;
+            Bukkit.getScheduler().runTaskLater(plugin, () -> {
+                if (finalEzChestShop.isEnabled()) {
+                    plugin.getLogger().info("EzChestShop now enabled - initializing integration...");
+                    continueInitialization(finalEzChestShop);
+                } else {
+                    plugin.getLogger().warning("EzChestShop still not enabled after delay - integration disabled");
+                }
+            }, 20L); // 1 second delay
+            return;
+        }
+
+        // Plugin is already enabled - continue immediately
+        continueInitialization(ezChestShop);
+    }
+
+    private void continueInitialization(Plugin ezChestShop) {
         plugin.getLogger().info("EzChestShop detected (v" + ezChestShop.getDescription().getVersion() + ") - initializing integration...");
 
         try {

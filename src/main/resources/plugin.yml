@@ -13,7 +13,7 @@ depend:
 
 softdepend:
   - LuckPerms
-  - EzChestShop
+  - EzChestShopReborn
 
 commands:
   rr:
