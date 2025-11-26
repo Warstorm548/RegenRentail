@@ -81,8 +81,8 @@ dependencies {
     // LuckPerms API
     compileOnly("net.luckperms:api:5.4")
 
-    // EzChestShop API (optional integration)
-    compileOnly("com.github.nouish:EzChestShop:1.9.2")
+    // EzChestShop - Optional integration (runtime detection only, no compile dependency)
+    // The plugin will detect and integrate with EzChestShop at runtime if installed
 }
 
 java {
