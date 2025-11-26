@@ -346,4 +346,9 @@ public class ConfigManager {
     public boolean isEzChestShopEnabled() { return config.getBoolean("integration.ezchestshop.enabled", true); }
     public boolean isEzChestShopNotifyOnRemoval() { return config.getBoolean("integration.ezchestshop.notify-on-removal", true); }
     public String getEzChestShopRemovalMessage() { return config.getString("integration.ezchestshop.removal-message", "&eChest shops in &6{region}&e have been removed due to rental expiration."); }
+
+    // Aliases for enhanced EzChestShop manager (cleaner method names)
+    public boolean isEzChestShopRemovalEnabled() { return isEzChestShopEnabled(); }
+    public boolean isEzChestShopNotifyEnabled() { return isEzChestShopNotifyOnRemoval(); }
+    public boolean isDebugMode() { return isDebug(); }
 }
