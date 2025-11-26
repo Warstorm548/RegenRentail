@@ -9,6 +9,8 @@ import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.World;
 import org.bukkit.block.Block;
+import org.bukkit.block.BlockState;
+import org.bukkit.block.data.BlockData;
 import org.bukkit.plugin.Plugin;
 
 import java.lang.reflect.Method;
@@ -32,7 +34,6 @@ public class EzChestShopManager {
     private Object shopContainerInstance;
     private Method isShopMethod;
     private Method deleteShopMethod;
-    private Method hideAllPlayerMethod; // Per-player hologram hiding (more reliable than hideForAll)
     private boolean apiInitialized = false;
 
     public EzChestShopManager(RegionRental plugin) {
@@ -92,13 +93,9 @@ public class EzChestShopManager {
                 return false;
             }
 
-            // Cache the methods we'll need
+            // Cache the methods we'll need (only isShop for shop detection)
             isShopMethod = shopContainerClass.getMethod("isShop", Location.class);
             deleteShopMethod = shopContainerClass.getMethod("deleteShop", Location.class);
-
-            // Load ShopHologram class for per-player hologram cleanup
-            Class<?> shopHologramClass = Class.forName("me.deadlight.ezchestshop.utils.holograms.ShopHologram");
-            hideAllPlayerMethod = shopHologramClass.getMethod("hideAll", org.bukkit.entity.Player.class);
 
             plugin.getLogger().fine("EzChestShop API reflection initialized successfully");
             return true;
@@ -228,7 +225,9 @@ public class EzChestShopManager {
     }
 
     /**
-     * Remove a shop at a specific location using EzChestShop's internal API via reflection
+     * Remove a shop at a specific location by breaking and optionally replacing the chest block.
+     * Breaking the chest triggers EzChestShop's automatic cleanup (shop deletion + hologram removal).
+     * Only replaces the chest if WorldEdit restoration is disabled.
      *
      * @param location The location of the chest
      * @return true if a shop was found and removed, false otherwise
@@ -247,45 +246,45 @@ public class EzChestShopManager {
                 return false;
             }
 
-            // STEP 1: Hide all holograms for each online player (more reliable than hideForAll)
-            hideHologramsForAllPlayers();
+            Block block = location.getBlock();
 
-            // STEP 2: Delete the shop from database and memory
-            deleteShopMethod.invoke(shopContainerInstance, location);
+            // Check if we need to restore the chest (only if WorldEdit restoration is disabled)
+            boolean willRestore = !plugin.getConfigManager().isBlockRestoration();
+            BlockData originalData = willRestore ? block.getBlockData() : null;
+            Material originalType = willRestore ? block.getType() : null;
 
-            // STEP 3: Schedule retry cleanup after 0.5s (catches async hologram loading)
-            Bukkit.getScheduler().runTaskLater(plugin, this::hideHologramsForAllPlayers, 10L);
+            // Clear chest inventory to prevent item drops (StorageManager already saved items)
+            BlockState state = block.getState();
+            if (state instanceof org.bukkit.block.Container) {
+                org.bukkit.block.Container container = (org.bukkit.block.Container) state;
+                container.getInventory().clear();
+                container.update();
+            }
 
-            // STEP 4: Final cleanup after 2s (safety net for late-loading holograms)
-            Bukkit.getScheduler().runTaskLater(plugin, this::hideHologramsForAllPlayers, 40L);
+            // Break the block - this triggers EzChestShop's BlockBreakEvent listener
+            // which automatically removes the shop and holograms
+            block.setType(Material.AIR);
 
-            plugin.getLogger().fine("Successfully removed EzChestShop and scheduled hologram cleanup at " + formatLocation(location));
+            // Only replace the chest if WorldEdit restoration is disabled
+            if (willRestore) {
+                // Wait 3 ticks (0.15s) for event propagation, then restore the chest
+                Bukkit.getScheduler().runTaskLater(plugin, () -> {
+                    Block restoredBlock = location.getBlock();
+                    restoredBlock.setType(originalType);
+                    restoredBlock.setBlockData(originalData);
+                }, 3L);
+
+                plugin.getLogger().fine("Removed EzChestShop and will restore chest at " + formatLocation(location));
+            } else {
+                plugin.getLogger().fine("Removed EzChestShop (WorldEdit will restore) at " + formatLocation(location));
+            }
+
             return true;
 
         } catch (Exception e) {
             plugin.getLogger().log(Level.WARNING,
-                    "Failed to remove shop at " + formatLocation(location) + " via reflection", e);
+                    "Failed to remove shop at " + formatLocation(location), e);
             return false;
-        }
-    }
-
-    /**
-     * Hide all holograms for all online players
-     * More reliable than hideForAll(Location) which relies on internal cached data
-     */
-    private void hideHologramsForAllPlayers() {
-        if (!apiInitialized || hideAllPlayerMethod == null) {
-            return;
-        }
-
-        for (org.bukkit.entity.Player player : Bukkit.getOnlinePlayers()) {
-            try {
-                // Call ShopHologram.hideAll(Player) for each player
-                hideAllPlayerMethod.invoke(null, player); // static method
-            } catch (Exception e) {
-                // Ignore individual player failures (player might have disconnected)
-                plugin.getLogger().fine("Failed to hide holograms for player " + player.getName());
-            }
         }
     }
 
@@ -309,7 +308,6 @@ public class EzChestShopManager {
         this.shopContainerInstance = null;
         this.isShopMethod = null;
         this.deleteShopMethod = null;
-        this.hideAllPlayerMethod = null;
 
         // Reinitialize
         setupEzChestShop();
