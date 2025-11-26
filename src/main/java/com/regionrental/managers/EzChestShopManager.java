@@ -11,6 +11,7 @@ import org.bukkit.World;
 import org.bukkit.block.Block;
 import org.bukkit.plugin.Plugin;
 
+import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.logging.Level;
@@ -18,6 +19,7 @@ import java.util.logging.Level;
 /**
  * Manager for EzChestShop integration
  * Handles automatic shop removal from regions when rentals expire
+ * Uses reflection to access EzChestShop's internal API (no compile-time dependency)
  */
 public class EzChestShopManager {
 
@@ -25,13 +27,20 @@ public class EzChestShopManager {
     private Plugin ezChestShopPlugin;
     private boolean ezChestShopEnabled;
 
+    // Cached reflection objects for performance
+    private Class<?> shopContainerClass;
+    private Object shopContainerInstance;
+    private Method isShopMethod;
+    private Method deleteShopMethod;
+    private boolean apiInitialized = false;
+
     public EzChestShopManager(RegionRental plugin) {
         this.plugin = plugin;
         setupEzChestShop();
     }
 
     /**
-     * Initialize EzChestShop integration
+     * Initialize EzChestShop integration and reflection API
      */
     private void setupEzChestShop() {
         Plugin ecsPlugin = plugin.getServer().getPluginManager().getPlugin("EzChestShop");
@@ -39,24 +48,73 @@ public class EzChestShopManager {
         if (ecsPlugin == null) {
             plugin.getLogger().info("EzChestShop not found - shop removal disabled");
             this.ezChestShopEnabled = false;
+            this.apiInitialized = false;
             return;
         }
 
         this.ezChestShopPlugin = ecsPlugin;
         this.ezChestShopEnabled = plugin.getConfigManager().isEzChestShopEnabled();
 
-        if (this.ezChestShopEnabled) {
+        if (!this.ezChestShopEnabled) {
+            plugin.getLogger().info("EzChestShop detected but integration disabled in config");
+            this.apiInitialized = false;
+            return;
+        }
+
+        // Initialize reflection API
+        this.apiInitialized = initializeReflectionAPI();
+
+        if (this.apiInitialized) {
             plugin.getLogger().info("EzChestShop integration enabled (version: " + ecsPlugin.getDescription().getVersion() + ")");
         } else {
-            plugin.getLogger().info("EzChestShop detected but integration disabled in config");
+            plugin.getLogger().warning("EzChestShop found but API initialization failed - shop removal will be disabled");
+            this.ezChestShopEnabled = false;
         }
     }
 
     /**
-     * Check if EzChestShop is available and enabled
+     * Initialize reflection objects for accessing EzChestShop's internal API
+     *
+     * @return true if initialization succeeded, false otherwise
+     */
+    private boolean initializeReflectionAPI() {
+        try {
+            // Load ShopContainer class
+            shopContainerClass = Class.forName("me.deadlight.ezchestshop.data.ShopContainer");
+
+            // Get ShopContainer instance from EzChestShop plugin
+            Method getShopContainerMethod = ezChestShopPlugin.getClass().getMethod("getShopContainer");
+            shopContainerInstance = getShopContainerMethod.invoke(ezChestShopPlugin);
+
+            if (shopContainerInstance == null) {
+                plugin.getLogger().warning("Failed to get ShopContainer instance from EzChestShop");
+                return false;
+            }
+
+            // Cache the methods we'll need
+            isShopMethod = shopContainerClass.getMethod("isShop", Location.class);
+            deleteShopMethod = shopContainerClass.getMethod("deleteShop", Location.class);
+
+            plugin.getLogger().fine("EzChestShop API reflection initialized successfully");
+            return true;
+
+        } catch (ClassNotFoundException e) {
+            plugin.getLogger().warning("EzChestShop ShopContainer class not found - incompatible version?");
+            return false;
+        } catch (NoSuchMethodException e) {
+            plugin.getLogger().warning("EzChestShop API methods not found - incompatible version: " + e.getMessage());
+            return false;
+        } catch (Exception e) {
+            plugin.getLogger().log(Level.WARNING, "Failed to initialize EzChestShop API reflection", e);
+            return false;
+        }
+    }
+
+    /**
+     * Check if EzChestShop is available, enabled, and API is initialized
      */
     public boolean isEnabled() {
-        return ezChestShopEnabled && ezChestShopPlugin != null && ezChestShopPlugin.isEnabled();
+        return ezChestShopEnabled && ezChestShopPlugin != null && ezChestShopPlugin.isEnabled() && apiInitialized;
     }
 
     /**
@@ -165,32 +223,34 @@ public class EzChestShopManager {
     }
 
     /**
-     * Remove a shop at a specific location using the /ecsadmin remove command
+     * Remove a shop at a specific location using EzChestShop's internal API via reflection
      *
      * @param location The location of the chest
-     * @return true if command was executed successfully
+     * @return true if a shop was found and removed, false otherwise
      */
     private boolean removeShopAtLocation(Location location) {
+        if (!apiInitialized) {
+            return false;
+        }
+
         try {
-            // Build the command: /ecsadmin remove <x> <y> <z> <world>
-            String command = String.format("ecsadmin remove %d %d %d %s",
-                    location.getBlockX(),
-                    location.getBlockY(),
-                    location.getBlockZ(),
-                    location.getWorld().getName());
+            // Check if this location has a shop
+            Boolean isShop = (Boolean) isShopMethod.invoke(shopContainerInstance, location);
 
-            // Execute command as console (has all permissions)
-            boolean success = Bukkit.dispatchCommand(Bukkit.getConsoleSender(), command);
-
-            if (success) {
-                plugin.getLogger().fine("Executed shop removal command: /" + command);
+            if (isShop == null || !isShop) {
+                // No shop at this location
+                return false;
             }
 
-            return success;
+            // Delete the shop using EzChestShop's API
+            deleteShopMethod.invoke(shopContainerInstance, location);
+
+            plugin.getLogger().fine("Successfully removed EzChestShop at " + formatLocation(location));
+            return true;
 
         } catch (Exception e) {
             plugin.getLogger().log(Level.WARNING,
-                    "Failed to remove shop at " + formatLocation(location), e);
+                    "Failed to remove shop at " + formatLocation(location) + " via reflection", e);
             return false;
         }
     }
@@ -206,8 +266,17 @@ public class EzChestShopManager {
 
     /**
      * Reload the EzChestShop integration (called when config is reloaded)
+     * Reinitializes reflection API in case plugin was updated
      */
     public void reload() {
+        // Reset state
+        this.apiInitialized = false;
+        this.shopContainerClass = null;
+        this.shopContainerInstance = null;
+        this.isShopMethod = null;
+        this.deleteShopMethod = null;
+
+        // Reinitialize
         setupEzChestShop();
     }
 }
