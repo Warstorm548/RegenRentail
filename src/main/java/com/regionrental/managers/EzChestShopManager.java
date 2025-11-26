@@ -51,10 +51,21 @@ public class EzChestShopManager {
     }
 
     private void initializeReflection() {
-        Plugin ezChestShop = Bukkit.getPluginManager().getPlugin("EzChestShop");
+        // Try multiple possible plugin names (including Reborn variant)
+        String[] possibleNames = {"EzChestShop", "EzChestShopReborn", "ecs", "ChestShop", "ezchestshop"};
+        Plugin ezChestShop = null;
+
+        for (String name : possibleNames) {
+            ezChestShop = Bukkit.getPluginManager().getPlugin(name);
+            if (ezChestShop != null) {
+                plugin.getLogger().info("Found EzChestShop plugin as: " + name);
+                break;
+            }
+        }
 
         if (ezChestShop == null || !ezChestShop.isEnabled()) {
             plugin.getLogger().info("EzChestShop not detected - shop removal integration disabled");
+            plugin.getLogger().info("Tried names: " + String.join(", ", possibleNames));
             return;
         }
 
