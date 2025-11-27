@@ -112,7 +112,12 @@ public class WorldEditManager {
     // Backward compatibility - uses first world
     @Deprecated
     public boolean captureRegion(String regionName) {
-        World world = Bukkit.getWorlds().get(0);
+        java.util.List<World> worlds = Bukkit.getWorlds();
+        if (worlds.isEmpty()) {
+            plugin.getLogger().warning("No worlds loaded, cannot capture region: " + regionName);
+            return false;
+        }
+        World world = worlds.get(0);
         return captureRegion(regionName, world);
     }
 
