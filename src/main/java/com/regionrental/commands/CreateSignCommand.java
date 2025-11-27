@@ -37,10 +37,10 @@ public class CreateSignCommand implements CommandExecutor {
         }
         
         String regionName = args[0];
-        
-        // Check if region exists
-        if (!plugin.getWorldGuardManager().regionExists(regionName)) {
-            player.sendMessage(plugin.getConfigManager().getMessage("region-not-found", 
+
+        // Check if region exists in player's current world
+        if (!plugin.getWorldGuardManager().regionExists(regionName, player.getWorld())) {
+            player.sendMessage(plugin.getConfigManager().getMessage("region-not-found",
                 "{region}", regionName));
             return true;
         }

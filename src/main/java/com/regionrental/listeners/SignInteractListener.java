@@ -55,8 +55,8 @@ public class SignInteractListener implements Listener {
     }
     
     private void handleRentOrInfo(Player player, String regionName) {
-        Rental rental = plugin.getRentalManager().getRental(regionName);
-        
+        Rental rental = plugin.getRentalManager().getRental(regionName, player.getWorld());
+
         if (rental == null) {
             // Region is available - attempt to rent
             handleRentRegion(player, regionName);
@@ -118,14 +118,14 @@ public class SignInteractListener implements Listener {
         
         // Create rental
         int days = plugin.getConfigManager().getDurationForRegion(regionName);
-        if (plugin.getRentalManager().createRental(regionName, player, days, price)) {
+        if (plugin.getRentalManager().createRental(regionName, player.getWorld(), player, days, price)) {
             player.sendMessage(plugin.getConfigManager().getMessage("rental-success",
                 "{region}", regionName,
                 "{days}", String.valueOf(days),
                 "{price}", String.format(plugin.getConfigManager().getCurrencyFormat(), price)));
-            
+
             // Play sound
-            player.playSound(player.getLocation(), 
+            player.playSound(player.getLocation(),
                 org.bukkit.Sound.ENTITY_PLAYER_LEVELUP, 1.0f, 1.0f);
         } else {
             // Refund if rental failed
@@ -140,57 +140,57 @@ public class SignInteractListener implements Listener {
             player.sendMessage(plugin.getConfigManager().getMessage("no-permission"));
             return;
         }
-        
-        Rental rental = plugin.getRentalManager().getRental(regionName);
-        
+
+        Rental rental = plugin.getRentalManager().getRental(regionName, player.getWorld());
+
         if (rental == null) {
             player.sendMessage(ChatColor.RED + "This region is not rented!");
             return;
         }
-        
+
         // Check if player owns this rental
         if (!rental.getPlayerUUID().equals(player.getUniqueId())) {
             player.sendMessage(ChatColor.RED + "You don't own this rental!");
             return;
         }
-        
+
         // Check extension limit
         if (rental.getExtensionCount() >= plugin.getConfigManager().getMaxExtensions()) {
             player.sendMessage(plugin.getConfigManager().getMessage("max-extensions-reached"));
             return;
         }
-        
+
         // Get extension price (same as rental price by default)
         double price = plugin.getConfigManager().getPriceForRegion(regionName);
         double multiplier = plugin.getConfig().getDouble("extension.price-multiplier", 1.0);
         price = price * multiplier;
-        
+
         // Check economy
         Economy economy = plugin.getEconomy();
         if (economy == null) {
             player.sendMessage(ChatColor.RED + "Economy system not available!");
             return;
         }
-        
+
         if (!economy.has(player, price)) {
             player.sendMessage(plugin.getConfigManager().getMessage("not-enough-money",
                 "{amount}", String.format(plugin.getConfigManager().getCurrencyFormat(), price)));
             return;
         }
-        
+
         // Withdraw money
         economy.withdrawPlayer(player, price);
-        
+
         // Extend rental
         int days = plugin.getConfigManager().getExtensionDuration();
-        if (plugin.getRentalManager().extendRental(regionName, player, days, price)) {
+        if (plugin.getRentalManager().extendRental(regionName, player.getWorld(), player, days, price)) {
             player.sendMessage(plugin.getConfigManager().getMessage("rental-extended",
                 "{region}", regionName,
                 "{days}", String.valueOf(days),
                 "{price}", String.format(plugin.getConfigManager().getCurrencyFormat(), price)));
-            
+
             // Play sound
-            player.playSound(player.getLocation(), 
+            player.playSound(player.getLocation(),
                 org.bukkit.Sound.ENTITY_EXPERIENCE_ORB_PICKUP, 1.0f, 1.0f);
         } else {
             // Refund if extension failed

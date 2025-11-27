@@ -192,24 +192,24 @@ public class SignManager {
         return true;
     }
     
-    public void updateSign(String regionName) {
+    public void updateSign(String regionName, org.bukkit.World world) {
         Location location = plugin.getSignsConfig().getSignLocation(regionName);
-        
+
         if (location == null) {
             return;
         }
-        
+
         Block block = location.getBlock();
-        
+
         // Check if block is a sign
         if (!(block.getState() instanceof Sign)) {
             plugin.getLogger().warning("Sign location for " + regionName + " is not a sign!");
             return;
         }
-        
+
         Sign sign = (Sign) block.getState();
-        Rental rental = plugin.getRentalManager().getRental(regionName);
-        
+        Rental rental = plugin.getRentalManager().getRental(regionName, world);
+
         if (rental == null) {
             // Region is available
             updateAvailableSign(sign, regionName);
@@ -217,8 +217,20 @@ public class SignManager {
             // Region is rented
             updateRentedSign(sign, rental);
         }
-        
+
         sign.update(true);
+    }
+
+    // Backward compatibility - extracts world from sign location
+    @Deprecated
+    public void updateSign(String regionName) {
+        Location location = plugin.getSignsConfig().getSignLocation(regionName);
+
+        if (location == null) {
+            return;
+        }
+
+        updateSign(regionName, location.getWorld());
     }
     
     private void updateAvailableSign(Sign sign, String regionName) {
