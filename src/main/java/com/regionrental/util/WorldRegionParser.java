@@ -49,6 +49,9 @@ public class WorldRegionParser {
         // Check if explicit world:region format
         if (arg.contains(":")) {
             String[] parts = arg.split(":", 2);
+            if (parts.length != 2 || parts[0].isEmpty() || parts[1].isEmpty()) {
+                return null; // Invalid format
+            }
             String worldName = parts[0];
             String regionName = parts[1];
 
