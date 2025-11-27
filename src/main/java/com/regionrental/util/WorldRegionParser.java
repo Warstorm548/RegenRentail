@@ -95,7 +95,10 @@ public class WorldRegionParser {
      */
     public static String extractWorldName(String compositeKey) {
         if (compositeKey.contains(":")) {
-            return compositeKey.split(":", 2)[0];
+            String[] parts = compositeKey.split(":", 2);
+            if (parts.length == 2 && !parts[0].isEmpty()) {
+                return parts[0];
+            }
         }
         return null;
     }
