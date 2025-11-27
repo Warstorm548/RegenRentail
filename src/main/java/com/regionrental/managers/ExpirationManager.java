@@ -43,7 +43,9 @@ public class ExpirationManager {
         org.bukkit.World world = plugin.getServer().getWorld(rental.getWorldName());
         if (world == null) {
             plugin.getLogger().warning("Cannot expire rental for " + rental.getRegionName() +
-                " - world '" + rental.getWorldName() + "' not found!");
+                " - world '" + rental.getWorldName() + "' not found! Removing invalid rental from system.");
+            plugin.getRentalManager().rentals.remove(rental.getCompositeKey());
+            plugin.getRentalManager().saveAllRentals();
             return;
         }
         plugin.getRentalManager().expireRental(rental.getRegionName(), world);
