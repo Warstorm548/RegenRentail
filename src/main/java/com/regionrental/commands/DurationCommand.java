@@ -51,7 +51,7 @@ public class DurationCommand implements CommandExecutor, TabCompleter {
         // Parse region argument with world inference
         WorldRegionParser.ParsedRegion parsed = WorldRegionParser.parse(args[1], sender);
         if (parsed == null) {
-            sender.sendMessage(ChatColor.RED + "Invalid format! Console must use world:region format (e.g., world:shop1)");
+            sender.sendMessage(ChatColor.RED + "Invalid region format!");
             return true;
         }
 
