@@ -2,7 +2,7 @@
 
 **Complete WorldGuard Region Rental System with Clickable Signs**
 
-Version: 1.3.6
+Version: 1.3.7
 Minecraft: Paper/Spigot 1.21+
 Java: OpenJDK 21+
 Build System: Gradle 9.2.0
@@ -128,14 +128,14 @@ Or build directly with Gradle:
 
 4. **Find your JAR file:**
 ```
-build/libs/RegionRental-1.3.6.jar
+build/libs/RegionRental-1.3.7.jar
 ```
 
 ## 🚀 Installation
 
 1. **Copy the JAR to your server:**
 ```bash
-cp build/libs/RegionRental-1.3.6.jar /path/to/server/plugins/
+cp build/libs/RegionRental-1.3.7.jar /path/to/server/plugins/
 ```
 
 2. **Install required dependencies:**
