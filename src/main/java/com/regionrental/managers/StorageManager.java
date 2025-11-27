@@ -309,16 +309,17 @@ public class StorageManager implements Listener {
             return playerBlocks;
         }
 
+        // Check world is not null before accessing it
+        if (world == null) {
+            plugin.getLogger().warning("World is null for region " + regionName);
+            return playerBlocks;
+        }
+
         // Get the original schematic using composite key
         String compositeKey = world.getName() + ":" + regionName;
         Clipboard clipboard = plugin.getWorldEditManager().getClipboard(compositeKey);
         if (clipboard == null) {
             plugin.getLogger().warning("No schematic found for region " + regionName + " in world " + world.getName() + " - cannot compare blocks");
-            return playerBlocks;
-        }
-
-        if (world == null) {
-            plugin.getLogger().warning("World is null for region " + regionName);
             return playerBlocks;
         }
 
