@@ -49,7 +49,12 @@ public class RentalManager {
         }
 
         int migratedCount = 0;
-        String defaultWorld = plugin.getServer().getWorlds().get(0).getName();
+        List<org.bukkit.World> worlds = plugin.getServer().getWorlds();
+        if (worlds.isEmpty()) {
+            plugin.getLogger().warning("No worlds are loaded! Cannot determine default world for rental migration.");
+            return;
+        }
+        String defaultWorld = worlds.get(0).getName();
 
         for (String configKey : rentalsConfig.getConfigurationSection("rentals").getKeys(false)) {
             String path = "rentals." + configKey;
