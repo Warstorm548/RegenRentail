@@ -8,8 +8,10 @@ import org.bukkit.configuration.file.YamlConfiguration;
 import java.io.File;
 import java.io.IOException;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
 import java.util.logging.Level;
+import org.bukkit.configuration.ConfigurationSection;
 
 public class SignsConfig {
     
@@ -208,18 +210,26 @@ public class SignsConfig {
     
     public Map<String, Location> getAllSigns() {
         Map<String, Location> signs = new HashMap<>();
-        
+
         if (!config.contains("signs")) {
             return signs;
         }
-        
-        for (String region : config.getConfigurationSection("signs").getKeys(false)) {
-            Location loc = getSignLocation(region);
-            if (loc != null) {
-                signs.put(region, loc);
+
+        for (String compositeKey : config.getConfigurationSection("signs").getKeys(false)) {
+            // compositeKey is in format "world:region"
+            String path = "signs." + compositeKey;
+            String worldName = config.getString(path + ".world");
+            int x = config.getInt(path + ".x");
+            int y = config.getInt(path + ".y");
+            int z = config.getInt(path + ".z");
+
+            org.bukkit.World world = plugin.getServer().getWorld(worldName);
+            if (world != null) {
+                Location loc = new Location(world, x, y, z);
+                signs.put(compositeKey, loc);
             }
         }
-        
+
         return signs;
     }
     

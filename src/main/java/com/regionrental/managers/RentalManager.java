@@ -397,7 +397,8 @@ public class RentalManager {
         }
 
         // Get extension price per day from config
-        double extensionPrice = plugin.getConfigManager().getExtensionPrice(rental.getRegionName());
+        org.bukkit.World world = plugin.getServer().getWorld(rental.getWorldName());
+        double extensionPrice = plugin.getConfigManager().getExtensionPrice(rental.getRegionName(), world);
         double totalCost = extensionPrice * days;
 
         // Check if player has enough money

@@ -354,9 +354,13 @@ public class RegionsConfig {
 
         int migratedCount = 0;
 
+        // Default to first world for migration (old format had no world awareness)
+        String defaultWorld = plugin.getServer().getWorlds().get(0).getName();
+        org.bukkit.World world = plugin.getServer().getWorld(defaultWorld);
+
         for (String region : regionKeys) {
-            // Skip if already in regions.yml
-            if (hasRegion(region)) {
+            // Skip if already in regions.yml (check with default world)
+            if (hasRegion(region, world)) {
                 continue;
             }
 

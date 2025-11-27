@@ -89,8 +89,8 @@ public class RemoveCommand implements CommandExecutor {
 
         // Delete WorldEdit schematic if it exists
         boolean schematicDeleted = false;
-        if (plugin.getWorldEditManager().hasCapture(regionName, world)) {
-            plugin.getWorldEditManager().deleteCapture(regionName, world);
+        if (plugin.getWorldEditManager().hasCapture(regionName)) {
+            plugin.getWorldEditManager().deleteCapture(regionName);
             schematicDeleted = true;
         }
 

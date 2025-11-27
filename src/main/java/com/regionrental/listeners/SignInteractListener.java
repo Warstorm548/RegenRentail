@@ -90,8 +90,8 @@ public class SignInteractListener implements Listener {
         }
         
         // Get price
-        double price = plugin.getConfigManager().getPriceForRegion(regionName);
-        
+        double price = plugin.getConfigManager().getPriceForRegion(regionName, player.getWorld());
+
         // Check for permission-based pricing
         for (String perm : plugin.getConfigManager().getPermissionPrices().keySet()) {
             if (player.hasPermission(perm)) {
@@ -117,7 +117,7 @@ public class SignInteractListener implements Listener {
         economy.withdrawPlayer(player, price);
         
         // Create rental
-        int days = plugin.getConfigManager().getDurationForRegion(regionName);
+        int days = plugin.getConfigManager().getDurationForRegion(regionName, player.getWorld());
         if (plugin.getRentalManager().createRental(regionName, player.getWorld(), player, days, price)) {
             player.sendMessage(plugin.getConfigManager().getMessage("rental-success",
                 "{region}", regionName,
@@ -161,7 +161,7 @@ public class SignInteractListener implements Listener {
         }
 
         // Get extension price (same as rental price by default)
-        double price = plugin.getConfigManager().getPriceForRegion(regionName);
+        double price = plugin.getConfigManager().getPriceForRegion(regionName, player.getWorld());
         double multiplier = plugin.getConfig().getDouble("extension.price-multiplier", 1.0);
         price = price * multiplier;
 
