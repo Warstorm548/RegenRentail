@@ -157,21 +157,24 @@ cp build/libs/RegionRental-1.4.0.jar /path/to/server/plugins/
 
 ### Creating a Rental Sign
 
-1. Create a WorldGuard region:
+1. **Navigate to the world** where you want to create the rental region (overworld, nether, end, etc.)
+
+2. Create a WorldGuard region:
 ```
 /rg define shop1
 ```
 
-2. Place a sign and look at it
+3. Place a sign and look at it
 
-3. Create the rental sign:
+4. Create the rental sign:
 ```
 /rrcreatesign shop1
 ```
+**Note:** The sign will be created for the region in your current world. You can have regions with the same name in different worlds.
 
 ### Renting a Region
 
-- **Right-click** the sign to rent
+- **Right-click** the sign to rent (automatically rents in the sign's world)
 - **Shift + Right-click** to extend your rental
 
 ### Commands
@@ -180,21 +183,21 @@ All commands start with `/rr` to avoid conflicts:
 
 **User Commands:**
 - `/rr help` - Show help menu
-- `/rr info <region>` - View rental information
-- `/rr list [player]` - List active rentals
-- `/rrextend <region>` - Extend a rental
+- `/rr info <region>` - View rental information (in your current world)
+- `/rr list [player]` - List active rentals (across all worlds)
+- `/rrextend <region>` - Extend a rental (in your current world)
 - `/rrretrieve` - Get stored items from expired rentals
 
 **Admin Commands:**
 - `/rrreload` - Reload configuration
-- `/rrcreatesign <region>` - Create a rental sign (uses defaults until overrides set)
-- `/rrreset <region>` - Reset a rental (with full refund)
-- `/rrduration <add|remove|set|reset> <region> [<time>]` - Modify rental duration
+- `/rrcreatesign <region>` - Create a rental sign in your current world (uses defaults until overrides set)
+- `/rrreset <region>` - Reset a rental in your current world (with full refund)
+- `/rrduration <add|remove|set|reset> <region> [<time>]` - Modify rental duration in your current world
   - `add` - Add time to rental
   - `remove` - Remove time from rental
   - `set` - Set absolute duration
   - `reset` - Reset to default duration (refunds extensions if configured)
-- `/rroverride <subcommand> [args]` - Set per-region custom rental settings
+- `/rroverride <subcommand> [args]` - Set per-region custom rental settings (world-independent, applies to all worlds)
   - `price <region> <amount>` - Set custom rental price
   - `duration <region> <days>` - Set custom duration
   - `maxextensions <region> <count>` - Set max extensions
@@ -203,9 +206,9 @@ All commands start with `/rr` to avoid conflicts:
   - `extensionduration <region> <days>` - Set extension duration
   - `remove <region>` - Remove all overrides (use defaults)
   - `list [region]` - View overrides for region or all regions
-- `/rrremove <region>` - Remove RegionRental setup from a region
-- `/rrrefundhistory <region>` - View complete refund transaction history for a rental
-- `/rrverify` - Verify region configurations (shows defaults vs custom overrides)
+- `/rrremove <region>` - Remove RegionRental setup from a region in your current world
+- `/rrrefundhistory <region>` - View refund history for a rental in your current world
+- `/rrverify` - Verify region configurations across all worlds (shows defaults vs custom overrides)
 
 ## ⚙️ Configuration
 
