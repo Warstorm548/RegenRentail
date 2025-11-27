@@ -27,10 +27,11 @@ public class EzChestShopManager {
     private final RegionRental plugin;
     private boolean ezChestShopEnabled;
 
-    // Reflection cache for shop detection
+    // Reflection cache for shop detection and removal
     private Class<?> shopContainerClass;
     private Method getShopMethod;
     private Method isShopMethod;
+    private Method deleteShopMethod;
 
     // Container types that can be EzChestShop shops
     private static final Set<Material> SHOP_CONTAINER_TYPES = Set.of(
@@ -102,9 +103,23 @@ public class EzChestShopManager {
                 plugin.getLogger().fine("isShop(Location) not found");
             }
 
+            // Try to find deleteShop method for shop removal
+            try {
+                deleteShopMethod = shopContainerClass.getMethod("deleteShop", Location.class);
+            } catch (NoSuchMethodException e) {
+                try {
+                    deleteShopMethod = shopContainerClass.getMethod("removeShop", Location.class);
+                } catch (NoSuchMethodException e2) {
+                    plugin.getLogger().warning("No deleteShop/removeShop method found - shop removal will not work");
+                }
+            }
+
             if (getShopMethod != null || isShopMethod != null) {
                 ezChestShopEnabled = true;
                 plugin.getLogger().info("EzChestShop integration enabled successfully");
+                if (deleteShopMethod != null) {
+                    plugin.getLogger().info("Shop removal API method available");
+                }
             } else {
                 plugin.getLogger().warning("EzChestShop integration failed - API methods not found");
             }
@@ -158,34 +173,33 @@ public class EzChestShopManager {
             plugin.getLogger().info("[Debug] Removing shop at " + formatLocation(location));
         }
 
-        // Execute /ecs remove command
-        // This lets EzChestShop handle all cleanup including holograms, data, etc.
-        String command = String.format("ecs remove %d %d %d %s",
-            location.getBlockX(),
-            location.getBlockY(),
-            location.getBlockZ(),
-            location.getWorld().getName());
+        // Call ShopContainer.deleteShop(location) via reflection
+        // This handles: database removal, hologram cleanup, persistent data, memory cleanup
+        if (deleteShopMethod != null) {
+            try {
+                deleteShopMethod.invoke(null, location);
 
-        try {
-            Bukkit.dispatchCommand(Bukkit.getConsoleSender(), command);
+                if (debug) {
+                    plugin.getLogger().info("[Debug] Called deleteShop API at " + formatLocation(location));
+                }
 
-            if (debug) {
-                plugin.getLogger().info("[Debug] Executed command: /" + command);
+                // Verify shop was removed
+                boolean removed = !hasShopAt(location);
+
+                if (removed && debug) {
+                    plugin.getLogger().info("[Debug] Shop successfully removed at " + formatLocation(location));
+                } else if (!removed) {
+                    plugin.getLogger().warning("Shop removal API call failed at " + formatLocation(location));
+                }
+
+                return removed;
+
+            } catch (Exception e) {
+                plugin.getLogger().warning("Failed to call deleteShop API: " + e.getMessage());
+                return false;
             }
-
-            // Verify shop was removed
-            boolean removed = !hasShopAt(location);
-
-            if (removed && debug) {
-                plugin.getLogger().info("[Debug] Shop successfully removed at " + formatLocation(location));
-            } else if (!removed) {
-                plugin.getLogger().warning("Shop removal command failed at " + formatLocation(location));
-            }
-
-            return removed;
-
-        } catch (Exception e) {
-            plugin.getLogger().warning("Failed to execute shop removal command: " + e.getMessage());
+        } else {
+            plugin.getLogger().warning("deleteShop method not available - cannot remove shop at " + formatLocation(location));
             return false;
         }
     }
@@ -315,6 +329,7 @@ public class EzChestShopManager {
         this.shopContainerClass = null;
         this.getShopMethod = null;
         this.isShopMethod = null;
+        this.deleteShopMethod = null;
         initializeReflection();
     }
 }
