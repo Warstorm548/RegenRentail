@@ -7,8 +7,9 @@ import org.bukkit.configuration.file.YamlConfiguration;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.logging.Level;
 import org.bukkit.configuration.ConfigurationSection;
@@ -46,6 +47,12 @@ public class SignsConfig {
     /**
      * Migrate signs from old format (region name only) to new format (world:region)
      * This runs automatically on plugin load and is idempotent (safe to run multiple times)
+     * 
+     * Migration follows a safe approach:
+     * 1. First verify all migrations can be performed
+     * 2. Then apply migrations (copy data to new keys)
+     * 3. Save the config with new data (old keys still exist as backup)
+     * 4. Only remove old keys after successful save
      */
     private void migrateToWorldAwareKeys() {
         if (!config.contains("signs")) {
@@ -57,13 +64,13 @@ public class SignsConfig {
             return;
         }
 
-        Map<String, ConfigurationSection> migrations = new HashMap<>();
-        int migratedCount = 0;
+        // Phase 1: Validate all migrations can be performed
+        Map<String, Map<String, Object>> validatedMigrations = new HashMap<>();
+        List<String> oldKeysToRemove = new ArrayList<>();
 
-        // Find old format entries (no ":" in key)
         for (String key : signsSection.getKeys(false)) {
             if (!key.contains(":")) {
-                // Old format - has world field, use it
+                // Old format - verify it has a world field
                 String world = config.getString("signs." + key + ".world");
                 if (world == null || world.isEmpty()) {
                     plugin.getLogger().warning("Sign '" + key + "' has no world field, skipping migration");
@@ -72,36 +79,62 @@ public class SignsConfig {
 
                 String newKey = world + ":" + key;
 
-                // Copy all data to new key
+                // Verify old section exists and copy data to a map (snapshot)
                 ConfigurationSection oldSection = config.getConfigurationSection("signs." + key);
-                migrations.put(newKey, oldSection);
+                if (oldSection == null) {
+                    plugin.getLogger().warning("Sign '" + key + "' has no data section, skipping migration");
+                    continue;
+                }
 
-                migratedCount++;
+                // Take a snapshot of all data from old section
+                Map<String, Object> dataSnapshot = new HashMap<>();
+                for (String subKey : oldSection.getKeys(true)) {
+                    Object value = oldSection.get(subKey);
+                    // Only copy leaf values, not sections
+                    if (!(value instanceof ConfigurationSection)) {
+                        dataSnapshot.put(subKey, value);
+                    }
+                }
+
+                validatedMigrations.put(newKey, dataSnapshot);
+                oldKeysToRemove.add(key);
             }
         }
 
-        // Apply migrations
-        if (!migrations.isEmpty()) {
-            for (Map.Entry<String, ConfigurationSection> entry : migrations.entrySet()) {
-                String compositeKey = entry.getKey();
-                ConfigurationSection data = entry.getValue();
+        if (validatedMigrations.isEmpty()) {
+            return;
+        }
 
-                // Copy all data from old section to new key
-                for (String subKey : data.getKeys(true)) {
-                    Object value = data.get(subKey);
-                    config.set("signs." + compositeKey + "." + subKey, value);
-                }
+        // Phase 2: Apply migrations (copy data to new keys, keeping old keys as backup)
+        for (Map.Entry<String, Map<String, Object>> entry : validatedMigrations.entrySet()) {
+            String compositeKey = entry.getKey();
+            Map<String, Object> dataSnapshot = entry.getValue();
+
+            for (Map.Entry<String, Object> dataEntry : dataSnapshot.entrySet()) {
+                config.set("signs." + compositeKey + "." + dataEntry.getKey(), dataEntry.getValue());
             }
+        }
 
-            // Remove old keys (those without ":")
-            for (String key : new HashSet<>(signsSection.getKeys(false))) {
-                if (!key.contains(":")) {
-                    config.set("signs." + key, null);
-                }
-            }
+        // Phase 3: Save config with new data (old keys still exist as backup)
+        try {
+            config.save(configFile);
+        } catch (IOException e) {
+            plugin.getLogger().log(Level.SEVERE, "Failed to save signs.yml during migration! Old data preserved.", e);
+            // Abort migration - old keys remain intact as backup
+            return;
+        }
 
-            save();
-            plugin.getLogger().info("Migrated " + migratedCount + " sign(s) to world-aware format");
+        // Phase 4: Only remove old keys after successful save
+        for (String oldKey : oldKeysToRemove) {
+            config.set("signs." + oldKey, null);
+        }
+
+        // Final save to remove old keys
+        try {
+            config.save(configFile);
+            plugin.getLogger().info("Migrated " + validatedMigrations.size() + " sign(s) to world-aware format");
+        } catch (IOException e) {
+            plugin.getLogger().log(Level.WARNING, "Failed to clean up old sign keys. Data is safe but duplicated.", e);
         }
     }
     
