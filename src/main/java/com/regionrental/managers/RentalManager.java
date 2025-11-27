@@ -76,6 +76,10 @@ public class RentalManager {
 
                 if (regionName == null) {
                     // OLD format: configKey IS the region name
+                    if (configKey.contains(":")) {
+                        plugin.getLogger().warning("Skipping malformed rental key: " + configKey);
+                        continue;
+                    }
                     regionName = configKey;
                 }
 
