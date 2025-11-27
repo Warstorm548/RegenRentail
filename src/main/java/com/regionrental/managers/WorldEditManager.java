@@ -175,7 +175,12 @@ public class WorldEditManager {
     // Backward compatibility - uses first world
     @Deprecated
     public boolean restoreRegion(String regionName) {
-        World world = Bukkit.getWorlds().get(0);
+        java.util.List<World> worlds = Bukkit.getWorlds();
+        if (worlds.isEmpty()) {
+            plugin.getLogger().warning("No worlds loaded, cannot restore region: " + regionName);
+            return false;
+        }
+        World world = worlds.get(0);
         return restoreRegion(regionName, world);
     }
 
