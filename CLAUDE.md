@@ -84,7 +84,7 @@ When updating the version, modify these files:
 - Output JAR: `build/libs/RegionRental-X.X.X.jar`
 
 ### Current Version
-- **Version:** 1.4.0
+- **Version:** 2.0.0
 - **Last Updated:** Add multi-world support for rental regions
 
 ## Architecture Overview
