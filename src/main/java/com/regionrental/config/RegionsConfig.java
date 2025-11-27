@@ -36,6 +36,8 @@ public class RegionsConfig {
                     "Use /rroverride commands to set custom values for specific regions.\n" +
                     "Regions not listed here will use default settings from config.yml\n" +
                     "\n" +
+                    "Format: world:region (e.g., world:shop1, world_nether:shop2)\n" +
+                    "\n" +
                     "Commands:\n" +
                     "  /rroverride price <region> <amount>\n" +
                     "  /rroverride duration <region> <days>\n" +
@@ -56,6 +58,66 @@ public class RegionsConfig {
         }
 
         config = YamlConfiguration.loadConfiguration(configFile);
+
+        // Run migration to world-aware keys
+        migrateToWorldAwareKeys();
+    }
+
+    /**
+     * Migrate regions from old format (region name only) to new format (world:region)
+     * This runs automatically on plugin load and is idempotent (safe to run multiple times)
+     */
+    private void migrateToWorldAwareKeys() {
+        if (!config.contains("regions")) {
+            return;
+        }
+
+        ConfigurationSection regionsSection = config.getConfigurationSection("regions");
+        if (regionsSection == null) {
+            return;
+        }
+
+        String defaultWorld = plugin.getServer().getWorlds().get(0).getName();
+        Map<String, ConfigurationSection> migrations = new HashMap<>();
+        int migratedCount = 0;
+
+        // Find old format entries (no ":" in key)
+        for (String key : regionsSection.getKeys(false)) {
+            if (!key.contains(":")) {
+                // Old format - default to first world
+                String newKey = defaultWorld + ":" + key;
+
+                // Copy all data to new key
+                ConfigurationSection oldSection = config.getConfigurationSection("regions." + key);
+                migrations.put(newKey, oldSection);
+
+                migratedCount++;
+            }
+        }
+
+        // Apply migrations
+        if (!migrations.isEmpty()) {
+            for (Map.Entry<String, ConfigurationSection> entry : migrations.entrySet()) {
+                String compositeKey = entry.getKey();
+                ConfigurationSection data = entry.getValue();
+
+                // Copy all data from old section to new key
+                for (String subKey : data.getKeys(true)) {
+                    Object value = data.get(subKey);
+                    config.set("regions." + compositeKey + "." + subKey, value);
+                }
+            }
+
+            // Remove old keys (those without ":")
+            for (String key : new HashSet<>(regionsSection.getKeys(false))) {
+                if (!key.contains(":")) {
+                    config.set("regions." + key, null);
+                }
+            }
+
+            save();
+            plugin.getLogger().info("Migrated " + migratedCount + " region override(s) to world-aware format (defaulted to world: " + defaultWorld + ")");
+        }
     }
 
     public void save() {
@@ -73,31 +135,34 @@ public class RegionsConfig {
     /**
      * Remove a region entry
      */
-    public void removeRegion(String region) {
-        if (!hasRegion(region)) {
+    public void removeRegion(String region, org.bukkit.World world) {
+        String compositeKey = world.getName() + ":" + region;
+        if (!hasRegion(region, world)) {
             return;
         }
 
-        config.set("regions." + region, null);
+        config.set("regions." + compositeKey, null);
         save();
 
         if (plugin.getConfigManager().isDebug()) {
-            plugin.getLogger().info("Removed region '" + region + "' from regions.yml");
+            plugin.getLogger().info("Removed region '" + compositeKey + "' from regions.yml");
         }
     }
 
     /**
      * Check if region exists in config
      */
-    public boolean hasRegion(String region) {
-        return config.contains("regions." + region);
+    public boolean hasRegion(String region, org.bukkit.World world) {
+        String compositeKey = world.getName() + ":" + region;
+        return config.contains("regions." + compositeKey);
     }
 
     /**
      * Get region price or fallback to default
      */
-    public double getRegionPrice(String region, double defaultPrice) {
-        String path = "regions." + region + ".price";
+    public double getRegionPrice(String region, org.bukkit.World world, double defaultPrice) {
+        String compositeKey = world.getName() + ":" + region;
+        String path = "regions." + compositeKey + ".price";
         if (config.contains(path)) {
             return config.getDouble(path, defaultPrice);
         }
@@ -107,8 +172,9 @@ public class RegionsConfig {
     /**
      * Get region duration or fallback to default
      */
-    public int getRegionDuration(String region, int defaultDuration) {
-        String path = "regions." + region + ".duration";
+    public int getRegionDuration(String region, org.bukkit.World world, int defaultDuration) {
+        String compositeKey = world.getName() + ":" + region;
+        String path = "regions." + compositeKey + ".duration";
         if (config.contains(path)) {
             return config.getInt(path, defaultDuration);
         }
@@ -118,8 +184,9 @@ public class RegionsConfig {
     /**
      * Get region max extensions or fallback to default
      */
-    public int getRegionMaxExtensions(String region, int defaultMax) {
-        String path = "regions." + region + ".max-extensions";
+    public int getRegionMaxExtensions(String region, org.bukkit.World world, int defaultMax) {
+        String compositeKey = world.getName() + ":" + region;
+        String path = "regions." + compositeKey + ".max-extensions";
         if (config.contains(path)) {
             return config.getInt(path, defaultMax);
         }
@@ -129,8 +196,9 @@ public class RegionsConfig {
     /**
      * Get region extension price or fallback to default
      */
-    public double getRegionExtensionPrice(String region, double defaultPrice) {
-        String path = "regions." + region + ".extension-price";
+    public double getRegionExtensionPrice(String region, org.bukkit.World world, double defaultPrice) {
+        String compositeKey = world.getName() + ":" + region;
+        String path = "regions." + compositeKey + ".extension-price";
         if (config.contains(path)) {
             double price = config.getDouble(path, defaultPrice);
             // If set to 0, use calculated default
@@ -142,8 +210,9 @@ public class RegionsConfig {
     /**
      * Get region allow extensions or fallback to default
      */
-    public boolean getRegionAllowExtensions(String region, boolean defaultAllow) {
-        String path = "regions." + region + ".allow-extensions";
+    public boolean getRegionAllowExtensions(String region, org.bukkit.World world, boolean defaultAllow) {
+        String compositeKey = world.getName() + ":" + region;
+        String path = "regions." + compositeKey + ".allow-extensions";
         if (config.contains(path)) {
             return config.getBoolean(path, defaultAllow);
         }
@@ -153,8 +222,9 @@ public class RegionsConfig {
     /**
      * Get region extension duration or fallback to default
      */
-    public int getRegionExtensionDuration(String region, int defaultDuration) {
-        String path = "regions." + region + ".extension-duration";
+    public int getRegionExtensionDuration(String region, org.bukkit.World world, int defaultDuration) {
+        String compositeKey = world.getName() + ":" + region;
+        String path = "regions." + compositeKey + ".extension-duration";
         if (config.contains(path)) {
             return config.getInt(path, defaultDuration);
         }
@@ -164,8 +234,9 @@ public class RegionsConfig {
     /**
      * Set region price override
      */
-    public void setRegionPrice(String region, double price) {
-        String path = "regions." + region + ".price";
+    public void setRegionPrice(String region, org.bukkit.World world, double price) {
+        String compositeKey = world.getName() + ":" + region;
+        String path = "regions." + compositeKey + ".price";
         config.set(path, price);
         save();
     }
@@ -173,8 +244,9 @@ public class RegionsConfig {
     /**
      * Set region duration override
      */
-    public void setRegionDuration(String region, int days) {
-        String path = "regions." + region + ".duration";
+    public void setRegionDuration(String region, org.bukkit.World world, int days) {
+        String compositeKey = world.getName() + ":" + region;
+        String path = "regions." + compositeKey + ".duration";
         config.set(path, days);
         save();
     }
@@ -182,8 +254,9 @@ public class RegionsConfig {
     /**
      * Set region max extensions override
      */
-    public void setRegionMaxExtensions(String region, int maxExtensions) {
-        String path = "regions." + region + ".max-extensions";
+    public void setRegionMaxExtensions(String region, org.bukkit.World world, int maxExtensions) {
+        String compositeKey = world.getName() + ":" + region;
+        String path = "regions." + compositeKey + ".max-extensions";
         config.set(path, maxExtensions);
         save();
     }
@@ -191,8 +264,9 @@ public class RegionsConfig {
     /**
      * Set region extension price override
      */
-    public void setRegionExtensionPrice(String region, double price) {
-        String path = "regions." + region + ".extension-price";
+    public void setRegionExtensionPrice(String region, org.bukkit.World world, double price) {
+        String compositeKey = world.getName() + ":" + region;
+        String path = "regions." + compositeKey + ".extension-price";
         config.set(path, price);
         save();
     }
@@ -200,8 +274,9 @@ public class RegionsConfig {
     /**
      * Set region allow extensions override
      */
-    public void setRegionAllowExtensions(String region, boolean allow) {
-        String path = "regions." + region + ".allow-extensions";
+    public void setRegionAllowExtensions(String region, org.bukkit.World world, boolean allow) {
+        String compositeKey = world.getName() + ":" + region;
+        String path = "regions." + compositeKey + ".allow-extensions";
         config.set(path, allow);
         save();
     }
@@ -209,8 +284,9 @@ public class RegionsConfig {
     /**
      * Set region extension duration override
      */
-    public void setRegionExtensionDuration(String region, int days) {
-        String path = "regions." + region + ".extension-duration";
+    public void setRegionExtensionDuration(String region, org.bukkit.World world, int days) {
+        String compositeKey = world.getName() + ":" + region;
+        String path = "regions." + compositeKey + ".extension-duration";
         config.set(path, days);
         save();
     }
@@ -219,14 +295,15 @@ public class RegionsConfig {
      * Get all override settings for a specific region
      * Returns empty map if region has no overrides
      */
-    public Map<String, Object> getRegionOverrides(String region) {
+    public Map<String, Object> getRegionOverrides(String region, org.bukkit.World world) {
         Map<String, Object> overrides = new HashMap<>();
 
-        if (!hasRegion(region)) {
+        if (!hasRegion(region, world)) {
             return overrides;
         }
 
-        String path = "regions." + region;
+        String compositeKey = world.getName() + ":" + region;
+        String path = "regions." + compositeKey;
         ConfigurationSection section = config.getConfigurationSection(path);
 
         if (section == null) {

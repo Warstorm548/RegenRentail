@@ -35,14 +35,20 @@ public class ExpirationManager {
         // Notify player if online
         Player player = Bukkit.getPlayer(rental.getPlayerUUID());
         if (player != null && player.isOnline()) {
-            player.sendMessage(plugin.getConfigManager().getMessage("rental-expired", 
+            player.sendMessage(plugin.getConfigManager().getMessage("rental-expired",
                 "{region}", rental.getRegionName()));
         }
-        
-        // Expire the rental
-        plugin.getRentalManager().expireRental(rental.getRegionName());
-        
-        plugin.getLogger().info("Expired rental for " + rental.getRegionName() + 
+
+        // Expire the rental (CRITICAL FIX: use world-aware method)
+        org.bukkit.World world = plugin.getServer().getWorld(rental.getWorldName());
+        if (world == null) {
+            plugin.getLogger().warning("Cannot expire rental for " + rental.getRegionName() +
+                " - world '" + rental.getWorldName() + "' not found!");
+            return;
+        }
+        plugin.getRentalManager().expireRental(rental.getRegionName(), world);
+
+        plugin.getLogger().info("Expired rental for " + rental.getWorldName() + ":" + rental.getRegionName() +
             " (Player: " + rental.getPlayerName() + ")");
     }
     

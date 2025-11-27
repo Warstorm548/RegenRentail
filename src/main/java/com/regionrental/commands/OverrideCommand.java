@@ -1,7 +1,9 @@
 package com.regionrental.commands;
 
 import com.regionrental.RegionRental;
+import com.regionrental.util.WorldRegionParser;
 import org.bukkit.ChatColor;
+import org.bukkit.World;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
@@ -59,11 +61,20 @@ public class OverrideCommand implements CommandExecutor, TabCompleter {
 
     private boolean handlePrice(CommandSender sender, String[] args) {
         if (args.length != 3) {
-            sender.sendMessage(ChatColor.RED + "Usage: /rroverride price <region> <amount>");
+            sender.sendMessage(ChatColor.RED + "Usage: /rroverride price <world:region> <amount>");
+            sender.sendMessage(ChatColor.YELLOW + "Example: /rroverride price world:shop1 500");
             return true;
         }
 
-        String region = args[1];
+        // Parse region with world
+        WorldRegionParser.ParsedRegion parsed = WorldRegionParser.parse(args[1], sender);
+        if (parsed == null) {
+            sender.sendMessage(ChatColor.RED + "Invalid region format! Console must use world:region format (e.g., world:shop1)");
+            return true;
+        }
+
+        World world = parsed.getWorld();
+        String regionName = parsed.regionName;
         double price;
 
         try {
@@ -78,31 +89,38 @@ public class OverrideCommand implements CommandExecutor, TabCompleter {
         }
 
         // Validate region exists in WorldGuard
-        if (!plugin.getWorldGuardManager().doesRegionExist(region)) {
-            sender.sendMessage(ChatColor.RED + "Region '" + region + "' does not exist in WorldGuard!");
+        if (!plugin.getWorldGuardManager().doesRegionExist(regionName, world)) {
+            sender.sendMessage(ChatColor.RED + "Region '" + regionName + "' does not exist in world '" + world.getName() + "'!");
             return true;
         }
 
-        plugin.getRegionsConfig().setRegionPrice(region, price);
+        plugin.getRegionsConfig().setRegionPrice(regionName, world, price);
 
         String formattedPrice = String.format(plugin.getConfigManager().getCurrencyFormat(), price);
-        sender.sendMessage(ChatColor.GREEN + "Set rental price for " + ChatColor.YELLOW + region +
+        sender.sendMessage(ChatColor.GREEN + "Set rental price for " + ChatColor.YELLOW + parsed.getCompositeKey() +
                 ChatColor.GREEN + " to " + ChatColor.GOLD + formattedPrice);
 
         // Update sign if it exists
-        plugin.getSignManager().updateSign(region);
+        plugin.getSignManager().updateSign(regionName, world);
 
-        plugin.getLogger().info(sender.getName() + " set price override for region " + region + " to " + price);
+        plugin.getLogger().info(sender.getName() + " set price override for region " + parsed.getCompositeKey() + " to " + price);
         return true;
     }
 
     private boolean handleDuration(CommandSender sender, String[] args) {
         if (args.length != 3) {
-            sender.sendMessage(ChatColor.RED + "Usage: /rroverride duration <region> <days>");
+            sender.sendMessage(ChatColor.RED + "Usage: /rroverride duration <world:region> <days>");
             return true;
         }
 
-        String region = args[1];
+        WorldRegionParser.ParsedRegion parsed = WorldRegionParser.parse(args[1], sender);
+        if (parsed == null) {
+            sender.sendMessage(ChatColor.RED + "Invalid region format! Console must use world:region format");
+            return true;
+        }
+
+        World world = parsed.getWorld();
+        String regionName = parsed.regionName;
         int days;
 
         try {
@@ -116,29 +134,36 @@ public class OverrideCommand implements CommandExecutor, TabCompleter {
             return true;
         }
 
-        if (!plugin.getWorldGuardManager().doesRegionExist(region)) {
-            sender.sendMessage(ChatColor.RED + "Region '" + region + "' does not exist in WorldGuard!");
+        if (!plugin.getWorldGuardManager().doesRegionExist(regionName, world)) {
+            sender.sendMessage(ChatColor.RED + "Region '" + regionName + "' does not exist in world '" + world.getName() + "'!");
             return true;
         }
 
-        plugin.getRegionsConfig().setRegionDuration(region, days);
+        plugin.getRegionsConfig().setRegionDuration(regionName, world, days);
 
-        sender.sendMessage(ChatColor.GREEN + "Set rental duration for " + ChatColor.YELLOW + region +
+        sender.sendMessage(ChatColor.GREEN + "Set rental duration for " + ChatColor.YELLOW + parsed.getCompositeKey() +
                 ChatColor.GREEN + " to " + ChatColor.GOLD + days + " days");
 
-        plugin.getSignManager().updateSign(region);
+        plugin.getSignManager().updateSign(regionName, world);
 
-        plugin.getLogger().info(sender.getName() + " set duration override for region " + region + " to " + days + " days");
+        plugin.getLogger().info(sender.getName() + " set duration override for region " + parsed.getCompositeKey() + " to " + days + " days");
         return true;
     }
 
     private boolean handleMaxExtensions(CommandSender sender, String[] args) {
         if (args.length != 3) {
-            sender.sendMessage(ChatColor.RED + "Usage: /rroverride maxextensions <region> <count>");
+            sender.sendMessage(ChatColor.RED + "Usage: /rroverride maxextensions <world:region> <count>");
             return true;
         }
 
-        String region = args[1];
+        WorldRegionParser.ParsedRegion parsed = WorldRegionParser.parse(args[1], sender);
+        if (parsed == null) {
+            sender.sendMessage(ChatColor.RED + "Invalid region format! Console must use world:region format");
+            return true;
+        }
+
+        World world = parsed.getWorld();
+        String regionName = parsed.regionName;
         int maxExtensions;
 
         try {
@@ -152,28 +177,35 @@ public class OverrideCommand implements CommandExecutor, TabCompleter {
             return true;
         }
 
-        if (!plugin.getWorldGuardManager().doesRegionExist(region)) {
-            sender.sendMessage(ChatColor.RED + "Region '" + region + "' does not exist in WorldGuard!");
+        if (!plugin.getWorldGuardManager().doesRegionExist(regionName, world)) {
+            sender.sendMessage(ChatColor.RED + "Region '" + regionName + "' does not exist in world '" + world.getName() + "'!");
             return true;
         }
 
-        plugin.getRegionsConfig().setRegionMaxExtensions(region, maxExtensions);
+        plugin.getRegionsConfig().setRegionMaxExtensions(regionName, world, maxExtensions);
 
-        sender.sendMessage(ChatColor.GREEN + "Set max extensions for " + ChatColor.YELLOW + region +
+        sender.sendMessage(ChatColor.GREEN + "Set max extensions for " + ChatColor.YELLOW + parsed.getCompositeKey() +
                 ChatColor.GREEN + " to " + ChatColor.GOLD + maxExtensions);
 
-        plugin.getLogger().info(sender.getName() + " set max-extensions override for region " + region + " to " + maxExtensions);
+        plugin.getLogger().info(sender.getName() + " set max-extensions override for region " + parsed.getCompositeKey() + " to " + maxExtensions);
         return true;
     }
 
     private boolean handleExtensionPrice(CommandSender sender, String[] args) {
         if (args.length != 3) {
-            sender.sendMessage(ChatColor.RED + "Usage: /rroverride extensionprice <region> <amount>");
+            sender.sendMessage(ChatColor.RED + "Usage: /rroverride extensionprice <world:region> <amount>");
             sender.sendMessage(ChatColor.YELLOW + "Tip: Use 0 to auto-calculate from rental price and duration");
             return true;
         }
 
-        String region = args[1];
+        WorldRegionParser.ParsedRegion parsed = WorldRegionParser.parse(args[1], sender);
+        if (parsed == null) {
+            sender.sendMessage(ChatColor.RED + "Invalid region format! Console must use world:region format");
+            return true;
+        }
+
+        World world = parsed.getWorld();
+        String regionName = parsed.regionName;
         double price;
 
         try {
@@ -187,29 +219,36 @@ public class OverrideCommand implements CommandExecutor, TabCompleter {
             return true;
         }
 
-        if (!plugin.getWorldGuardManager().doesRegionExist(region)) {
-            sender.sendMessage(ChatColor.RED + "Region '" + region + "' does not exist in WorldGuard!");
+        if (!plugin.getWorldGuardManager().doesRegionExist(regionName, world)) {
+            sender.sendMessage(ChatColor.RED + "Region '" + regionName + "' does not exist in world '" + world.getName() + "'!");
             return true;
         }
 
-        plugin.getRegionsConfig().setRegionExtensionPrice(region, price);
+        plugin.getRegionsConfig().setRegionExtensionPrice(regionName, world, price);
 
         String formattedPrice = price == 0 ? "auto-calculated" :
                 String.format(plugin.getConfigManager().getCurrencyFormat(), price);
-        sender.sendMessage(ChatColor.GREEN + "Set extension price for " + ChatColor.YELLOW + region +
+        sender.sendMessage(ChatColor.GREEN + "Set extension price for " + ChatColor.YELLOW + parsed.getCompositeKey() +
                 ChatColor.GREEN + " to " + ChatColor.GOLD + formattedPrice);
 
-        plugin.getLogger().info(sender.getName() + " set extension-price override for region " + region + " to " + price);
+        plugin.getLogger().info(sender.getName() + " set extension-price override for region " + parsed.getCompositeKey() + " to " + price);
         return true;
     }
 
     private boolean handleAllowExtensions(CommandSender sender, String[] args) {
         if (args.length != 3) {
-            sender.sendMessage(ChatColor.RED + "Usage: /rroverride allowextensions <region> <true|false>");
+            sender.sendMessage(ChatColor.RED + "Usage: /rroverride allowextensions <world:region> <true|false>");
             return true;
         }
 
-        String region = args[1];
+        WorldRegionParser.ParsedRegion parsed = WorldRegionParser.parse(args[1], sender);
+        if (parsed == null) {
+            sender.sendMessage(ChatColor.RED + "Invalid region format! Console must use world:region format");
+            return true;
+        }
+
+        World world = parsed.getWorld();
+        String regionName = parsed.regionName;
         String allowStr = args[2].toLowerCase();
 
         if (!allowStr.equals("true") && !allowStr.equals("false")) {
@@ -219,27 +258,34 @@ public class OverrideCommand implements CommandExecutor, TabCompleter {
 
         boolean allow = Boolean.parseBoolean(allowStr);
 
-        if (!plugin.getWorldGuardManager().doesRegionExist(region)) {
-            sender.sendMessage(ChatColor.RED + "Region '" + region + "' does not exist in WorldGuard!");
+        if (!plugin.getWorldGuardManager().doesRegionExist(regionName, world)) {
+            sender.sendMessage(ChatColor.RED + "Region '" + regionName + "' does not exist in world '" + world.getName() + "'!");
             return true;
         }
 
-        plugin.getRegionsConfig().setRegionAllowExtensions(region, allow);
+        plugin.getRegionsConfig().setRegionAllowExtensions(regionName, world, allow);
 
-        sender.sendMessage(ChatColor.GREEN + "Set allow extensions for " + ChatColor.YELLOW + region +
+        sender.sendMessage(ChatColor.GREEN + "Set allow extensions for " + ChatColor.YELLOW + parsed.getCompositeKey() +
                 ChatColor.GREEN + " to " + ChatColor.GOLD + allow);
 
-        plugin.getLogger().info(sender.getName() + " set allow-extensions override for region " + region + " to " + allow);
+        plugin.getLogger().info(sender.getName() + " set allow-extensions override for region " + parsed.getCompositeKey() + " to " + allow);
         return true;
     }
 
     private boolean handleExtensionDuration(CommandSender sender, String[] args) {
         if (args.length != 3) {
-            sender.sendMessage(ChatColor.RED + "Usage: /rroverride extensionduration <region> <days>");
+            sender.sendMessage(ChatColor.RED + "Usage: /rroverride extensionduration <world:region> <days>");
             return true;
         }
 
-        String region = args[1];
+        WorldRegionParser.ParsedRegion parsed = WorldRegionParser.parse(args[1], sender);
+        if (parsed == null) {
+            sender.sendMessage(ChatColor.RED + "Invalid region format! Console must use world:region format");
+            return true;
+        }
+
+        World world = parsed.getWorld();
+        String regionName = parsed.regionName;
         int days;
 
         try {
@@ -253,76 +299,90 @@ public class OverrideCommand implements CommandExecutor, TabCompleter {
             return true;
         }
 
-        if (!plugin.getWorldGuardManager().doesRegionExist(region)) {
-            sender.sendMessage(ChatColor.RED + "Region '" + region + "' does not exist in WorldGuard!");
+        if (!plugin.getWorldGuardManager().doesRegionExist(regionName, world)) {
+            sender.sendMessage(ChatColor.RED + "Region '" + regionName + "' does not exist in world '" + world.getName() + "'!");
             return true;
         }
 
-        plugin.getRegionsConfig().setRegionExtensionDuration(region, days);
+        plugin.getRegionsConfig().setRegionExtensionDuration(regionName, world, days);
 
-        sender.sendMessage(ChatColor.GREEN + "Set extension duration for " + ChatColor.YELLOW + region +
+        sender.sendMessage(ChatColor.GREEN + "Set extension duration for " + ChatColor.YELLOW + parsed.getCompositeKey() +
                 ChatColor.GREEN + " to " + ChatColor.GOLD + days + " days");
 
-        plugin.getLogger().info(sender.getName() + " set extension-duration override for region " + region + " to " + days + " days");
+        plugin.getLogger().info(sender.getName() + " set extension-duration override for region " + parsed.getCompositeKey() + " to " + days + " days");
         return true;
     }
 
     private boolean handleRemove(CommandSender sender, String[] args) {
         if (args.length != 2) {
-            sender.sendMessage(ChatColor.RED + "Usage: /rroverride remove <region>");
+            sender.sendMessage(ChatColor.RED + "Usage: /rroverride remove <world:region>");
             return true;
         }
 
-        String region = args[1];
-
-        if (!plugin.getRegionsConfig().hasRegion(region)) {
-            sender.sendMessage(ChatColor.RED + "Region '" + region + "' has no custom overrides!");
+        WorldRegionParser.ParsedRegion parsed = WorldRegionParser.parse(args[1], sender);
+        if (parsed == null) {
+            sender.sendMessage(ChatColor.RED + "Invalid region format! Console must use world:region format");
             return true;
         }
 
-        plugin.getRegionsConfig().removeRegion(region);
+        World world = parsed.getWorld();
+        String regionName = parsed.regionName;
 
-        sender.sendMessage(ChatColor.GREEN + "Removed all custom overrides for " + ChatColor.YELLOW + region);
+        if (!plugin.getRegionsConfig().hasRegion(regionName, world)) {
+            sender.sendMessage(ChatColor.RED + "Region '" + parsed.getCompositeKey() + "' has no custom overrides!");
+            return true;
+        }
+
+        plugin.getRegionsConfig().removeRegion(regionName, world);
+
+        sender.sendMessage(ChatColor.GREEN + "Removed all custom overrides for " + ChatColor.YELLOW + parsed.getCompositeKey());
         sender.sendMessage(ChatColor.YELLOW + "Region will now use default settings from config.yml");
 
         // Update sign to show default values
-        plugin.getSignManager().updateSign(region);
+        plugin.getSignManager().updateSign(regionName, world);
 
-        plugin.getLogger().info(sender.getName() + " removed overrides for region " + region);
+        plugin.getLogger().info(sender.getName() + " removed overrides for region " + parsed.getCompositeKey());
         return true;
     }
 
     private boolean handleList(CommandSender sender, String[] args) {
         if (args.length == 1) {
-            // List all regions with overrides
+            // List all regions with overrides (composite keys shown)
             java.util.Set<String> regions = plugin.getRegionsConfig().getAllRegions();
 
             if (regions.isEmpty()) {
                 sender.sendMessage(ChatColor.YELLOW + "No regions have custom overrides configured");
-                sender.sendMessage(ChatColor.GRAY + "Use /rroverride <setting> <region> <value> to set overrides");
+                sender.sendMessage(ChatColor.GRAY + "Use /rroverride <setting> <world:region> <value> to set overrides");
                 return true;
             }
 
             sender.sendMessage(ChatColor.GOLD + "=== Regions with Custom Overrides ===");
-            for (String region : regions) {
-                sender.sendMessage(ChatColor.YELLOW + "  - " + region + ChatColor.GRAY + " (/rroverride list " + region + ")");
+            for (String compositeKey : regions) {
+                sender.sendMessage(ChatColor.YELLOW + "  - " + compositeKey + ChatColor.GRAY + " (/rroverride list " + compositeKey + ")");
             }
             sender.sendMessage(ChatColor.GRAY + "Total: " + regions.size() + " region(s)");
             return true;
         } else if (args.length == 2) {
             // Show details for specific region
-            String region = args[1];
+            WorldRegionParser.ParsedRegion parsed = WorldRegionParser.parse(args[1], sender);
+            if (parsed == null) {
+                sender.sendMessage(ChatColor.RED + "Invalid region format! Console must use world:region format");
+                return true;
+            }
 
-            if (!plugin.getRegionsConfig().hasRegion(region)) {
-                sender.sendMessage(ChatColor.RED + "Region '" + region + "' has no custom overrides");
+            World world = parsed.getWorld();
+            String regionName = parsed.regionName;
+
+            if (!plugin.getRegionsConfig().hasRegion(regionName, world)) {
+                sender.sendMessage(ChatColor.RED + "Region '" + parsed.getCompositeKey() + "' has no custom overrides");
                 sender.sendMessage(ChatColor.YELLOW + "Using default values from config.yml");
                 return true;
             }
 
-            sender.sendMessage(ChatColor.GOLD + "=== Custom Overrides for " + region + " ===");
+            sender.sendMessage(ChatColor.GOLD + "=== Custom Overrides for " + parsed.getCompositeKey() + " ===");
 
             // Get the raw config to check which values are actually set
-            Map<String, Object> overrides = plugin.getRegionsConfig().getRegionOverrides(region);
+            Map<String, Object> overrides = plugin.getRegionsConfig().getRegionOverrides(regionName, world);
 
             if (overrides.isEmpty()) {
                 sender.sendMessage(ChatColor.YELLOW + "No overrides set (using defaults)");
@@ -340,7 +400,7 @@ public class OverrideCommand implements CommandExecutor, TabCompleter {
 
             return true;
         } else {
-            sender.sendMessage(ChatColor.RED + "Usage: /rroverride list [region]");
+            sender.sendMessage(ChatColor.RED + "Usage: /rroverride list [world:region]");
             return true;
         }
     }

@@ -2,9 +2,11 @@ package com.regionrental.commands;
 
 import com.regionrental.RegionRental;
 import com.regionrental.managers.Rental;
+import com.regionrental.util.WorldRegionParser;
 import net.milkbowl.vault.economy.Economy;
 import org.bukkit.ChatColor;
 import org.bukkit.OfflinePlayer;
+import org.bukkit.World;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
@@ -45,18 +47,27 @@ public class DurationCommand implements CommandExecutor, TabCompleter {
         }
 
         String action = args[0].toLowerCase();
-        String regionName = args[1];
+
+        // Parse region argument with world inference
+        WorldRegionParser.ParsedRegion parsed = WorldRegionParser.parse(args[1], sender);
+        if (parsed == null) {
+            sender.sendMessage(ChatColor.RED + "Invalid format! Console must use world:region format (e.g., world:shop1)");
+            return true;
+        }
+
+        World world = parsed.getWorld();
+        String regionName = parsed.regionName;
 
         // Check if region exists and is rented
-        Rental rental = plugin.getRentalManager().getRental(regionName);
+        Rental rental = plugin.getRentalManager().getRental(regionName, world);
         if (rental == null) {
-            sender.sendMessage(ChatColor.RED + "Region " + regionName + " is not currently rented!");
+            sender.sendMessage(ChatColor.RED + "Region " + parsed.getCompositeKey() + " is not currently rented!");
             return true;
         }
 
         // Handle reset action (doesn't require time parameter)
         if (action.equals("reset")) {
-            resetDuration(sender, rental);
+            resetDuration(sender, rental, world);
             return true;
         }
 
@@ -91,13 +102,13 @@ public class DurationCommand implements CommandExecutor, TabCompleter {
         // Apply the modification
         switch (action) {
             case "add":
-                addDuration(sender, rental, millisToModify, chargePlayer);
+                addDuration(sender, rental, world, millisToModify, chargePlayer);
                 break;
             case "remove":
-                removeDuration(sender, rental, millisToModify);
+                removeDuration(sender, rental, world, millisToModify);
                 break;
             case "set":
-                setDuration(sender, rental, millisToModify);
+                setDuration(sender, rental, world, millisToModify);
                 break;
             default:
                 showUsage(sender);
@@ -107,7 +118,7 @@ public class DurationCommand implements CommandExecutor, TabCompleter {
         return true;
     }
     
-    private void addDuration(CommandSender sender, Rental rental, long millis, boolean chargePlayer) {
+    private void addDuration(CommandSender sender, Rental rental, World world, long millis, boolean chargePlayer) {
         String timeAdded = formatMillis(millis);
         int days = (int) (millis / (24L * 60L * 60L * 1000L));
 
@@ -129,7 +140,7 @@ public class DurationCommand implements CommandExecutor, TabCompleter {
             }
 
             // Get the cost for feedback
-            double extensionPrice = plugin.getConfigManager().getExtensionPrice(rental.getRegionName());
+            double extensionPrice = plugin.getConfigManager().getExtensionPrice(rental.getRegionName(), world);
             double totalCost = extensionPrice * days;
             String formattedAmount = String.format(plugin.getConfigManager().getCurrencyFormat(), totalCost);
 
@@ -155,7 +166,7 @@ public class DurationCommand implements CommandExecutor, TabCompleter {
             rental.setEndDate(newEndDate);
 
             // Update sign
-            plugin.getSignManager().updateSign(rental.getRegionName());
+            plugin.getSignManager().updateSign(rental.getRegionName(), world);
 
             // Save
             plugin.getRentalManager().saveAllRentals();
@@ -171,7 +182,7 @@ public class DurationCommand implements CommandExecutor, TabCompleter {
         }
     }
     
-    private void removeDuration(CommandSender sender, Rental rental, long millis) {
+    private void removeDuration(CommandSender sender, Rental rental, World world, long millis) {
         long currentTime = System.currentTimeMillis();
         long newEndDate = rental.getEndDate() - millis;
 
@@ -212,7 +223,7 @@ public class DurationCommand implements CommandExecutor, TabCompleter {
         rental.setEndDate(newEndDate);
 
         // Update sign
-        plugin.getSignManager().updateSign(rental.getRegionName());
+        plugin.getSignManager().updateSign(rental.getRegionName(), world);
 
         // Save
         plugin.getRentalManager().saveAllRentals();
@@ -230,27 +241,27 @@ public class DurationCommand implements CommandExecutor, TabCompleter {
                 (refundAmount > 0 ? " (refunded: $" + String.format("%.2f", refundAmount) + ")" : " (no refund)"));
     }
     
-    private void setDuration(CommandSender sender, Rental rental, long millis) {
+    private void setDuration(CommandSender sender, Rental rental, World world, long millis) {
         long newEndDate = System.currentTimeMillis() + millis;
         rental.setEndDate(newEndDate);
-        
+
         // Update sign
-        plugin.getSignManager().updateSign(rental.getRegionName());
-        
+        plugin.getSignManager().updateSign(rental.getRegionName(), world);
+
         // Save
         plugin.getRentalManager().saveAllRentals();
-        
+
         String newDuration = formatMillis(millis);
         sender.sendMessage(ChatColor.GREEN + "Set rental duration for " + rental.getRegionName() + " to " + newDuration);
         sender.sendMessage(ChatColor.YELLOW + "New expiration: " + rental.getFormattedEndDate());
-        
+
         // Log the action
         if (plugin.getConfigManager().isDebug()) {
             plugin.getLogger().info(sender.getName() + " set duration of " + rental.getRegionName() + " to " + newDuration);
         }
     }
 
-    private void resetDuration(CommandSender sender, Rental rental) {
+    private void resetDuration(CommandSender sender, Rental rental, World world) {
         // Get default duration from config
         int defaultDays = plugin.getConfigManager().getDefaultDuration();
 
@@ -285,7 +296,7 @@ public class DurationCommand implements CommandExecutor, TabCompleter {
         rental.resetTime(defaultDays);
 
         // Update sign
-        plugin.getSignManager().updateSign(rental.getRegionName());
+        plugin.getSignManager().updateSign(rental.getRegionName(), world);
 
         // Save
         plugin.getRentalManager().saveAllRentals();

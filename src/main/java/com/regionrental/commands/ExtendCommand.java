@@ -2,8 +2,10 @@ package com.regionrental.commands;
 
 import com.regionrental.RegionRental;
 import com.regionrental.managers.Rental;
+import com.regionrental.util.WorldRegionParser;
 import net.milkbowl.vault.economy.Economy;
 import org.bukkit.ChatColor;
+import org.bukkit.World;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
@@ -33,31 +35,41 @@ public class ExtendCommand implements CommandExecutor {
         
         if (args.length < 1) {
             player.sendMessage(ChatColor.RED + "Usage: /rrextend <region>");
+            player.sendMessage(ChatColor.YELLOW + "Example: /rrextend shop1");
             return true;
         }
-        
-        String regionName = args[0];
-        Rental rental = plugin.getRentalManager().getRental(regionName);
-        
+
+        // Parse region argument with world inference (player's world)
+        WorldRegionParser.ParsedRegion parsed = WorldRegionParser.parse(args[0], player);
+        if (parsed == null) {
+            player.sendMessage(ChatColor.RED + "Invalid region format!");
+            return true;
+        }
+
+        World world = parsed.getWorld();
+        String regionName = parsed.regionName;
+
+        Rental rental = plugin.getRentalManager().getRental(regionName, world);
+
         if (rental == null) {
             player.sendMessage(ChatColor.RED + "Region " + regionName + " is not rented!");
             return true;
         }
-        
+
         // Check if player owns this rental
         if (!rental.getPlayerUUID().equals(player.getUniqueId())) {
             player.sendMessage(ChatColor.RED + "You don't own this rental!");
             return true;
         }
-        
+
         // Check extension limit
         if (rental.getExtensionCount() >= plugin.getConfigManager().getMaxExtensions()) {
             player.sendMessage(plugin.getConfigManager().getMessage("max-extensions-reached"));
             return true;
         }
-        
+
         // Get extension price
-        double price = plugin.getConfigManager().getPriceForRegion(regionName);
+        double price = plugin.getConfigManager().getPriceForRegion(regionName, world);
         double multiplier = plugin.getConfig().getDouble("extension.price-multiplier", 1.0);
         price = price * multiplier;
         
@@ -76,10 +88,10 @@ public class ExtendCommand implements CommandExecutor {
         
         // Withdraw money
         economy.withdrawPlayer(player, price);
-        
+
         // Extend rental
         int days = plugin.getConfigManager().getExtensionDuration();
-        if (plugin.getRentalManager().extendRental(regionName, player, days, price)) {
+        if (plugin.getRentalManager().extendRental(regionName, world, player, days, price)) {
             player.sendMessage(plugin.getConfigManager().getMessage("rental-extended",
                 "{region}", regionName,
                 "{days}", String.valueOf(days),
@@ -89,7 +101,7 @@ public class ExtendCommand implements CommandExecutor {
             economy.depositPlayer(player, price);
             player.sendMessage(ChatColor.RED + "Failed to extend rental!");
         }
-        
+
         return true;
     }
 }

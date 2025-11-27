@@ -73,9 +73,9 @@ public class SignInteractListener implements Listener {
             return;
         }
         
-        // Check if region exists in WorldGuard
-        if (!plugin.getWorldGuardManager().regionExists(regionName)) {
-            player.sendMessage(plugin.getConfigManager().getMessage("region-not-found", 
+        // Check if region exists in WorldGuard (FIXED: use world-aware method)
+        if (!plugin.getWorldGuardManager().regionExists(regionName, player.getWorld())) {
+            player.sendMessage(plugin.getConfigManager().getMessage("region-not-found",
                 "{region}", regionName));
             return;
         }

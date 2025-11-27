@@ -2,7 +2,9 @@ package com.regionrental.commands;
 
 import com.regionrental.RegionRental;
 import com.regionrental.managers.Rental;
+import com.regionrental.util.WorldRegionParser;
 import org.bukkit.ChatColor;
+import org.bukkit.World;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
@@ -29,17 +31,26 @@ public class RefundHistoryCommand implements CommandExecutor {
         }
 
         if (args.length < 1) {
-            sender.sendMessage(ChatColor.RED + "Usage: /rrrefundhistory <region>");
+            sender.sendMessage(ChatColor.RED + "Usage: /rrrefundhistory <world:region>");
+            sender.sendMessage(ChatColor.YELLOW + "Example: /rrrefundhistory world:shop1");
             sender.sendMessage(ChatColor.YELLOW + "Shows refund transaction history for a rental region.");
             return true;
         }
 
-        String regionName = args[0];
+        // Parse region argument with world inference
+        WorldRegionParser.ParsedRegion parsed = WorldRegionParser.parse(args[0], sender);
+        if (parsed == null) {
+            sender.sendMessage(ChatColor.RED + "Invalid format! Console must use world:region format (e.g., world:shop1)");
+            return true;
+        }
+
+        World world = parsed.getWorld();
+        String regionName = parsed.regionName;
 
         // Get rental
-        Rental rental = plugin.getRentalManager().getRental(regionName);
+        Rental rental = plugin.getRentalManager().getRental(regionName, world);
         if (rental == null) {
-            sender.sendMessage(ChatColor.RED + "Region " + regionName + " is not currently rented!");
+            sender.sendMessage(ChatColor.RED + "Region " + parsed.getCompositeKey() + " is not currently rented!");
             sender.sendMessage(ChatColor.YELLOW + "Refund history is only available for active rentals.");
             return true;
         }
@@ -58,7 +69,7 @@ public class RefundHistoryCommand implements CommandExecutor {
         sender.sendMessage("");
         sender.sendMessage(ChatColor.GOLD + "" + ChatColor.BOLD + "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
         sender.sendMessage(plugin.getConfigManager().getMessage("refund-history-header",
-                "{region}", regionName));
+                "{region}", parsed.getCompositeKey()));
         sender.sendMessage(ChatColor.GOLD + "" + ChatColor.BOLD + "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
         sender.sendMessage("");
 
