@@ -111,7 +111,9 @@ public class RentalManager {
                 // Use composite key (world:region) for storage
                 rentals.put(rental.getCompositeKey(), rental);
             } catch (Exception e) {
-                plugin.getLogger().warning("Failed to load rental for config key " + configKey + ": " + e.getMessage());
+                String keyFormat = (rentalsConfig.getString("rentals." + configKey + ".world", null) == null)
+                        ? "region name (old format)" : "composite key (world:region)";
+                plugin.getLogger().warning("Failed to load rental for " + keyFormat + " '" + configKey + "': " + e.getMessage());
             }
         }
 
