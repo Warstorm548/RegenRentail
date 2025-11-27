@@ -26,7 +26,7 @@ RegionRental is a Minecraft Paper/Spigot plugin (1.21+) that implements a comple
 ./gradlew clean build
 
 # Output location
-build/libs/RegionRental-1.0.0.jar
+build/libs/RegionRental-2.0.0.jar
 ```
 
 ### Development Commands
@@ -371,7 +371,7 @@ Add to `StorageManager.CONTAINER_TYPES` set (currently supports: chest, barrel, 
 
 ### Quick Test Workflow
 1. Build: `./gradlew build`
-2. Copy JAR: `cp build/libs/RegionRental-1.0.0.jar /path/to/server/plugins/`
+2. Copy JAR: `cp build/libs/RegionRental-2.0.0.jar /path/to/server/plugins/`
 3. Start server
 4. Create WorldGuard region: `/rg define testregion`
 5. Create rental sign: `/rrcreatesign testregion`
@@ -607,7 +607,6 @@ signs:
 
 ## Known Limitations
 
-- No multi-world support (uses first world found for region)
 - Signs must be manually placed before creating rental sign
 - Container scanning is synchronous (may cause lag on very large regions)
 - Extension limit is global (not per-region configurable)
