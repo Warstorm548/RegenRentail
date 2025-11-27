@@ -95,17 +95,18 @@ public class StorageManager implements Listener {
     }
     
     /**
-     * Scans and collects items from containers in a region
+     * Scans and collects items from containers in a region (world-aware)
      * Also clears the containers
+     * @param regionName The region name
+     * @param world The world containing the region
      * @return List of ItemStacks found in containers
      */
-    public List<ItemStack> collectItemsFromRegion(String regionName) {
+    public List<ItemStack> collectItemsFromRegion(String regionName, World world) {
         List<ItemStack> allItems = new ArrayList<>();
         Map<Material, Integer> containerCounts = new HashMap<>(); // Track container types and counts
 
-        World world = findWorldForRegion(regionName);
         if (world == null) {
-            plugin.getLogger().warning("Could not find world for region " + regionName);
+            plugin.getLogger().warning("World is null for region " + regionName);
             return allItems;
         }
 
@@ -122,9 +123,10 @@ public class StorageManager implements Listener {
         }
 
         // Get the schematic to compare against (for player-placed container detection)
-        Clipboard clipboard = plugin.getWorldEditManager().getClipboard(regionName);
+        String compositeKey = world.getName() + ":" + regionName;
+        Clipboard clipboard = plugin.getWorldEditManager().getClipboard(compositeKey);
         if (clipboard == null) {
-            plugin.getLogger().warning("No schematic found for region " + regionName + " - counting all containers");
+            plugin.getLogger().warning("No schematic found for region " + regionName + " in world " + world.getName() + " - counting all containers");
         }
 
         // Get region bounds
@@ -210,10 +212,27 @@ public class StorageManager implements Listener {
     }
 
     /**
-     * Legacy method - stores items from containers (backward compatibility)
+     * Deprecated: Use world-aware version instead
+     * @deprecated Use {@link #collectItemsFromRegion(String, World)} instead
      */
-    public void storeItemsFromRegion(String regionName, UUID playerUUID) {
-        List<ItemStack> allItems = collectItemsFromRegion(regionName);
+    @Deprecated
+    public List<ItemStack> collectItemsFromRegion(String regionName) {
+        World world = findWorldForRegion(regionName);
+        if (world == null) {
+            plugin.getLogger().warning("Could not find world for region " + regionName);
+            return new ArrayList<>();
+        }
+        return collectItemsFromRegion(regionName, world);
+    }
+
+    /**
+     * Stores items from containers in a region (world-aware)
+     * @param regionName The region name
+     * @param world The world containing the region
+     * @param playerUUID The player's UUID
+     */
+    public void storeItemsFromRegion(String regionName, World world, UUID playerUUID) {
+        List<ItemStack> allItems = collectItemsFromRegion(regionName, world);
 
         // Store items if any were found
         if (!allItems.isEmpty()) {
@@ -238,15 +257,18 @@ public class StorageManager implements Listener {
     }
 
     /**
-     * Stores both container items and player-placed blocks together
+     * Stores both container items and player-placed blocks together (world-aware)
      * This is the recommended method for rental expiration
+     * @param regionName The region name
+     * @param world The world containing the region
+     * @param playerUUID The player's UUID
      */
-    public void storeItemsAndBlocksFromRegion(String regionName, UUID playerUUID) {
+    public void storeItemsAndBlocksFromRegion(String regionName, World world, UUID playerUUID) {
         // Collect container items
-        List<ItemStack> containerItems = collectItemsFromRegion(regionName);
+        List<ItemStack> containerItems = collectItemsFromRegion(regionName, world);
 
         // Collect player-placed blocks
-        List<ItemStack> playerBlocks = storePlayerBlocksFromRegion(regionName, playerUUID);
+        List<ItemStack> playerBlocks = storePlayerBlocksFromRegion(regionName, world, playerUUID);
 
         // Store both together
         if (!containerItems.isEmpty() || !playerBlocks.isEmpty()) {
@@ -273,12 +295,13 @@ public class StorageManager implements Listener {
     }
 
     /**
-     * Stores player-placed blocks from a region by comparing current state to original schematic
+     * Stores player-placed blocks from a region by comparing current state to original schematic (world-aware)
      * @param regionName The WorldGuard region name
+     * @param world The world containing the region
      * @param playerUUID The player's UUID
      * @return List of ItemStacks representing player-placed blocks
      */
-    public List<ItemStack> storePlayerBlocksFromRegion(String regionName, UUID playerUUID) {
+    public List<ItemStack> storePlayerBlocksFromRegion(String regionName, World world, UUID playerUUID) {
         List<ItemStack> playerBlocks = new ArrayList<>();
 
         // Check if block storage is enabled
@@ -286,16 +309,16 @@ public class StorageManager implements Listener {
             return playerBlocks;
         }
 
-        // Get the original schematic
-        Clipboard clipboard = plugin.getWorldEditManager().getClipboard(regionName);
+        // Get the original schematic using composite key
+        String compositeKey = world.getName() + ":" + regionName;
+        Clipboard clipboard = plugin.getWorldEditManager().getClipboard(compositeKey);
         if (clipboard == null) {
-            plugin.getLogger().warning("No schematic found for region " + regionName + " - cannot compare blocks");
+            plugin.getLogger().warning("No schematic found for region " + regionName + " in world " + world.getName() + " - cannot compare blocks");
             return playerBlocks;
         }
 
-        World world = findWorldForRegion(regionName);
         if (world == null) {
-            plugin.getLogger().warning("Could not find world for region " + regionName);
+            plugin.getLogger().warning("World is null for region " + regionName);
             return playerBlocks;
         }
 

@@ -206,23 +206,42 @@ public class EzChestShopManager {
 
 
     /**
-     * Remove all chest shops from a WorldGuard region.
-     * This method maintains the original signature for backward compatibility.
+     * Remove all chest shops from a WorldGuard region (world-aware).
      *
      * @param regionName The name of the WorldGuard region
+     * @param world The world containing the region
      * @return Number of shops removed
      */
-    public int removeShopsInRegion(String regionName) {
+    public int removeShopsInRegion(String regionName, World world) {
         if (!ezChestShopEnabled) return 0;
 
         if (!plugin.getConfigManager().isEzChestShopRemovalEnabled()) {
             return 0;
         }
 
-        // Get the WorldGuard region
-        ProtectedRegion region = plugin.getWorldGuardManager().getRegion(regionName);
+        // Get the WorldGuard region from the specified world
+        ProtectedRegion region = plugin.getWorldGuardManager().getRegion(regionName, world);
         if (region == null) {
-            plugin.getLogger().warning("Cannot remove shops from region '" + regionName + "' - region not found");
+            plugin.getLogger().warning("Cannot remove shops from region '" + regionName + "' in world '" + world.getName() + "' - region not found");
+            return 0;
+        }
+
+        return removeShopsInRegionInternal(region, world, regionName);
+    }
+
+    /**
+     * Remove all chest shops from a WorldGuard region (searches all worlds).
+     * This method maintains the original signature for backward compatibility.
+     *
+     * @param regionName The name of the WorldGuard region
+     * @return Number of shops removed
+     * @deprecated Use {@link #removeShopsInRegion(String, World)} instead
+     */
+    @Deprecated
+    public int removeShopsInRegion(String regionName) {
+        if (!ezChestShopEnabled) return 0;
+
+        if (!plugin.getConfigManager().isEzChestShopRemovalEnabled()) {
             return 0;
         }
 
@@ -233,7 +252,14 @@ public class EzChestShopManager {
             return 0;
         }
 
-        return removeShopsInRegion(region, world, regionName);
+        // Get the WorldGuard region
+        ProtectedRegion region = plugin.getWorldGuardManager().getRegion(regionName, world);
+        if (region == null) {
+            plugin.getLogger().warning("Cannot remove shops from region '" + regionName + "' - region not found");
+            return 0;
+        }
+
+        return removeShopsInRegionInternal(region, world, regionName);
     }
 
     /**
@@ -244,7 +270,7 @@ public class EzChestShopManager {
      * @param regionId The region ID for logging
      * @return Number of shops removed
      */
-    private int removeShopsInRegion(ProtectedRegion region, World world, String regionId) {
+    private int removeShopsInRegionInternal(ProtectedRegion region, World world, String regionId) {
         boolean debug = plugin.getConfigManager().isDebugMode();
         BlockVector3 min = region.getMinimumPoint();
         BlockVector3 max = region.getMaximumPoint();
