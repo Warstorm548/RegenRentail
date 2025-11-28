@@ -2,7 +2,9 @@ package com.regionrental.commands;
 
 import com.regionrental.RegionRental;
 import com.regionrental.managers.Rental;
+import com.regionrental.util.WorldRegionParser;
 import org.bukkit.ChatColor;
+import org.bukkit.World;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
@@ -30,26 +32,35 @@ public class RemoveCommand implements CommandExecutor {
         }
 
         if (args.length < 1) {
-            sender.sendMessage(ChatColor.RED + "Usage: /rrremove <region>");
+            sender.sendMessage(ChatColor.RED + "Usage: /rrremove <world:region>");
+            sender.sendMessage(ChatColor.YELLOW + "Example: /rrremove world:shop1");
             sender.sendMessage(ChatColor.YELLOW + "This will completely remove RegionRental setup from the region.");
             sender.sendMessage(ChatColor.YELLOW + "If the region is currently rented, the rental will be reset with full refund.");
             return true;
         }
 
-        String regionName = args[0];
+        // Parse region argument with world inference
+        WorldRegionParser.ParsedRegion parsed = WorldRegionParser.parse(args[0], sender);
+        if (parsed == null) {
+            sender.sendMessage(ChatColor.RED + "Invalid format! Console must use world:region format (e.g., world:shop1)");
+            return true;
+        }
+
+        World world = parsed.getWorld();
+        String regionName = parsed.regionName;
 
         // Check if WorldGuard region exists
-        if (!plugin.getWorldGuardManager().regionExists(regionName)) {
+        if (!plugin.getWorldGuardManager().regionExists(regionName, world)) {
             sender.sendMessage(plugin.getConfigManager().getMessage("region-not-found",
-                "{region}", regionName));
+                "{region}", parsed.getCompositeKey()));
             return true;
         }
 
         // Check if region has an active rental
-        Rental rental = plugin.getRentalManager().getRental(regionName);
+        Rental rental = plugin.getRentalManager().getRental(regionName, world);
         if (rental != null) {
             // Reset the rental with net refund first (prevents double-refunds)
-            Map<String, Object> refundDetails = plugin.getRentalManager().resetRentalWithRefund(regionName);
+            Map<String, Object> refundDetails = plugin.getRentalManager().resetRentalWithRefund(regionName, world);
 
             if (refundDetails != null) {
                 String playerName = (String) refundDetails.get("playerName");
@@ -74,7 +85,7 @@ public class RemoveCommand implements CommandExecutor {
         }
 
         // Remove rental sign
-        boolean signRemoved = plugin.getSignManager().removeRegionSetup(regionName);
+        boolean signRemoved = plugin.getSignManager().removeRegionSetup(regionName, world);
 
         // Delete WorldEdit schematic if it exists
         boolean schematicDeleted = false;
@@ -85,15 +96,15 @@ public class RemoveCommand implements CommandExecutor {
 
         // Remove region from regions.yml
         boolean regionConfigRemoved = false;
-        if (plugin.getRegionsConfig().hasRegion(regionName)) {
-            plugin.getRegionsConfig().removeRegion(regionName);
+        if (plugin.getRegionsConfig().hasRegion(regionName, world)) {
+            plugin.getRegionsConfig().removeRegion(regionName, world);
             regionConfigRemoved = true;
         }
 
         // Send comprehensive success message
         StringBuilder message = new StringBuilder();
         message.append(plugin.getConfigManager().getMessage("region-removed",
-            "{region}", regionName));
+            "{region}", parsed.getCompositeKey()));
 
         if (signRemoved) {
             message.append("\n").append(ChatColor.GREEN).append("  ✓ Rental sign removed");
@@ -114,7 +125,7 @@ public class RemoveCommand implements CommandExecutor {
         sender.sendMessage(message.toString());
 
         // Log the action
-        plugin.getLogger().info("Admin " + sender.getName() + " removed RegionRental setup from region: " + regionName);
+        plugin.getLogger().info("Admin " + sender.getName() + " removed RegionRental setup from region: " + parsed.getCompositeKey());
 
         return true;
     }

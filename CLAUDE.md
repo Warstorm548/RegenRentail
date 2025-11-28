@@ -26,7 +26,7 @@ RegionRental is a Minecraft Paper/Spigot plugin (1.21+) that implements a comple
 ./gradlew clean build
 
 # Output location
-build/libs/RegionRental-1.0.0.jar
+build/libs/RegionRental-2.0.0.jar
 ```
 
 ### Development Commands
@@ -84,8 +84,8 @@ When updating the version, modify these files:
 - Output JAR: `build/libs/RegionRental-X.X.X.jar`
 
 ### Current Version
-- **Version:** 1.2.7
-- **Last Updated:** Fix schematic container counting bug (only count player-placed containers)
+- **Version:** 2.0.0
+- **Last Updated:** Add multi-world support for rental regions
 
 ## Architecture Overview
 
@@ -222,6 +222,57 @@ Located in `SignInteractListener.java`:
 - All file I/O is synchronous (runs on main thread)
 - Scheduled tasks run asynchronously where possible
 
+### Multi-World Support
+The plugin now supports rental regions across multiple worlds:
+
+**Key Features:**
+- Each rental region stores its world name (e.g., "world", "world_nether", "world_the_end")
+- Region names can be identical across different worlds (e.g., "shop1" in "world" AND "shop1" in "world_nether")
+- All operations are world-aware (rentals, WorldEdit capture/restore, WorldGuard membership, etc.)
+- Automatic data migration from single-world to multi-world format on first load
+
+**Technical Implementation:**
+- **Composite Keys**: Rentals stored using `worldName:regionName` format (e.g., "world:shop1")
+- **Rental Class**: Added `worldName` field to track which world each rental belongs to
+- **RentalManager**: Uses composite keys in ConcurrentHashMap for O(1) lookups
+- **WorldEditManager**: Fixed critical bug - now uses actual world instead of hardcoded first world
+- **WorldGuardManager**: Added world-specific methods for direct world lookups (no more inefficient loops)
+- **Data Storage**: `rentals.yml` stores world name for each rental with automatic migration
+
+**Example YAML Structure:**
+```yaml
+rentals:
+  world:shop1:  # Composite key: worldName:regionName
+    region-name: shop1
+    world: world
+    player-uuid: "..."
+    # ... other rental data
+  world_nether:shop1:  # Same region name, different world
+    region-name: shop1
+    world: world_nether
+    player-uuid: "..."
+```
+
+**Migration:**
+- Existing rentals automatically default to first world (usually "world")
+- Migration logged on first startup
+- Data re-saved in new format immediately
+- Fully backward compatible - no manual intervention required
+
+**Usage in Code:**
+```java
+// NEW: World-aware methods (recommended)
+rentalManager.createRental(regionName, world, player, days, price);
+rentalManager.getRental(regionName, world);
+worldEditManager.captureRegion(regionName, world);
+worldEditManager.restoreRegion(regionName, world);
+worldGuardManager.addPlayerToRegion(regionName, world, playerUUID);
+
+// OLD: Deprecated methods (still work via backward compatibility)
+rentalManager.createRental(regionName, player, days, price); // Uses player's world
+rentalManager.getRental(regionName); // Searches all worlds, returns first match
+```
+
 ## Important Patterns and Conventions
 
 ### Accessing Managers
@@ -320,7 +371,7 @@ Add to `StorageManager.CONTAINER_TYPES` set (currently supports: chest, barrel, 
 
 ### Quick Test Workflow
 1. Build: `./gradlew build`
-2. Copy JAR: `cp build/libs/RegionRental-1.0.0.jar /path/to/server/plugins/`
+2. Copy JAR: `cp build/libs/RegionRental-2.0.0.jar /path/to/server/plugins/`
 3. Start server
 4. Create WorldGuard region: `/rg define testregion`
 5. Create rental sign: `/rrcreatesign testregion`
@@ -556,7 +607,6 @@ signs:
 
 ## Known Limitations
 
-- No multi-world support (uses first world found for region)
 - Signs must be manually placed before creating rental sign
 - Container scanning is synchronous (may cause lag on very large regions)
 - Extension limit is global (not per-region configurable)

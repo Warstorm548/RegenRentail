@@ -46,99 +46,44 @@ public class WorldGuardManager {
         
         return regionManager.hasRegion(regionName);
     }
-    
-    public boolean regionExists(String regionName) {
-        // Check all worlds for the region
-        for (World world : Bukkit.getWorlds()) {
-            if (regionExists(regionName, world)) {
-                return true;
-            }
+    public void addPlayerToRegion(String regionName, World world, UUID playerUUID) {
+        RegionManager regionManager = WorldGuard.getInstance().getPlatform()
+                .getRegionContainer().get(BukkitAdapter.adapt(world));
+
+        if (regionManager == null) {
+            plugin.getLogger().warning("No RegionManager found for world: " + world.getName());
+            return;
         }
-        return false;
-    }
-    
-    public void addPlayerToRegion(String regionName, UUID playerUUID) {
-        for (World world : Bukkit.getWorlds()) {
-            RegionManager regionManager = WorldGuard.getInstance().getPlatform()
-                    .getRegionContainer().get(BukkitAdapter.adapt(world));
-            
-            if (regionManager == null) continue;
-            
-            ProtectedRegion region = regionManager.getRegion(regionName);
-            if (region != null) {
-                DefaultDomain members = region.getMembers();
-                members.addPlayer(playerUUID);
-                
-                plugin.getLogger().info("Added player " + playerUUID + " to region " + regionName);
-                return;
-            }
+
+        ProtectedRegion region = regionManager.getRegion(regionName);
+        if (region != null) {
+            DefaultDomain members = region.getMembers();
+            members.addPlayer(playerUUID);
+
+            plugin.getLogger().info("Added player " + playerUUID + " to region " + regionName + " in world " + world.getName());
+        } else {
+            plugin.getLogger().warning("Region " + regionName + " not found in world " + world.getName());
         }
     }
-    
-    public void removePlayerFromRegion(String regionName, UUID playerUUID) {
-        for (World world : Bukkit.getWorlds()) {
-            RegionManager regionManager = WorldGuard.getInstance().getPlatform()
-                    .getRegionContainer().get(BukkitAdapter.adapt(world));
-            
-            if (regionManager == null) continue;
-            
-            ProtectedRegion region = regionManager.getRegion(regionName);
-            if (region != null) {
-                DefaultDomain members = region.getMembers();
-                members.removePlayer(playerUUID);
-                
-                plugin.getLogger().info("Removed player " + playerUUID + " from region " + regionName);
-                return;
-            }
+    public void removePlayerFromRegion(String regionName, World world, UUID playerUUID) {
+        RegionManager regionManager = WorldGuard.getInstance().getPlatform()
+                .getRegionContainer().get(BukkitAdapter.adapt(world));
+
+        if (regionManager == null) {
+            plugin.getLogger().warning("No RegionManager found for world: " + world.getName());
+            return;
+        }
+
+        ProtectedRegion region = regionManager.getRegion(regionName);
+        if (region != null) {
+            DefaultDomain members = region.getMembers();
+            members.removePlayer(playerUUID);
+
+            plugin.getLogger().info("Removed player " + playerUUID + " from region " + regionName + " in world " + world.getName());
+        } else {
+            plugin.getLogger().warning("Region " + regionName + " not found in world " + world.getName());
         }
     }
-    
-    public boolean isPlayerMemberOfRegion(String regionName, UUID playerUUID) {
-        for (World world : Bukkit.getWorlds()) {
-            RegionManager regionManager = WorldGuard.getInstance().getPlatform()
-                    .getRegionContainer().get(BukkitAdapter.adapt(world));
-            
-            if (regionManager == null) continue;
-            
-            ProtectedRegion region = regionManager.getRegion(regionName);
-            if (region != null) {
-                return region.getMembers().contains(playerUUID);
-            }
-        }
-        return false;
-    }
-    
-    public boolean isPlayerOwnerOfRegion(String regionName, UUID playerUUID) {
-        for (World world : Bukkit.getWorlds()) {
-            RegionManager regionManager = WorldGuard.getInstance().getPlatform()
-                    .getRegionContainer().get(BukkitAdapter.adapt(world));
-            
-            if (regionManager == null) continue;
-            
-            ProtectedRegion region = regionManager.getRegion(regionName);
-            if (region != null) {
-                return region.getOwners().contains(playerUUID);
-            }
-        }
-        return false;
-    }
-    
-    public void clearRegionMembers(String regionName) {
-        for (World world : Bukkit.getWorlds()) {
-            RegionManager regionManager = WorldGuard.getInstance().getPlatform()
-                    .getRegionContainer().get(BukkitAdapter.adapt(world));
-            
-            if (regionManager == null) continue;
-            
-            ProtectedRegion region = regionManager.getRegion(regionName);
-            if (region != null) {
-                region.getMembers().clear();
-                plugin.getLogger().info("Cleared all members from region " + regionName);
-                return;
-            }
-        }
-    }
-    
     public ProtectedRegion getRegion(String regionName, World world) {
         if (worldGuard == null) return null;
         
@@ -148,34 +93,6 @@ public class WorldGuardManager {
         if (regionManager == null) return null;
         
         return regionManager.getRegion(regionName);
-    }
-    
-    public ProtectedRegion getRegion(String regionName) {
-        for (World world : Bukkit.getWorlds()) {
-            ProtectedRegion region = getRegion(regionName, world);
-            if (region != null) {
-                return region;
-            }
-        }
-        return null;
-    }
-    
-    public boolean canPlayerBuildInRegion(Player player, String regionName) {
-        for (World world : Bukkit.getWorlds()) {
-            ProtectedRegion region = getRegion(regionName, world);
-            if (region != null) {
-                LocalPlayer localPlayer = WorldGuardPlugin.inst().wrapPlayer(player);
-                return region.isMember(localPlayer) || region.isOwner(localPlayer);
-            }
-        }
-        return false;
-    }
-
-    /**
-     * Alias for regionExists() to match command naming
-     */
-    public boolean doesRegionExist(String regionName) {
-        return regionExists(regionName);
     }
 
     /**

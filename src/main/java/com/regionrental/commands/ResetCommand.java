@@ -2,7 +2,9 @@ package com.regionrental.commands;
 
 import com.regionrental.RegionRental;
 import com.regionrental.managers.Rental;
+import com.regionrental.util.WorldRegionParser;
 import org.bukkit.ChatColor;
+import org.bukkit.World;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
@@ -25,20 +27,29 @@ public class ResetCommand implements CommandExecutor {
         }
 
         if (args.length < 1) {
-            sender.sendMessage(ChatColor.RED + "Usage: /rrreset <region>");
+            sender.sendMessage(ChatColor.RED + "Usage: /rrreset <world:region>");
+            sender.sendMessage(ChatColor.YELLOW + "Example: /rrreset world:shop1");
             return true;
         }
 
-        String regionName = args[0];
+        // Parse region argument with world inference
+        WorldRegionParser.ParsedRegion parsed = WorldRegionParser.parse(args[0], sender);
+        if (parsed == null) {
+            sender.sendMessage(ChatColor.RED + "Invalid format! Console must use world:region format (e.g., world:shop1)");
+            return true;
+        }
 
-        Rental rental = plugin.getRentalManager().getRental(regionName);
+        World world = parsed.getWorld();
+        String regionName = parsed.regionName;
+
+        Rental rental = plugin.getRentalManager().getRental(regionName, world);
         if (rental == null) {
-            sender.sendMessage(ChatColor.RED + "Region " + regionName + " is not currently rented!");
+            sender.sendMessage(ChatColor.RED + "Region " + parsed.getCompositeKey() + " is not currently rented!");
             return true;
         }
 
         // Reset the rental with net refund (prevents double-refunds)
-        Map<String, Object> refundDetails = plugin.getRentalManager().resetRentalWithRefund(regionName);
+        Map<String, Object> refundDetails = plugin.getRentalManager().resetRentalWithRefund(regionName, world);
 
         if (refundDetails != null) {
             String playerName = (String) refundDetails.get("playerName");

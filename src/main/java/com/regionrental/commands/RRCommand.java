@@ -41,6 +41,12 @@ public class RRCommand implements CommandExecutor, TabCompleter {
                 return true;
             }
 
+            // Validate args.length >= 2 before accessing args[1]
+            if (args.length < 2) {
+                showHelp(sender, 1);
+                return true;
+            }
+
             // Check if argument is a page number
             try {
                 int page = Integer.parseInt(args[1]);

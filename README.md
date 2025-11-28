@@ -2,7 +2,7 @@
 
 **Complete WorldGuard Region Rental System with Clickable Signs**
 
-Version: 1.3.7
+Version: 2.0.1
 Minecraft: Paper/Spigot 1.21+
 Java: OpenJDK 21+
 Build System: Gradle 9.2.0
@@ -10,12 +10,13 @@ Build System: Gradle 9.2.0
 ## ✅ All Features Implemented
 
 ### Core Features
+- ✅ **Multi-world support** - Rental regions work across multiple worlds (overworld, nether, end)
 - ✅ **Clickable rental signs** - Right-click to rent, shift-click to extend
 - ✅ **Vault economy** - Full money integration
 - ✅ **WorldGuard regions** - Automatic member management
 - ✅ **Time-based rentals** - Configurable durations
 - ✅ **Extension system** - Extend with limits
-- ✅ **Block restoration** - Auto-restore on expiry with WorldEdit
+- ✅ **Block restoration** - Auto-restore on expiry with WorldEdit (world-aware)
 - ✅ **Item storage** - Items saved from containers
 - ✅ **Item retrieval** - `/rrretrieve` command
 - ✅ **Per-region configuration** - Command-based override system via `/rroverride`
@@ -128,14 +129,14 @@ Or build directly with Gradle:
 
 4. **Find your JAR file:**
 ```
-build/libs/RegionRental-1.3.7.jar
+build/libs/RegionRental-2.0.1.jar
 ```
 
 ## 🚀 Installation
 
 1. **Copy the JAR to your server:**
 ```bash
-cp build/libs/RegionRental-1.3.7.jar /path/to/server/plugins/
+cp build/libs/RegionRental-2.0.1.jar /path/to/server/plugins/
 ```
 
 2. **Install required dependencies:**
@@ -156,21 +157,24 @@ cp build/libs/RegionRental-1.3.7.jar /path/to/server/plugins/
 
 ### Creating a Rental Sign
 
-1. Create a WorldGuard region:
+1. **Navigate to the world** where you want to create the rental region (overworld, nether, end, etc.)
+
+2. Create a WorldGuard region:
 ```
 /rg define shop1
 ```
 
-2. Place a sign and look at it
+3. Place a sign and look at it
 
-3. Create the rental sign:
+4. Create the rental sign:
 ```
 /rrcreatesign shop1
 ```
+**Note:** The sign will be created for the region in your current world. You can have regions with the same name in different worlds.
 
 ### Renting a Region
 
-- **Right-click** the sign to rent
+- **Right-click** the sign to rent (automatically rents in the sign's world)
 - **Shift + Right-click** to extend your rental
 
 ### Commands
@@ -179,21 +183,21 @@ All commands start with `/rr` to avoid conflicts:
 
 **User Commands:**
 - `/rr help` - Show help menu
-- `/rr info <region>` - View rental information
-- `/rr list [player]` - List active rentals
-- `/rrextend <region>` - Extend a rental
+- `/rr info <region>` - View rental information (in your current world)
+- `/rr list [player]` - List active rentals (across all worlds)
+- `/rrextend <region>` - Extend a rental (in your current world)
 - `/rrretrieve` - Get stored items from expired rentals
 
 **Admin Commands:**
 - `/rrreload` - Reload configuration
-- `/rrcreatesign <region>` - Create a rental sign (uses defaults until overrides set)
-- `/rrreset <region>` - Reset a rental (with full refund)
-- `/rrduration <add|remove|set|reset> <region> [<time>]` - Modify rental duration
+- `/rrcreatesign <region>` - Create a rental sign in your current world (uses defaults until overrides set)
+- `/rrreset <region>` - Reset a rental in your current world (with full refund)
+- `/rrduration <add|remove|set|reset> <region> [<time>]` - Modify rental duration in your current world
   - `add` - Add time to rental
   - `remove` - Remove time from rental
   - `set` - Set absolute duration
   - `reset` - Reset to default duration (refunds extensions if configured)
-- `/rroverride <subcommand> [args]` - Set per-region custom rental settings
+- `/rroverride <subcommand> [args]` - Set per-region custom rental settings (world-independent, applies to all worlds)
   - `price <region> <amount>` - Set custom rental price
   - `duration <region> <days>` - Set custom duration
   - `maxextensions <region> <count>` - Set max extensions
@@ -202,9 +206,9 @@ All commands start with `/rr` to avoid conflicts:
   - `extensionduration <region> <days>` - Set extension duration
   - `remove <region>` - Remove all overrides (use defaults)
   - `list [region]` - View overrides for region or all regions
-- `/rrremove <region>` - Remove RegionRental setup from a region
-- `/rrrefundhistory <region>` - View complete refund transaction history for a rental
-- `/rrverify` - Verify region configurations (shows defaults vs custom overrides)
+- `/rrremove <region>` - Remove RegionRental setup from a region in your current world
+- `/rrrefundhistory <region>` - View refund history for a rental in your current world
+- `/rrverify` - Verify region configurations across all worlds (shows defaults vs custom overrides)
 
 ## ⚙️ Configuration
 
@@ -261,11 +265,14 @@ Automatically stores items from expired rentals
 
 ### `rentals.yml` - Active Rentals (Runtime)
 Automatically created and managed at runtime:
-- Stores all active rental data
+- Stores all active rental data with world information
+- Uses composite keys (`worldName:regionName`) for unique identification
 - Includes rental start/end timestamps
 - Tracks extension count and total paid amount
 - Includes `initialPrice` field for tracking extension costs separately
+- Includes `world` field for multi-world support
 - Auto-saved every 5 minutes
+- Automatic migration from old format on first load
 
 ## 📁 Plugin Data Directory
 
@@ -501,7 +508,95 @@ integration:
 - **Detailed Information**: Shows refund date, amount, and reason for each transaction
 - **Prevents Double-Refunds**: System tracks what has been refunded to prevent duplicate payments
 
+### Multi-World Support
+RegionRental now fully supports rental regions across multiple worlds, enabling admins to set up rental shops in different dimensions:
+
+**Key Features:**
+- **World-Aware Rentals**: Each rental region tracks which world it belongs to (e.g., "world", "world_nether", "world_the_end")
+- **Unique Per-World**: Same region name can exist independently in different worlds (e.g., "shop1" in overworld AND "shop1" in nether)
+- **Automatic World Detection**: Commands and sign interactions automatically use the player's current world
+- **Correct WorldEdit Operations**: Block capture and restoration now happen in the correct world (fixes critical bug)
+- **Optimized Performance**: Direct world-specific lookups eliminate inefficient world scanning
+- **Automatic Migration**: Existing rentals automatically assigned to first world on upgrade with zero downtime
+
+**How It Works:**
+- **Composite Keys**: Rentals stored using `worldName:regionName` format internally (e.g., "world:shop1")
+- **World-Aware Commands**: All commands operate in the player's current world automatically
+- **WorldEdit Integration**: Captures and restores blocks in the correct world for each rental
+- **WorldGuard Integration**: Manages region membership per-world with O(1) performance
+
+**Data Migration:**
+- Old rentals.yml data automatically migrated on first startup
+- Existing rentals default to first world (usually "world")
+- Migration logged clearly in console
+- Data immediately re-saved in new format
+- **100% backward compatible** - no manual intervention required
+
+**Example YAML Structure:**
+```yaml
+rentals:
+  world:shop1:  # Composite key: worldName:regionName
+    region-name: shop1
+    world: world
+    player-uuid: "..."
+    # ... other rental data
+  world_nether:shop1:  # Same region name, different world
+    region-name: shop1
+    world: world_nether
+    player-uuid: "..."
+```
+
+**Usage Examples:**
+```bash
+# In overworld
+/rrcreatesign shop1           # Creates sign for shop1 in overworld
+/rrinfo shop1                  # Shows info for shop1 in overworld
+
+# In nether (same region name)
+/rrcreatesign shop1           # Creates sign for shop1 in nether
+/rrinfo shop1                  # Shows info for shop1 in nether
+```
+
+**Technical Benefits:**
+- ✅ No more world collisions or data corruption
+- ✅ WorldEdit captures/restores in correct world
+- ✅ Direct world lookups for better performance
+- ✅ Backward compatible with existing installations
+- ✅ Fully automatic migration
+
 ## 🆕 Recent Updates
+
+### Version 2.0.0 - Multi-World Support
+
+#### Complete Multi-World System
+- **World-Aware Rentals**: Each rental now tracks and operates in its specific world
+- **Fixed Critical Bug**: WorldEdit operations now use correct world instead of hardcoded first world
+- **Composite Key System**: Rentals identified by `worldName:regionName` format for uniqueness
+- **Automatic Migration**: Existing rentals seamlessly upgraded to multi-world format on first load
+- **Performance Improvements**: Direct world-specific lookups eliminate inefficient world scanning
+- **Zero Breaking Changes**: Fully backward compatible with existing rental data
+
+#### Updated Components
+- **Rental Class**: Added `worldName` field and composite key support
+- **RentalManager**: All CRUD operations now world-aware with deprecated fallback methods
+- **WorldEditManager**: Fixed hardcoded world bug, now captures/restores in correct world
+- **WorldGuardManager**: Added direct world-specific methods for O(1) performance
+- **SignManager**: Sign updates now world-aware based on rental's world
+- **SignInteractListener**: Player interactions use player's current world automatically
+- **CreateSignCommand**: Validates regions in player's current world
+
+#### Data Migration
+- Existing `rentals.yml` automatically detected and migrated
+- Old rentals default to first world (usually "world")
+- Migration count logged on startup for transparency
+- Data immediately re-saved in new composite key format
+- No manual intervention or downtime required
+
+#### Example Use Cases
+- Set up identical rental shops in overworld and nether
+- Different rental regions per dimension (mining claims in end, shops in overworld)
+- WorldEdit captures/restores blocks in correct world
+- No more world collisions or unexpected behavior
 
 ### Version 1.3.3 - EzChestShop Integration
 
@@ -615,7 +710,6 @@ chmod +x gradlew
 
 ## ⚠️ Known Limitations
 
-- **Multi-world support**: Currently uses the first world found for region lookups
 - **Manual sign placement**: Signs must be manually placed before creating rental sign with `/rrcreatesign`
 - **Container scanning**: Synchronous operation that may cause minor lag on very large regions
 - **Support block detection**: Requires sign to be properly attached when using `/rrcreatesign`

@@ -48,8 +48,11 @@ public class RentalManager {
             return;
         }
 
-        for (String regionName : rentalsConfig.getConfigurationSection("rentals").getKeys(false)) {
-            String path = "rentals." + regionName;
+        int migratedCount = 0;
+        String defaultWorld = plugin.getServer().getWorlds().get(0).getName();
+
+        for (String configKey : rentalsConfig.getConfigurationSection("rentals").getKeys(false)) {
+            String path = "rentals." + configKey;
 
             try {
                 UUID playerUUID = UUID.fromString(rentalsConfig.getString(path + ".player-uuid"));
@@ -59,6 +62,23 @@ public class RentalManager {
                 int extensionCount = rentalsConfig.getInt(path + ".extension-count", 0);
                 double totalPaid = rentalsConfig.getDouble(path + ".total-paid", 0);
                 double initialPrice = rentalsConfig.getDouble(path + ".initial-price", totalPaid);
+
+                // Load world field (with migration for old data)
+                // NEW format: composite key (world:region) with region-name field
+                // OLD format: just region name as key
+                String worldName = rentalsConfig.getString(path + ".world", null);
+                String regionName = rentalsConfig.getString(path + ".region-name", null);
+
+                if (regionName == null) {
+                    // OLD format: configKey IS the region name
+                    regionName = configKey;
+                }
+
+                if (worldName == null) {
+                    // Migration: Old rental without world field - default to first world
+                    worldName = defaultWorld;
+                    migratedCount++;
+                }
 
                 // Load refund tracking data (backwards compatible)
                 double totalRefunded = rentalsConfig.getDouble(path + ".total-refunded", 0.0);
@@ -76,15 +96,22 @@ public class RentalManager {
                     }
                 }
 
-                Rental rental = new Rental(regionName, playerUUID, playerName, startDate, endDate,
+                Rental rental = new Rental(regionName, worldName, playerUUID, playerName, startDate, endDate,
                         extensionCount, totalPaid, initialPrice, totalRefunded, refundHistory);
-                rentals.put(regionName, rental);
+
+                // Use composite key (world:region) for storage
+                rentals.put(rental.getCompositeKey(), rental);
             } catch (Exception e) {
-                plugin.getLogger().warning("Failed to load rental for region " + regionName + ": " + e.getMessage());
+                plugin.getLogger().warning("Failed to load rental for config key " + configKey + ": " + e.getMessage());
             }
         }
 
         plugin.getLogger().info("Loaded " + rentals.size() + " rentals");
+
+        if (migratedCount > 0) {
+            plugin.getLogger().info("Migrated " + migratedCount + " rental(s) to multi-world format (defaulted to '" + defaultWorld + "')");
+            saveAllRentals(); // Save migrated data
+        }
     }
     
     public void saveAllRentals() {
@@ -93,8 +120,11 @@ public class RentalManager {
 
         for (Map.Entry<String, Rental> entry : rentals.entrySet()) {
             Rental rental = entry.getValue();
-            String path = "rentals." + rental.getRegionName();
+            // Use composite key (world:region) for unique identification
+            String path = "rentals." + rental.getCompositeKey();
 
+            rentalsConfig.set(path + ".region-name", rental.getRegionName());
+            rentalsConfig.set(path + ".world", rental.getWorldName());
             rentalsConfig.set(path + ".player-uuid", rental.getPlayerUUID().toString());
             rentalsConfig.set(path + ".player-name", rental.getPlayerName());
             rentalsConfig.set(path + ".start-date", rental.getStartDate());
@@ -124,9 +154,11 @@ public class RentalManager {
         }
     }
     
-    public boolean createRental(String regionName, Player player, int days, double price) {
+    public boolean createRental(String regionName, org.bukkit.World world, Player player, int days, double price) {
+        String compositeKey = world.getName() + ":" + regionName;
+
         // Check if region is already rented
-        if (isRented(regionName)) {
+        if (isRented(regionName, world)) {
             return false;
         }
 
@@ -138,73 +170,75 @@ public class RentalManager {
 
         // Capture region state with WorldEdit before renting (if enabled)
         if (plugin.getConfigManager().isBlockRestoration()) {
-            boolean captured = plugin.getWorldEditManager().captureRegion(regionName);
+            boolean captured = plugin.getWorldEditManager().captureRegion(regionName, world);
             if (!captured && plugin.getConfigManager().isDebug()) {
-                plugin.getLogger().warning("Failed to capture region state for: " + regionName);
+                plugin.getLogger().warning("Failed to capture region state for: " + regionName + " in world " + world.getName());
             }
         }
 
         // Create the rental
         long endDate = System.currentTimeMillis() + (days * 24L * 60L * 60L * 1000L);
-        Rental rental = new Rental(regionName, player.getUniqueId(), player.getName(), endDate, price);
+        Rental rental = new Rental(regionName, world.getName(), player.getUniqueId(), player.getName(), endDate, price);
 
-        rentals.put(regionName, rental);
+        rentals.put(compositeKey, rental);
 
         // Add player to region
-        plugin.getWorldGuardManager().addPlayerToRegion(regionName, player.getUniqueId());
+        plugin.getWorldGuardManager().addPlayerToRegion(regionName, world, player.getUniqueId());
 
-        // Update sign
-        plugin.getSignManager().updateSign(regionName);
+        // Mark sign as dirty for next update cycle
+        plugin.getSignManager().markSignDirty(regionName, world);
 
         // Save
         saveAllRentals();
 
         return true;
     }
-    
-    public boolean extendRental(String regionName, Player player, int days, double price) {
-        Rental rental = rentals.get(regionName);
-        
+
+    public boolean extendRental(String regionName, org.bukkit.World world, Player player, int days, double price) {
+        String compositeKey = world.getName() + ":" + regionName;
+        Rental rental = rentals.get(compositeKey);
+
         if (rental == null || !rental.getPlayerUUID().equals(player.getUniqueId())) {
             return false;
         }
-        
+
         // Check extension limit
         if (rental.getExtensionCount() >= plugin.getConfigManager().getMaxExtensions()) {
             player.sendMessage(plugin.getConfigManager().getMessage("max-extensions-reached"));
             return false;
         }
-        
+
         // Extend the rental
         rental.extendRental(days, price);
-        
-        // Update sign
-        plugin.getSignManager().updateSign(regionName);
-        
+
+        // Mark sign as dirty for next update cycle
+        plugin.getSignManager().markSignDirty(regionName, world);
+
         // Save
         saveAllRentals();
-        
+
         return true;
     }
-    
-    public void expireRental(String regionName) {
-        Rental rental = rentals.get(regionName);
+
+    public void expireRental(String regionName, org.bukkit.World world) {
+        String compositeKey = world.getName() + ":" + regionName;
+        Rental rental = rentals.get(compositeKey);
 
         if (rental == null) {
             return;
         }
 
         // Remove player from region
-        plugin.getWorldGuardManager().removePlayerFromRegion(regionName, rental.getPlayerUUID());
+        plugin.getWorldGuardManager().removePlayerFromRegion(regionName, world, rental.getPlayerUUID());
 
         // Store container items and player-placed blocks (must happen BEFORE restoration)
         if (plugin.getConfigManager().isItemStorage()) {
-            plugin.getStorageManager().storeItemsAndBlocksFromRegion(regionName, rental.getPlayerUUID());
+            plugin.getStorageManager().storeItemsAndBlocksFromRegion(regionName, world, rental.getPlayerUUID());
         }
 
         // Remove EzChestShop shops from region (AFTER storage scan, BEFORE restoration)
         if (plugin.getEzChestShopManager() != null && plugin.getEzChestShopManager().isEnabled()) {
-            int shopsRemoved = plugin.getEzChestShopManager().removeShopsInRegion(regionName);
+            int shopsRemoved = plugin.getEzChestShopManager().removeShopsInRegion(regionName, world);
 
             // Notify player if configured and shops were removed
             if (shopsRemoved > 0 && plugin.getConfigManager().isEzChestShopNotifyOnRemoval()) {
@@ -220,25 +254,26 @@ public class RentalManager {
 
         // Restore region blocks with WorldEdit (if enabled)
         if (plugin.getConfigManager().isBlockRestoration()) {
-            boolean restored = plugin.getWorldEditManager().restoreRegion(regionName);
+            boolean restored = plugin.getWorldEditManager().restoreRegion(regionName, world);
             if (restored) {
-                plugin.getLogger().info("Restored blocks for region: " + regionName);
+                plugin.getLogger().info("Restored blocks for region: " + regionName + " in world " + world.getName());
             } else if (plugin.getConfigManager().isDebug()) {
-                plugin.getLogger().warning("Failed to restore blocks for region: " + regionName);
+                plugin.getLogger().warning("Failed to restore blocks for region: " + regionName + " in world " + world.getName());
             }
         }
 
         // Remove rental
-        rentals.remove(regionName);
+        rentals.remove(compositeKey);
 
-        // Update sign
-        plugin.getSignManager().updateSign(regionName);
+        // Mark sign as dirty for next update cycle
+        plugin.getSignManager().markSignDirty(regionName, world);
 
         // Save
         saveAllRentals();
 
-        plugin.getLogger().info("Rental expired for region " + regionName);
+        plugin.getLogger().info("Rental expired for region " + regionName + " in world " + world.getName());
     }
+
 
     /**
      * Issues a refund to a player with safety checks and audit trail
@@ -336,7 +371,8 @@ public class RentalManager {
         }
 
         // Get extension price per day from config
-        double extensionPrice = plugin.getConfigManager().getExtensionPrice(rental.getRegionName());
+        org.bukkit.World world = plugin.getServer().getWorld(rental.getWorldName());
+        double extensionPrice = plugin.getConfigManager().getExtensionPrice(rental.getRegionName(), world);
         double totalCost = extensionPrice * days;
 
         // Check if player has enough money
@@ -354,8 +390,10 @@ public class RentalManager {
             // Save
             saveAllRentals();
 
-            // Update sign
-            plugin.getSignManager().updateSign(rental.getRegionName());
+            // Mark sign as dirty for next update cycle
+            if (world != null) {
+                plugin.getSignManager().markSignDirty(rental.getRegionName(), world);
+            }
 
             // Log
             String formattedAmount = String.format(plugin.getConfigManager().getCurrencyFormat(), totalCost);
@@ -371,10 +409,12 @@ public class RentalManager {
     /**
      * Resets a rental with net refund (prevents double-refunds) for admin use
      * @param regionName The region to reset
+     * @param world The world the region is in
      * @return A map containing refund details (playerUUID, playerName, refundAmount, alreadyRefunded) or null if rental doesn't exist
      */
-    public Map<String, Object> resetRentalWithRefund(String regionName) {
-        Rental rental = rentals.get(regionName);
+    public Map<String, Object> resetRentalWithRefund(String regionName, org.bukkit.World world) {
+        String compositeKey = world.getName() + ":" + regionName;
+        Rental rental = rentals.get(compositeKey);
 
         if (rental == null) {
             return null;
@@ -406,7 +446,7 @@ public class RentalManager {
         }
 
         // Now expire the rental (this removes player from region, stores items, restores blocks, etc.)
-        expireRental(regionName);
+        expireRental(regionName, world);
 
         // Return details for admin notification
         Map<String, Object> refundDetails = new HashMap<>();
@@ -419,31 +459,27 @@ public class RentalManager {
         return refundDetails;
     }
 
-    /**
-     * @deprecated Use resetRentalWithRefund for admin resets to ensure proper refunds
-     */
-    @Deprecated
-    public void resetRental(String regionName) {
-        expireRental(regionName);
-    }
-    
-    public void resetRentalTime(String regionName, int days) {
-        Rental rental = rentals.get(regionName);
+
+
+    public void resetRentalTime(String regionName, org.bukkit.World world, int days) {
+        String compositeKey = world.getName() + ":" + regionName;
+        Rental rental = rentals.get(compositeKey);
         if (rental != null) {
             rental.resetTime(days);
-            plugin.getSignManager().updateSign(regionName);
+            plugin.getSignManager().updateSign(regionName, world);
             saveAllRentals();
         }
     }
-    
-    public boolean isRented(String regionName) {
-        return rentals.containsKey(regionName);
+
+    public boolean isRented(String regionName, org.bukkit.World world) {
+        String compositeKey = world.getName() + ":" + regionName;
+        return rentals.containsKey(compositeKey);
     }
-    
-    public Rental getRental(String regionName) {
-        return rentals.get(regionName);
+
+    public Rental getRental(String regionName, org.bukkit.World world) {
+        String compositeKey = world.getName() + ":" + regionName;
+        return rentals.get(compositeKey);
     }
-    
     public List<Rental> getPlayerRentals(UUID playerUUID) {
         return rentals.values().stream()
                 .filter(rental -> rental.getPlayerUUID().equals(playerUUID))

@@ -95,17 +95,18 @@ public class StorageManager implements Listener {
     }
     
     /**
-     * Scans and collects items from containers in a region
+     * Scans and collects items from containers in a region (world-aware)
      * Also clears the containers
+     * @param regionName The region name
+     * @param world The world containing the region
      * @return List of ItemStacks found in containers
      */
-    public List<ItemStack> collectItemsFromRegion(String regionName) {
+    public List<ItemStack> collectItemsFromRegion(String regionName, World world) {
         List<ItemStack> allItems = new ArrayList<>();
         Map<Material, Integer> containerCounts = new HashMap<>(); // Track container types and counts
 
-        World world = findWorldForRegion(regionName);
         if (world == null) {
-            plugin.getLogger().warning("Could not find world for region " + regionName);
+            plugin.getLogger().warning("World is null for region " + regionName);
             return allItems;
         }
 
@@ -122,9 +123,10 @@ public class StorageManager implements Listener {
         }
 
         // Get the schematic to compare against (for player-placed container detection)
-        Clipboard clipboard = plugin.getWorldEditManager().getClipboard(regionName);
+        String compositeKey = world.getName() + ":" + regionName;
+        Clipboard clipboard = plugin.getWorldEditManager().getClipboard(compositeKey);
         if (clipboard == null) {
-            plugin.getLogger().warning("No schematic found for region " + regionName + " - counting all containers");
+            plugin.getLogger().warning("No schematic found for region " + regionName + " in world " + world.getName() + " - counting all containers");
         }
 
         // Get region bounds
@@ -210,10 +212,27 @@ public class StorageManager implements Listener {
     }
 
     /**
-     * Legacy method - stores items from containers (backward compatibility)
+     * Deprecated: Use world-aware version instead
+     * @deprecated Use {@link #collectItemsFromRegion(String, World)} instead
      */
-    public void storeItemsFromRegion(String regionName, UUID playerUUID) {
-        List<ItemStack> allItems = collectItemsFromRegion(regionName);
+    @Deprecated
+    public List<ItemStack> collectItemsFromRegion(String regionName) {
+        World world = findWorldForRegion(regionName);
+        if (world == null) {
+            plugin.getLogger().warning("Could not find world for region " + regionName);
+            return new ArrayList<>();
+        }
+        return collectItemsFromRegion(regionName, world);
+    }
+
+    /**
+     * Stores items from containers in a region (world-aware)
+     * @param regionName The region name
+     * @param world The world containing the region
+     * @param playerUUID The player's UUID
+     */
+    public void storeItemsFromRegion(String regionName, World world, UUID playerUUID) {
+        List<ItemStack> allItems = collectItemsFromRegion(regionName, world);
 
         // Store items if any were found
         if (!allItems.isEmpty()) {
@@ -238,15 +257,18 @@ public class StorageManager implements Listener {
     }
 
     /**
-     * Stores both container items and player-placed blocks together
+     * Stores both container items and player-placed blocks together (world-aware)
      * This is the recommended method for rental expiration
+     * @param regionName The region name
+     * @param world The world containing the region
+     * @param playerUUID The player's UUID
      */
-    public void storeItemsAndBlocksFromRegion(String regionName, UUID playerUUID) {
+    public void storeItemsAndBlocksFromRegion(String regionName, World world, UUID playerUUID) {
         // Collect container items
-        List<ItemStack> containerItems = collectItemsFromRegion(regionName);
+        List<ItemStack> containerItems = collectItemsFromRegion(regionName, world);
 
         // Collect player-placed blocks
-        List<ItemStack> playerBlocks = storePlayerBlocksFromRegion(regionName, playerUUID);
+        List<ItemStack> playerBlocks = storePlayerBlocksFromRegion(regionName, world, playerUUID);
 
         // Store both together
         if (!containerItems.isEmpty() || !playerBlocks.isEmpty()) {
@@ -273,12 +295,13 @@ public class StorageManager implements Listener {
     }
 
     /**
-     * Stores player-placed blocks from a region by comparing current state to original schematic
+     * Stores player-placed blocks from a region by comparing current state to original schematic (world-aware)
      * @param regionName The WorldGuard region name
+     * @param world The world containing the region
      * @param playerUUID The player's UUID
      * @return List of ItemStacks representing player-placed blocks
      */
-    public List<ItemStack> storePlayerBlocksFromRegion(String regionName, UUID playerUUID) {
+    public List<ItemStack> storePlayerBlocksFromRegion(String regionName, World world, UUID playerUUID) {
         List<ItemStack> playerBlocks = new ArrayList<>();
 
         // Check if block storage is enabled
@@ -286,16 +309,16 @@ public class StorageManager implements Listener {
             return playerBlocks;
         }
 
-        // Get the original schematic
-        Clipboard clipboard = plugin.getWorldEditManager().getClipboard(regionName);
+        // Get the original schematic using composite key
+        String compositeKey = world.getName() + ":" + regionName;
+        Clipboard clipboard = plugin.getWorldEditManager().getClipboard(compositeKey);
         if (clipboard == null) {
-            plugin.getLogger().warning("No schematic found for region " + regionName + " - cannot compare blocks");
+            plugin.getLogger().warning("No schematic found for region " + regionName + " in world " + world.getName() + " - cannot compare blocks");
             return playerBlocks;
         }
 
-        World world = findWorldForRegion(regionName);
         if (world == null) {
-            plugin.getLogger().warning("Could not find world for region " + regionName);
+            plugin.getLogger().warning("World is null for region " + regionName);
             return playerBlocks;
         }
 
@@ -478,70 +501,80 @@ public class StorageManager implements Listener {
     
     private void openGUIPage(Player player, StorageGUISession session, int page) {
         int totalPages = session.getTotalPages();
-        
+
         // Validate page number
         if (page < 0) page = 0;
         if (page >= totalPages) page = totalPages - 1;
-        
+
         session.currentPage = page;
-        
+
         // Create inventory for this page
-        String title = totalPages > 1 
+        String title = totalPages > 1
             ? "Retrieved Items - Page " + (page + 1) + "/" + totalPages
             : "Retrieve Your Items";
-        
+
         Inventory gui = Bukkit.createInventory(new StorageGUIHolder(player.getUniqueId()), 54, title);
-        
-        // Add items for current page
-        int startIndex = page * ITEMS_PER_PAGE;
-        int endIndex = Math.min(startIndex + ITEMS_PER_PAGE, session.items.size());
-        
-        for (int i = startIndex; i < endIndex; i++) {
-            ItemStack item = session.items.get(i);
-            if (item != null) {
-                gui.addItem(item);
+
+        // Synchronized block to prevent concurrent modification of session.items
+        synchronized (session.items) {
+            // Add items for current page
+            int startIndex = page * ITEMS_PER_PAGE;
+            int endIndex = Math.min(startIndex + ITEMS_PER_PAGE, session.items.size());
+
+            // Bounds check to prevent IndexOutOfBoundsException
+            if (startIndex >= session.items.size()) {
+                plugin.getLogger().warning("Page index out of bounds for player " + player.getName() +
+                    " (startIndex: " + startIndex + ", items: " + session.items.size() + ")");
+                return;
+            }
+
+            for (int i = startIndex; i < endIndex; i++) {
+                ItemStack item = session.items.get(i);
+                if (item != null) {
+                    gui.addItem(item);
+                }
+            }
+
+            // Add navigation buttons if multiple pages
+            if (totalPages > 1) {
+                // Previous page button
+                if (page > 0) {
+                    ItemStack prevButton = createNavigationButton(
+                        Material.ARROW,
+                        ChatColor.GREEN + "« Previous Page",
+                        ChatColor.GRAY + "Click to go to page " + page
+                    );
+                    gui.setItem(45, prevButton);
+                }
+
+                // Page info
+                ItemStack pageInfo = createNavigationButton(
+                    Material.PAPER,
+                    ChatColor.YELLOW + "Page " + (page + 1) + " of " + totalPages,
+                    ChatColor.GRAY + "Total items: " + session.items.size()
+                );
+                gui.setItem(49, pageInfo);
+
+                // Next page button
+                if (page < totalPages - 1) {
+                    ItemStack nextButton = createNavigationButton(
+                        Material.ARROW,
+                        ChatColor.GREEN + "Next Page »",
+                        ChatColor.GRAY + "Click to go to page " + (page + 2)
+                    );
+                    gui.setItem(53, nextButton);
+                }
+
+                // Close button
+                ItemStack closeButton = createNavigationButton(
+                    Material.BARRIER,
+                    ChatColor.RED + "Close",
+                    ChatColor.GRAY + "Click to close and save items"
+                );
+                gui.setItem(50, closeButton);
             }
         }
-        
-        // Add navigation buttons if multiple pages
-        if (totalPages > 1) {
-            // Previous page button
-            if (page > 0) {
-                ItemStack prevButton = createNavigationButton(
-                    Material.ARROW,
-                    ChatColor.GREEN + "« Previous Page",
-                    ChatColor.GRAY + "Click to go to page " + page
-                );
-                gui.setItem(45, prevButton);
-            }
-            
-            // Page info
-            ItemStack pageInfo = createNavigationButton(
-                Material.PAPER,
-                ChatColor.YELLOW + "Page " + (page + 1) + " of " + totalPages,
-                ChatColor.GRAY + "Total items: " + session.items.size()
-            );
-            gui.setItem(49, pageInfo);
-            
-            // Next page button
-            if (page < totalPages - 1) {
-                ItemStack nextButton = createNavigationButton(
-                    Material.ARROW,
-                    ChatColor.GREEN + "Next Page »",
-                    ChatColor.GRAY + "Click to go to page " + (page + 2)
-                );
-                gui.setItem(53, nextButton);
-            }
-            
-            // Close button
-            ItemStack closeButton = createNavigationButton(
-                Material.BARRIER,
-                ChatColor.RED + "Close",
-                ChatColor.GRAY + "Click to close and save items"
-            );
-            gui.setItem(50, closeButton);
-        }
-        
+
         player.openInventory(gui);
     }
     
@@ -675,7 +708,11 @@ public class StorageManager implements Listener {
                 // Some items remain - save them back to storage
                 plugin.getStorageConfig().updatePartialStorage(playerUUID, remainingItems);
 
-                int itemsTaken = session.items.size() - remainingItems.size();
+                // Synchronized access to session.items for thread safety
+                int itemsTaken;
+                synchronized (session.items) {
+                    itemsTaken = session.items.size() - remainingItems.size();
+                }
                 player.sendMessage(ChatColor.YELLOW + "Retrieved " + itemsTaken + " items. " +
                                  remainingItems.size() + " items remain in storage. Use /rrretrieve to get them.");
             }

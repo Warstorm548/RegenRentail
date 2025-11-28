@@ -13,6 +13,7 @@ import java.util.UUID;
 public class Rental {
 
     private final String regionName;
+    private final String worldName; // World the rental region is in
     private final UUID playerUUID;
     private final String playerName;
     private final long startDate;
@@ -56,8 +57,9 @@ public class Rental {
     }
     
     // Constructor for new rentals
-    public Rental(String regionName, UUID playerUUID, String playerName, long endDate, double price) {
+    public Rental(String regionName, String worldName, UUID playerUUID, String playerName, long endDate, double price) {
         this.regionName = regionName;
+        this.worldName = worldName;
         this.playerUUID = playerUUID;
         this.playerName = playerName;
         this.startDate = System.currentTimeMillis();
@@ -71,10 +73,11 @@ public class Rental {
     }
 
     // Constructor for loading from storage (with refund data)
-    public Rental(String regionName, UUID playerUUID, String playerName, long startDate, long endDate,
+    public Rental(String regionName, String worldName, UUID playerUUID, String playerName, long startDate, long endDate,
                   int extensionCount, double totalPaid, double initialPrice, double totalRefunded,
                   List<RefundRecord> refundHistory) {
         this.regionName = regionName;
+        this.worldName = worldName;
         this.playerUUID = playerUUID;
         this.playerName = playerName;
         this.startDate = startDate;
@@ -88,17 +91,26 @@ public class Rental {
     }
 
     // Backward compatibility constructor (for old data without refund tracking)
-    public Rental(String regionName, UUID playerUUID, String playerName, long startDate, long endDate,
+    public Rental(String regionName, String worldName, UUID playerUUID, String playerName, long startDate, long endDate,
                   int extensionCount, double totalPaid, double initialPrice) {
-        this(regionName, playerUUID, playerName, startDate, endDate, extensionCount, totalPaid,
+        this(regionName, worldName, playerUUID, playerName, startDate, endDate, extensionCount, totalPaid,
              initialPrice, 0.0, new ArrayList<>());
     }
 
     // Backward compatibility constructor (for old data without initialPrice or refund tracking)
-    public Rental(String regionName, UUID playerUUID, String playerName, long startDate, long endDate,
+    public Rental(String regionName, String worldName, UUID playerUUID, String playerName, long startDate, long endDate,
                   int extensionCount, double totalPaid) {
-        this(regionName, playerUUID, playerName, startDate, endDate, extensionCount, totalPaid,
+        this(regionName, worldName, playerUUID, playerName, startDate, endDate, extensionCount, totalPaid,
              totalPaid, 0.0, new ArrayList<>());
+    }
+
+    // Backward compatibility constructor (for migration from old data without world field)
+    // Defaults to first world (usually "world")
+    public Rental(String regionName, UUID playerUUID, String playerName, long startDate, long endDate,
+                  int extensionCount, double totalPaid, double initialPrice, double totalRefunded,
+                  List<RefundRecord> refundHistory, String defaultWorldName) {
+        this(regionName, defaultWorldName, playerUUID, playerName, startDate, endDate, extensionCount, totalPaid,
+             initialPrice, totalRefunded, refundHistory);
     }
     
     public boolean isExpired() {
@@ -193,6 +205,7 @@ public class Rental {
 
     // Getters
     public String getRegionName() { return regionName; }
+    public String getWorldName() { return worldName; }
     public UUID getPlayerUUID() { return playerUUID; }
     public String getPlayerName() { return playerName; }
     public long getStartDate() { return startDate; }
@@ -214,11 +227,19 @@ public class Rental {
         if (this == obj) return true;
         if (obj == null || getClass() != obj.getClass()) return false;
         Rental rental = (Rental) obj;
-        return regionName.equals(rental.regionName);
+        return regionName.equals(rental.regionName) && worldName.equals(rental.worldName);
     }
-    
+
     @Override
     public int hashCode() {
-        return regionName.hashCode();
+        return (worldName + ":" + regionName).hashCode();
+    }
+
+    /**
+     * Gets a unique composite key for this rental (world:region)
+     * @return The composite key string
+     */
+    public String getCompositeKey() {
+        return worldName + ":" + regionName;
     }
 }

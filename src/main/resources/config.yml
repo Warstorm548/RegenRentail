@@ -374,6 +374,8 @@ messages:
   # Region messages
   region-not-found: '&cRegion &e{region}&c not found!'
   region-not-setup: '&cRegion &e{region}&c is not set up for rental!'
+  invalid-region-format: '&cInvalid format! Console must use world:region format (e.g., world:shop1)'
+  region-not-found-in-world: '&cRegion &e{region}&c not found in world &e{world}&c!'
   
   # Rental messages
   already-rented: '&cThis region is already rented!'

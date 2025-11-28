@@ -239,51 +239,51 @@ public class ConfigManager {
         return validated;
     }
 
-    public double getPriceForRegion(String region) {
+    public double getPriceForRegion(String region, org.bukkit.World world) {
         // Check RegionsConfig first if available
         if (plugin.getRegionsConfig() != null) {
-            return plugin.getRegionsConfig().getRegionPrice(region, defaultPrice);
+            return plugin.getRegionsConfig().getRegionPrice(region, world, defaultPrice);
         }
         // Fallback to old config.yml method or default
         return regionPrices.getOrDefault(region, defaultPrice);
     }
 
-    public int getDurationForRegion(String region) {
+    public int getDurationForRegion(String region, org.bukkit.World world) {
         // Check RegionsConfig first if available
         if (plugin.getRegionsConfig() != null) {
-            return plugin.getRegionsConfig().getRegionDuration(region, defaultDuration);
+            return plugin.getRegionsConfig().getRegionDuration(region, world, defaultDuration);
         }
         // Fallback to old config.yml method or default
         return config.getInt("regions." + region + ".duration", defaultDuration);
     }
 
-    public int getMaxExtensionsForRegion(String region) {
+    public int getMaxExtensionsForRegion(String region, org.bukkit.World world) {
         if (plugin.getRegionsConfig() != null) {
-            return plugin.getRegionsConfig().getRegionMaxExtensions(region, maxExtensions);
+            return plugin.getRegionsConfig().getRegionMaxExtensions(region, world, maxExtensions);
         }
         return maxExtensions;
     }
 
-    public double getExtensionPriceForRegion(String region) {
+    public double getExtensionPriceForRegion(String region, org.bukkit.World world) {
         // Get extension price per day from RegionsConfig or calculate it
-        double calculatedPrice = getExtensionPrice(region);
+        double calculatedPrice = getExtensionPrice(region, world);
         if (plugin.getRegionsConfig() != null) {
-            return plugin.getRegionsConfig().getRegionExtensionPrice(region, calculatedPrice);
+            return plugin.getRegionsConfig().getRegionExtensionPrice(region, world, calculatedPrice);
         }
         return calculatedPrice;
     }
 
-    public boolean getAllowExtensionsForRegion(String region) {
+    public boolean getAllowExtensionsForRegion(String region, org.bukkit.World world) {
         boolean defaultAllow = config.getBoolean("extension.enabled", true);
         if (plugin.getRegionsConfig() != null) {
-            return plugin.getRegionsConfig().getRegionAllowExtensions(region, defaultAllow);
+            return plugin.getRegionsConfig().getRegionAllowExtensions(region, world, defaultAllow);
         }
         return defaultAllow;
     }
 
-    public int getExtensionDurationForRegion(String region) {
+    public int getExtensionDurationForRegion(String region, org.bukkit.World world) {
         if (plugin.getRegionsConfig() != null) {
-            return plugin.getRegionsConfig().getRegionExtensionDuration(region, extensionDuration);
+            return plugin.getRegionsConfig().getRegionExtensionDuration(region, world, extensionDuration);
         }
         return extensionDuration;
     }
@@ -319,7 +319,7 @@ public class ConfigManager {
     public double getDurationAddPricePerDay() { return config.getDouble("duration.add-price-per-day", 0.0); }
 
     // Extension price calculation helper
-    public double getExtensionPrice(String region) {
+    public double getExtensionPrice(String region, org.bukkit.World world) {
         // If custom price per day is configured, use it
         double pricePerDay = getDurationAddPricePerDay();
         if (pricePerDay > 0) {
@@ -327,8 +327,8 @@ public class ConfigManager {
         }
 
         // Otherwise, calculate from region price and duration
-        double regionPrice = getPriceForRegion(region);
-        int duration = getDurationForRegion(region);
+        double regionPrice = getPriceForRegion(region, world);
+        int duration = getDurationForRegion(region, world);
 
         if (duration <= 0) {
             return regionPrice; // Fallback to full price

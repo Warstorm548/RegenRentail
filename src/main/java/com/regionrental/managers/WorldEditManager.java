@@ -50,24 +50,24 @@ public class WorldEditManager {
     /**
      * Captures the current state of a WorldGuard region
      * @param regionName The WorldGuard region name
+     * @param world The world the region is in
      * @return true if capture was successful
      */
-    public boolean captureRegion(String regionName) {
+    public boolean captureRegion(String regionName, World world) {
         if (!plugin.getConfigManager().isBlockRestoration()) {
             return false; // Block restoration disabled
         }
 
         try {
             // Get the WorldGuard region
-            ProtectedRegion wgRegion = getWorldGuardRegion(regionName);
+            ProtectedRegion wgRegion = getWorldGuardRegion(regionName, world);
             if (wgRegion == null) {
-                plugin.getLogger().warning("Could not find WorldGuard region: " + regionName);
+                plugin.getLogger().warning("Could not find WorldGuard region: " + regionName + " in world " + world.getName());
                 return false;
             }
 
-            // Get the world
-            World bukkitWorld = Bukkit.getWorlds().get(0); // Default to first world
-            com.sk89q.worldedit.world.World weWorld = BukkitAdapter.adapt(bukkitWorld);
+            // Convert Bukkit world to WorldEdit world
+            com.sk89q.worldedit.world.World weWorld = BukkitAdapter.adapt(world);
 
             // Convert WorldGuard region to WorldEdit region
             BlockVector3 min = wgRegion.getMinimumPoint();
@@ -90,44 +90,53 @@ public class WorldEditManager {
                 Operations.complete(copy);
             }
 
-            // Store clipboard
-            savedRegions.put(regionName, clipboard);
+            // Store clipboard with world-aware key
+            String compositeKey = world.getName() + ":" + regionName;
+            savedRegions.put(compositeKey, clipboard);
 
-            // Save to disk
-            saveSchematic(regionName, clipboard);
+            // Save to disk with world-aware filename
+            saveSchematic(compositeKey, clipboard);
 
             if (plugin.getConfigManager().isDebug()) {
-                plugin.getLogger().info("Captured region state for: " + regionName);
+                plugin.getLogger().info("Captured region state for: " + regionName + " in world " + world.getName());
             }
 
             return true;
 
         } catch (Exception e) {
-            plugin.getLogger().log(Level.SEVERE, "Failed to capture region: " + regionName, e);
+            plugin.getLogger().log(Level.SEVERE, "Failed to capture region: " + regionName + " in world " + world.getName(), e);
             return false;
         }
+    }
+
+    // Backward compatibility - uses first world
+    @Deprecated
+    public boolean captureRegion(String regionName) {
+        World world = Bukkit.getWorlds().get(0);
+        return captureRegion(regionName, world);
     }
 
     /**
      * Restores a region to its captured state
      * @param regionName The WorldGuard region name
+     * @param world The world the region is in
      * @return true if restoration was successful
      */
-    public boolean restoreRegion(String regionName) {
+    public boolean restoreRegion(String regionName, World world) {
         if (!plugin.getConfigManager().isBlockRestoration()) {
             return false; // Block restoration disabled
         }
 
-        Clipboard clipboard = savedRegions.get(regionName);
+        String compositeKey = world.getName() + ":" + regionName;
+        Clipboard clipboard = savedRegions.get(compositeKey);
         if (clipboard == null) {
-            plugin.getLogger().warning("No saved state found for region: " + regionName);
+            plugin.getLogger().warning("No saved state found for region: " + regionName + " in world " + world.getName());
             return false;
         }
 
         try {
-            // Get the world
-            World bukkitWorld = Bukkit.getWorlds().get(0); // Default to first world
-            com.sk89q.worldedit.world.World weWorld = BukkitAdapter.adapt(bukkitWorld);
+            // Convert Bukkit world to WorldEdit world
+            com.sk89q.worldedit.world.World weWorld = BukkitAdapter.adapt(world);
 
             // Paste the clipboard back
             try (EditSession editSession = WorldEdit.getInstance().newEditSession(weWorld)) {
@@ -141,21 +150,28 @@ public class WorldEditManager {
             }
 
             if (plugin.getConfigManager().isDebug()) {
-                plugin.getLogger().info("Restored region state for: " + regionName);
+                plugin.getLogger().info("Restored region state for: " + regionName + " in world " + world.getName());
             }
 
             // Remove from memory if auto-delete is enabled
             if (plugin.getConfigManager().isAutoDeleteSchematics()) {
-                savedRegions.remove(regionName);
-                deleteSchematic(regionName);
+                savedRegions.remove(compositeKey);
+                deleteSchematic(compositeKey);
             }
 
             return true;
 
         } catch (Exception e) {
-            plugin.getLogger().log(Level.SEVERE, "Failed to restore region: " + regionName, e);
+            plugin.getLogger().log(Level.SEVERE, "Failed to restore region: " + regionName + " in world " + world.getName(), e);
             return false;
         }
+    }
+
+    // Backward compatibility - uses first world
+    @Deprecated
+    public boolean restoreRegion(String regionName) {
+        World world = Bukkit.getWorlds().get(0);
+        return restoreRegion(regionName, world);
     }
 
     /**
@@ -185,12 +201,11 @@ public class WorldEditManager {
     /**
      * Gets the WorldGuard region
      */
-    private ProtectedRegion getWorldGuardRegion(String regionName) {
-        World bukkitWorld = Bukkit.getWorlds().get(0);
+    private ProtectedRegion getWorldGuardRegion(String regionName, World world) {
         RegionManager regionManager = WorldGuard.getInstance()
             .getPlatform()
             .getRegionContainer()
-            .get(BukkitAdapter.adapt(bukkitWorld));
+            .get(BukkitAdapter.adapt(world));
 
         if (regionManager == null) {
             return null;
