@@ -185,8 +185,8 @@ public class RentalManager {
         // Add player to region
         plugin.getWorldGuardManager().addPlayerToRegion(regionName, world, player.getUniqueId());
 
-        // Update sign
-        plugin.getSignManager().updateSign(regionName, world);
+        // Mark sign as dirty for next update cycle
+        plugin.getSignManager().markSignDirty(regionName, world);
 
         // Save
         saveAllRentals();
@@ -211,8 +211,8 @@ public class RentalManager {
         // Extend the rental
         rental.extendRental(days, price);
 
-        // Update sign
-        plugin.getSignManager().updateSign(regionName, world);
+        // Mark sign as dirty for next update cycle
+        plugin.getSignManager().markSignDirty(regionName, world);
 
         // Save
         saveAllRentals();
@@ -265,8 +265,8 @@ public class RentalManager {
         // Remove rental
         rentals.remove(compositeKey);
 
-        // Update sign
-        plugin.getSignManager().updateSign(regionName, world);
+        // Mark sign as dirty for next update cycle
+        plugin.getSignManager().markSignDirty(regionName, world);
 
         // Save
         saveAllRentals();
@@ -390,8 +390,10 @@ public class RentalManager {
             // Save
             saveAllRentals();
 
-            // Update sign
-            plugin.getSignManager().updateSign(rental.getRegionName());
+            // Mark sign as dirty for next update cycle
+            if (world != null) {
+                plugin.getSignManager().markSignDirty(rental.getRegionName(), world);
+            }
 
             // Log
             String formattedAmount = String.format(plugin.getConfigManager().getCurrencyFormat(), totalCost);

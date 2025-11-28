@@ -96,12 +96,12 @@ public class OverrideCommand implements CommandExecutor, TabCompleter {
 
         plugin.getRegionsConfig().setRegionPrice(regionName, world, price);
 
+        // Mark sign dirty to update with new price
+        plugin.getSignManager().markSignDirty(regionName, world);
+
         String formattedPrice = String.format(plugin.getConfigManager().getCurrencyFormat(), price);
         sender.sendMessage(ChatColor.GREEN + "Set rental price for " + ChatColor.YELLOW + parsed.getCompositeKey() +
                 ChatColor.GREEN + " to " + ChatColor.GOLD + formattedPrice);
-
-        // Update sign if it exists
-        plugin.getSignManager().updateSign(regionName, world);
 
         plugin.getLogger().info(sender.getName() + " set price override for region " + parsed.getCompositeKey() + " to " + price);
         return true;
@@ -141,10 +141,11 @@ public class OverrideCommand implements CommandExecutor, TabCompleter {
 
         plugin.getRegionsConfig().setRegionDuration(regionName, world, days);
 
+        // Mark sign dirty to update with new duration
+        plugin.getSignManager().markSignDirty(regionName, world);
+
         sender.sendMessage(ChatColor.GREEN + "Set rental duration for " + ChatColor.YELLOW + parsed.getCompositeKey() +
                 ChatColor.GREEN + " to " + ChatColor.GOLD + days + " days");
-
-        plugin.getSignManager().updateSign(regionName, world);
 
         plugin.getLogger().info(sender.getName() + " set duration override for region " + parsed.getCompositeKey() + " to " + days + " days");
         return true;
@@ -183,6 +184,9 @@ public class OverrideCommand implements CommandExecutor, TabCompleter {
         }
 
         plugin.getRegionsConfig().setRegionMaxExtensions(regionName, world, maxExtensions);
+
+        // Mark sign dirty to update with new max extensions
+        plugin.getSignManager().markSignDirty(regionName, world);
 
         sender.sendMessage(ChatColor.GREEN + "Set max extensions for " + ChatColor.YELLOW + parsed.getCompositeKey() +
                 ChatColor.GREEN + " to " + ChatColor.GOLD + maxExtensions);
@@ -226,6 +230,9 @@ public class OverrideCommand implements CommandExecutor, TabCompleter {
 
         plugin.getRegionsConfig().setRegionExtensionPrice(regionName, world, price);
 
+        // Mark sign dirty to update with new extension price
+        plugin.getSignManager().markSignDirty(regionName, world);
+
         String formattedPrice = price == 0 ? "auto-calculated" :
                 String.format(plugin.getConfigManager().getCurrencyFormat(), price);
         sender.sendMessage(ChatColor.GREEN + "Set extension price for " + ChatColor.YELLOW + parsed.getCompositeKey() +
@@ -264,6 +271,9 @@ public class OverrideCommand implements CommandExecutor, TabCompleter {
         }
 
         plugin.getRegionsConfig().setRegionAllowExtensions(regionName, world, allow);
+
+        // Mark sign dirty to update with new allow extensions setting
+        plugin.getSignManager().markSignDirty(regionName, world);
 
         sender.sendMessage(ChatColor.GREEN + "Set allow extensions for " + ChatColor.YELLOW + parsed.getCompositeKey() +
                 ChatColor.GREEN + " to " + ChatColor.GOLD + allow);
@@ -306,6 +316,9 @@ public class OverrideCommand implements CommandExecutor, TabCompleter {
 
         plugin.getRegionsConfig().setRegionExtensionDuration(regionName, world, days);
 
+        // Mark sign dirty to update with new extension duration
+        plugin.getSignManager().markSignDirty(regionName, world);
+
         sender.sendMessage(ChatColor.GREEN + "Set extension duration for " + ChatColor.YELLOW + parsed.getCompositeKey() +
                 ChatColor.GREEN + " to " + ChatColor.GOLD + days + " days");
 
@@ -338,8 +351,8 @@ public class OverrideCommand implements CommandExecutor, TabCompleter {
         sender.sendMessage(ChatColor.GREEN + "Removed all custom overrides for " + ChatColor.YELLOW + parsed.getCompositeKey());
         sender.sendMessage(ChatColor.YELLOW + "Region will now use default settings from config.yml");
 
-        // Update sign to show default values
-        plugin.getSignManager().updateSign(regionName, world);
+        // Mark sign dirty to update with default values
+        plugin.getSignManager().markSignDirty(regionName, world);
 
         plugin.getLogger().info(sender.getName() + " removed overrides for region " + parsed.getCompositeKey());
         return true;

@@ -13,22 +13,37 @@ import org.bukkit.block.sign.Side;
 import org.bukkit.block.data.BlockData;
 import org.bukkit.block.data.type.WallSign;
 
+import java.util.HashSet;
 import java.util.Map;
+import java.util.Set;
 
 public class SignManager {
-    
+
     private final RegionRental plugin;
-    
+    private final Set<String> dirtySigns;  // Track signs that need updates
+
     public SignManager(RegionRental plugin) {
         this.plugin = plugin;
+        this.dirtySigns = new HashSet<>();
     }
     
     public void loadAllSigns() {
         // Migrate existing signs to include support block data
         migrateSupportBlocks();
 
-        // Signs are loaded from SignsConfig on demand
+        // Mark all signs as dirty to update them on startup
+        markAllSignsDirty();
+
+        // Update all dirty signs
         updateAllSigns();
+    }
+
+    /**
+     * Marks all signs as dirty for initial update or full refresh.
+     */
+    private void markAllSignsDirty() {
+        Map<String, Location> signs = plugin.getSignsConfig().getAllSigns();
+        dirtySigns.addAll(signs.keySet());
     }
 
     /**
@@ -285,19 +300,47 @@ public class SignManager {
         }
     }
     
-    public void updateAllSigns() {
-        Map<String, Location> signs = plugin.getSignsConfig().getAllSigns();
+    /**
+     * Marks a sign as dirty (needs update).
+     * Uses composite key format "world:region".
+     *
+     * @param regionName The region name
+     * @param world The world
+     */
+    public void markSignDirty(String regionName, World world) {
+        String compositeKey = world.getName() + ":" + regionName;
+        dirtySigns.add(compositeKey);
+    }
 
-        for (Map.Entry<String, Location> entry : signs.entrySet()) {
-            String compositeKey = entry.getKey();
-            Location location = entry.getValue();
+    /**
+     * Updates all dirty signs and clears the dirty set.
+     * This is much more efficient than updating ALL signs every 30 seconds.
+     */
+    public void updateAllSigns() {
+        if (dirtySigns.isEmpty()) {
+            return;  // Nothing to update
+        }
+
+        Map<String, Location> allSigns = plugin.getSignsConfig().getAllSigns();
+
+        // Update only dirty signs
+        for (String compositeKey : dirtySigns) {
+            Location location = allSigns.get(compositeKey);
+            if (location == null) {
+                continue;  // Sign was removed
+            }
 
             // Parse composite key "world:region"
             String regionName = WorldRegionParser.extractRegionName(compositeKey);
             World world = location.getWorld();
 
-            updateSign(regionName, world);
+            if (world != null) {
+                updateSign(regionName, world);
+            }
         }
+
+        // Clear dirty set after updating
+        dirtySigns.clear();
     }
     
     public boolean isRentalSign(Location location) {
