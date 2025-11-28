@@ -71,9 +71,10 @@ public class DurationCommand implements CommandExecutor, TabCompleter {
             return true;
         }
 
-        // For other actions, we need at least 3 arguments
+        // For other actions, we need at least 3 arguments (action, region, time)
         if (args.length < 3) {
-            showUsage(sender);
+            sender.sendMessage(ChatColor.RED + "Usage: /rrduration " + action + " <region> <time>");
+            sender.sendMessage(ChatColor.GRAY + "Example: /rrduration " + action + " shop1 7d");
             return true;
         }
 
@@ -82,13 +83,28 @@ public class DurationCommand implements CommandExecutor, TabCompleter {
         int timeArgStart = 2;
 
         // Parse the time from remaining arguments (excluding --charge flag if present)
+        // Validate we have time arguments before accessing array
+        if (timeArgStart >= args.length) {
+            sender.sendMessage(ChatColor.RED + "No time specified!");
+            showUsage(sender);
+            return true;
+        }
+
         StringBuilder timeString = new StringBuilder();
         for (int i = timeArgStart; i < args.length; i++) {
+            // Safe array access - loop condition ensures i < args.length
             if (args[i].equalsIgnoreCase("--charge")) {
                 chargePlayer = true;
                 continue;
             }
             timeString.append(args[i]).append(" ");
+        }
+
+        // Validate we got some time input
+        if (timeString.toString().trim().isEmpty()) {
+            sender.sendMessage(ChatColor.RED + "No time specified!");
+            showUsage(sender);
+            return true;
         }
 
         long millisToModify = parseTimeString(timeString.toString().trim());

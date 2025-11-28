@@ -78,8 +78,12 @@ public class WorldRegionParser {
      * @return Region name or the original key if no ":" found
      */
     public static String extractRegionName(String compositeKey) {
+        if (compositeKey == null) {
+            return null;
+        }
         if (compositeKey.contains(":")) {
-            return compositeKey.split(":", 2)[1];
+            String[] parts = compositeKey.split(":", 2);
+            return parts.length >= 2 ? parts[1] : compositeKey;
         }
         return compositeKey;
     }
@@ -91,8 +95,12 @@ public class WorldRegionParser {
      * @return World name or null if no ":" found
      */
     public static String extractWorldName(String compositeKey) {
+        if (compositeKey == null) {
+            return null;
+        }
         if (compositeKey.contains(":")) {
-            return compositeKey.split(":", 2)[0];
+            String[] parts = compositeKey.split(":", 2);
+            return parts.length >= 2 ? parts[0] : null;
         }
         return null;
     }
