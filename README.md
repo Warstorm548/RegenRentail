@@ -84,21 +84,23 @@ RegionRental/
     │   │   └── StorageConfig.java
     │   ├── listeners/               # Event listeners (1 class)
     │   │   └── SignInteractListener.java
-    │   └── managers/                # Core managers (8 classes)
-    │       ├── Rental.java          # Data model
-    │       ├── RentalManager.java
-    │       ├── SignManager.java
-    │       ├── StorageManager.java
-    │       ├── ExpirationManager.java
-    │       ├── WorldGuardManager.java
-    │       ├── WorldEditManager.java
-    │       └── EzChestShopManager.java  # EzChestShop integration
+    │   ├── managers/                # Core managers (8 classes)
+    │   │   ├── Rental.java          # Data model
+    │   │   ├── RentalManager.java
+    │   │   ├── SignManager.java
+    │   │   ├── StorageManager.java
+    │   │   ├── ExpirationManager.java
+    │   │   ├── EzChestShopManager.java  # EzChestShop integration
+    │   │   ├── WorldGuardManager.java
+    │   │   └── WorldEditManager.java
+    │   └── util/                    # Utility classes (1 class)
+    │       └── WorldRegionParser.java   # Composite key parsing (world:region)
     └── resources/
         ├── plugin.yml               # Plugin metadata
         └── config.yml               # Default configuration
 ```
 
-**Total: 26 Java classes + 2 resource files**
+**Total: 28 Java classes + 2 resource files**
 
 ## 🔨 Build Instructions
 

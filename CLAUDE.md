@@ -175,7 +175,7 @@ Config managers: `ConfigManager`, `RegionsConfig`, `SignsConfig`, `StorageConfig
 
 All commands use `/rr` prefix to avoid conflicts. The plugin attempts to register short aliases (e.g., `/reload`, `/info`) but falls back to prefixed versions if conflicts exist.
 
-**Command classes in `commands/` package (12 total):**
+**Command classes in `commands/` package (13 total):**
 - `RRCommand` - Main help command dispatcher
 - `ReloadCommand` - Reload configuration
 - `CreateSignCommand` - Create rental signs (signs use defaults until overrides set)
@@ -420,35 +420,38 @@ Add to `StorageManager.CONTAINER_TYPES` set (currently supports: chest, barrel, 
 ```
 src/main/java/com/regionrental/
 ├── RegionRental.java           # Main plugin class
-├── commands/                   # Command executors (12 classes)
-│   ├── RRCommand.java
-│   ├── ReloadCommand.java
-│   ├── CreateSignCommand.java
-│   ├── ResetCommand.java       # With full refund system
+├── commands/                   # Command executors (13 classes)
+│   ├── RRCommand.java          # Main help command dispatcher
+│   ├── ReloadCommand.java      # Reload configuration
+│   ├── CreateSignCommand.java  # Create rental signs
+│   ├── ResetCommand.java       # Reset rentals with full refund
 │   ├── RemoveCommand.java      # Complete region cleanup
-│   ├── RetrieveCommand.java
-│   ├── InfoCommand.java
-│   ├── ListCommand.java
-│   ├── ExtendCommand.java
-│   ├── DurationCommand.java    # Includes add/remove/set/reset subcommands
+│   ├── RetrieveCommand.java    # Retrieve stored items
+│   ├── InfoCommand.java        # View rental information
+│   ├── ListCommand.java        # List all rentals
+│   ├── ExtendCommand.java      # Extend rental duration
+│   ├── DurationCommand.java    # Modify rental duration (add/remove/set/reset)
 │   ├── RefundHistoryCommand.java  # View refund transaction history
-│   ├── VerifyCommand.java      # Verify region configs (shows defaults vs overrides)
-│   └── OverrideCommand.java    # Set per-region custom settings (NEW)
+│   ├── VerifyCommand.java      # Verify region configs (defaults vs overrides)
+│   └── OverrideCommand.java    # Set per-region custom settings
 ├── config/                     # Config managers (4 classes)
-│   ├── ConfigManager.java
-│   ├── RegionsConfig.java      # Per-region settings manager (NEW)
-│   ├── SignsConfig.java
-│   └── StorageConfig.java
+│   ├── ConfigManager.java      # Main configuration manager
+│   ├── RegionsConfig.java      # Per-region settings manager
+│   ├── SignsConfig.java        # Sign locations and support blocks
+│   └── StorageConfig.java      # Item storage configuration
 ├── listeners/                  # Event listeners (1 class)
-│   └── SignInteractListener.java
-└── managers/                   # Business logic managers (7 classes)
-    ├── Rental.java             # Data model
-    ├── RentalManager.java      # Rental lifecycle
-    ├── SignManager.java        # Sign management
-    ├── StorageManager.java     # Item storage
-    ├── ExpirationManager.java  # Expiration handling
-    ├── WorldGuardManager.java  # WorldGuard integration
-    └── WorldEditManager.java   # Block restoration (NEW)
+│   └── SignInteractListener.java  # Sign interaction and protection
+├── managers/                   # Business logic managers (8 classes)
+│   ├── Rental.java             # Rental data model
+│   ├── RentalManager.java      # Rental lifecycle management
+│   ├── SignManager.java        # Sign creation and updates
+│   ├── StorageManager.java     # Item storage from expired rentals
+│   ├── ExpirationManager.java  # Rental expiration handling
+│   ├── EzChestShopManager.java # EzChestShop integration (optional)
+│   ├── WorldGuardManager.java  # WorldGuard region integration
+│   └── WorldEditManager.java   # Block capture and restoration
+└── util/                       # Utility classes (1 class)
+    └── WorldRegionParser.java  # Composite key parsing (world:region)
 ```
 
 ## Recent Features
