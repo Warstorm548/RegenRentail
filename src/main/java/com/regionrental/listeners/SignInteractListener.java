@@ -2,6 +2,7 @@ package com.regionrental.listeners;
 
 import com.regionrental.RegionRental;
 import com.regionrental.managers.Rental;
+import com.regionrental.util.WorldRegionParser;
 import net.milkbowl.vault.economy.Economy;
 import org.bukkit.ChatColor;
 import org.bukkit.Location;
@@ -35,16 +36,25 @@ public class SignInteractListener implements Listener {
         }
         
         Location signLoc = event.getClickedBlock().getLocation();
-        String regionName = plugin.getSignManager().getRegionFromSign(signLoc);
-        
-        if (regionName == null) {
+        String compositeKey = plugin.getSignManager().getRegionFromSign(signLoc);
+
+        if (compositeKey == null) {
             // Not a rental sign
             return;
         }
-        
+
+        // Parse composite key to extract just the region name
+        // Composite key format: "world:region"
+        String regionName = WorldRegionParser.extractRegionName(compositeKey);
+
+        if (regionName == null) {
+            plugin.getLogger().warning("Invalid composite key format from sign: " + compositeKey);
+            return;
+        }
+
         event.setCancelled(true);
         Player player = event.getPlayer();
-        
+
         // Check if player is shift-clicking (extend rental)
         if (player.isSneaking()) {
             handleExtendRental(player, regionName);
