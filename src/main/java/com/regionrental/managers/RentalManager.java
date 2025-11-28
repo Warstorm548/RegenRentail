@@ -194,12 +194,6 @@ public class RentalManager {
         return true;
     }
 
-    // Backward compatibility method (uses player's current world)
-    @Deprecated
-    public boolean createRental(String regionName, Player player, int days, double price) {
-        return createRental(regionName, player.getWorld(), player, days, price);
-    }
-    
     public boolean extendRental(String regionName, org.bukkit.World world, Player player, int days, double price) {
         String compositeKey = world.getName() + ":" + regionName;
         Rental rental = rentals.get(compositeKey);
@@ -226,12 +220,6 @@ public class RentalManager {
         return true;
     }
 
-    // Backward compatibility method (uses player's current world)
-    @Deprecated
-    public boolean extendRental(String regionName, Player player, int days, double price) {
-        return extendRental(regionName, player.getWorld(), player, days, price);
-    }
-    
     public void expireRental(String regionName, org.bukkit.World world) {
         String compositeKey = world.getName() + ":" + regionName;
         Rental rental = rentals.get(compositeKey);
@@ -286,20 +274,6 @@ public class RentalManager {
         plugin.getLogger().info("Rental expired for region " + regionName + " in world " + world.getName());
     }
 
-    // Backward compatibility - tries to find rental in any world
-    @Deprecated
-    public void expireRental(String regionName) {
-        // Try to find the rental in any world
-        for (Rental rental : rentals.values()) {
-            if (rental.getRegionName().equals(regionName)) {
-                org.bukkit.World world = plugin.getServer().getWorld(rental.getWorldName());
-                if (world != null) {
-                    expireRental(regionName, world);
-                    return;
-                }
-            }
-        }
-    }
 
     /**
      * Issues a refund to a player with safety checks and audit trail
@@ -483,27 +457,7 @@ public class RentalManager {
         return refundDetails;
     }
 
-    // Backward compatibility - tries to find rental in any world
-    @Deprecated
-    public Map<String, Object> resetRentalWithRefund(String regionName) {
-        for (Rental rental : rentals.values()) {
-            if (rental.getRegionName().equals(regionName)) {
-                org.bukkit.World world = plugin.getServer().getWorld(rental.getWorldName());
-                if (world != null) {
-                    return resetRentalWithRefund(regionName, world);
-                }
-            }
-        }
-        return null;
-    }
 
-    /**
-     * @deprecated Use resetRentalWithRefund for admin resets to ensure proper refunds
-     */
-    @Deprecated
-    public void resetRental(String regionName) {
-        expireRental(regionName);
-    }
 
     public void resetRentalTime(String regionName, org.bukkit.World world, int days) {
         String compositeKey = world.getName() + ":" + regionName;
@@ -515,51 +469,15 @@ public class RentalManager {
         }
     }
 
-    @Deprecated
-    public void resetRentalTime(String regionName, int days) {
-        for (Rental rental : rentals.values()) {
-            if (rental.getRegionName().equals(regionName)) {
-                org.bukkit.World world = plugin.getServer().getWorld(rental.getWorldName());
-                if (world != null) {
-                    resetRentalTime(regionName, world, days);
-                    return;
-                }
-            }
-        }
-    }
-
     public boolean isRented(String regionName, org.bukkit.World world) {
         String compositeKey = world.getName() + ":" + regionName;
         return rentals.containsKey(compositeKey);
-    }
-
-    @Deprecated
-    public boolean isRented(String regionName) {
-        // Check if region is rented in any world
-        for (Rental rental : rentals.values()) {
-            if (rental.getRegionName().equals(regionName)) {
-                return true;
-            }
-        }
-        return false;
     }
 
     public Rental getRental(String regionName, org.bukkit.World world) {
         String compositeKey = world.getName() + ":" + regionName;
         return rentals.get(compositeKey);
     }
-
-    @Deprecated
-    public Rental getRental(String regionName) {
-        // Try to find rental in any world (returns first match)
-        for (Rental rental : rentals.values()) {
-            if (rental.getRegionName().equals(regionName)) {
-                return rental;
-            }
-        }
-        return null;
-    }
-    
     public List<Rental> getPlayerRentals(UUID playerUUID) {
         return rentals.values().stream()
                 .filter(rental -> rental.getPlayerUUID().equals(playerUUID))
