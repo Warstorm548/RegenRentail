@@ -501,70 +501,80 @@ public class StorageManager implements Listener {
     
     private void openGUIPage(Player player, StorageGUISession session, int page) {
         int totalPages = session.getTotalPages();
-        
+
         // Validate page number
         if (page < 0) page = 0;
         if (page >= totalPages) page = totalPages - 1;
-        
+
         session.currentPage = page;
-        
+
         // Create inventory for this page
-        String title = totalPages > 1 
+        String title = totalPages > 1
             ? "Retrieved Items - Page " + (page + 1) + "/" + totalPages
             : "Retrieve Your Items";
-        
+
         Inventory gui = Bukkit.createInventory(new StorageGUIHolder(player.getUniqueId()), 54, title);
-        
-        // Add items for current page
-        int startIndex = page * ITEMS_PER_PAGE;
-        int endIndex = Math.min(startIndex + ITEMS_PER_PAGE, session.items.size());
-        
-        for (int i = startIndex; i < endIndex; i++) {
-            ItemStack item = session.items.get(i);
-            if (item != null) {
-                gui.addItem(item);
+
+        // Synchronized block to prevent concurrent modification of session.items
+        synchronized (session.items) {
+            // Add items for current page
+            int startIndex = page * ITEMS_PER_PAGE;
+            int endIndex = Math.min(startIndex + ITEMS_PER_PAGE, session.items.size());
+
+            // Bounds check to prevent IndexOutOfBoundsException
+            if (startIndex >= session.items.size()) {
+                plugin.getLogger().warning("Page index out of bounds for player " + player.getName() +
+                    " (startIndex: " + startIndex + ", items: " + session.items.size() + ")");
+                return;
+            }
+
+            for (int i = startIndex; i < endIndex; i++) {
+                ItemStack item = session.items.get(i);
+                if (item != null) {
+                    gui.addItem(item);
+                }
+            }
+
+            // Add navigation buttons if multiple pages
+            if (totalPages > 1) {
+                // Previous page button
+                if (page > 0) {
+                    ItemStack prevButton = createNavigationButton(
+                        Material.ARROW,
+                        ChatColor.GREEN + "« Previous Page",
+                        ChatColor.GRAY + "Click to go to page " + page
+                    );
+                    gui.setItem(45, prevButton);
+                }
+
+                // Page info
+                ItemStack pageInfo = createNavigationButton(
+                    Material.PAPER,
+                    ChatColor.YELLOW + "Page " + (page + 1) + " of " + totalPages,
+                    ChatColor.GRAY + "Total items: " + session.items.size()
+                );
+                gui.setItem(49, pageInfo);
+
+                // Next page button
+                if (page < totalPages - 1) {
+                    ItemStack nextButton = createNavigationButton(
+                        Material.ARROW,
+                        ChatColor.GREEN + "Next Page »",
+                        ChatColor.GRAY + "Click to go to page " + (page + 2)
+                    );
+                    gui.setItem(53, nextButton);
+                }
+
+                // Close button
+                ItemStack closeButton = createNavigationButton(
+                    Material.BARRIER,
+                    ChatColor.RED + "Close",
+                    ChatColor.GRAY + "Click to close and save items"
+                );
+                gui.setItem(50, closeButton);
             }
         }
-        
-        // Add navigation buttons if multiple pages
-        if (totalPages > 1) {
-            // Previous page button
-            if (page > 0) {
-                ItemStack prevButton = createNavigationButton(
-                    Material.ARROW,
-                    ChatColor.GREEN + "« Previous Page",
-                    ChatColor.GRAY + "Click to go to page " + page
-                );
-                gui.setItem(45, prevButton);
-            }
-            
-            // Page info
-            ItemStack pageInfo = createNavigationButton(
-                Material.PAPER,
-                ChatColor.YELLOW + "Page " + (page + 1) + " of " + totalPages,
-                ChatColor.GRAY + "Total items: " + session.items.size()
-            );
-            gui.setItem(49, pageInfo);
-            
-            // Next page button
-            if (page < totalPages - 1) {
-                ItemStack nextButton = createNavigationButton(
-                    Material.ARROW,
-                    ChatColor.GREEN + "Next Page »",
-                    ChatColor.GRAY + "Click to go to page " + (page + 2)
-                );
-                gui.setItem(53, nextButton);
-            }
-            
-            // Close button
-            ItemStack closeButton = createNavigationButton(
-                Material.BARRIER,
-                ChatColor.RED + "Close",
-                ChatColor.GRAY + "Click to close and save items"
-            );
-            gui.setItem(50, closeButton);
-        }
-        
+
         player.openInventory(gui);
     }
     
@@ -698,7 +708,11 @@ public class StorageManager implements Listener {
                 // Some items remain - save them back to storage
                 plugin.getStorageConfig().updatePartialStorage(playerUUID, remainingItems);
 
-                int itemsTaken = session.items.size() - remainingItems.size();
+                // Synchronized access to session.items for thread safety
+                int itemsTaken;
+                synchronized (session.items) {
+                    itemsTaken = session.items.size() - remainingItems.size();
+                }
                 player.sendMessage(ChatColor.YELLOW + "Retrieved " + itemsTaken + " items. " +
                                  remainingItems.size() + " items remain in storage. Use /rrretrieve to get them.");
             }

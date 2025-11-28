@@ -269,9 +269,22 @@ public class SignManager {
         int duration = plugin.getConfigManager().getDurationForRegion(regionName, world);
         String formattedPrice = String.format(plugin.getConfigManager().getCurrencyFormat(), price);
 
+        java.util.List<String> formatList = plugin.getConfigManager().getAvailableSignFormat();
+
+        // Null/empty check to prevent NPE
+        if (formatList == null || formatList.isEmpty()) {
+            plugin.getLogger().warning("Available sign format is null or empty for region " + regionName);
+            return;
+        }
+
         int line = 0;
-        for (String format : plugin.getConfigManager().getAvailableSignFormat()) {
+        for (String format : formatList) {
             if (line >= 4) break;
+
+            // Null check for individual format line
+            if (format == null) {
+                continue;
+            }
 
             String text = format
                 .replace("{region}", regionName)
@@ -284,17 +297,30 @@ public class SignManager {
     }
     
     private void updateRentedSign(Sign sign, Rental rental) {
+        java.util.List<String> formatList = plugin.getConfigManager().getRentedSignFormat();
+
+        // Null/empty check to prevent NPE
+        if (formatList == null || formatList.isEmpty()) {
+            plugin.getLogger().warning("Rented sign format is null or empty for region " + rental.getRegionName());
+            return;
+        }
+
         int line = 0;
-        for (String format : plugin.getConfigManager().getRentedSignFormat()) {
+        for (String format : formatList) {
             if (line >= 4) break;
-            
+
+            // Null check for individual format line
+            if (format == null) {
+                continue;
+            }
+
             String text = format
                 .replace("{region}", rental.getRegionName())
                 .replace("{owner}", rental.getPlayerName())
                 .replace("{expires}", rental.getFormattedEndDate())
                 .replace("{days}", String.valueOf(rental.getDaysRemaining()))
                 .replace("{hours}", String.valueOf(rental.getHoursRemaining()));
-            
+
             sign.line(line, net.kyori.adventure.text.Component.text(color(text)));
             line++;
         }
