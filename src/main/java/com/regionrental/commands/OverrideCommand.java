@@ -89,7 +89,7 @@ public class OverrideCommand implements CommandExecutor, TabCompleter {
         }
 
         // Validate region exists in WorldGuard
-        if (!plugin.getWorldGuardManager().doesRegionExist(regionName)) {
+        if (!plugin.getWorldGuardManager().regionExists(regionName, world)) {
             sender.sendMessage(ChatColor.RED + "Region '" + regionName + "' does not exist in world '" + world.getName() + "'!");
             return true;
         }
@@ -134,7 +134,7 @@ public class OverrideCommand implements CommandExecutor, TabCompleter {
             return true;
         }
 
-        if (!plugin.getWorldGuardManager().doesRegionExist(regionName)) {
+        if (!plugin.getWorldGuardManager().regionExists(regionName, world)) {
             sender.sendMessage(ChatColor.RED + "Region '" + regionName + "' does not exist in world '" + world.getName() + "'!");
             return true;
         }
@@ -177,7 +177,7 @@ public class OverrideCommand implements CommandExecutor, TabCompleter {
             return true;
         }
 
-        if (!plugin.getWorldGuardManager().doesRegionExist(regionName)) {
+        if (!plugin.getWorldGuardManager().regionExists(regionName, world)) {
             sender.sendMessage(ChatColor.RED + "Region '" + regionName + "' does not exist in world '" + world.getName() + "'!");
             return true;
         }
@@ -219,7 +219,7 @@ public class OverrideCommand implements CommandExecutor, TabCompleter {
             return true;
         }
 
-        if (!plugin.getWorldGuardManager().doesRegionExist(regionName)) {
+        if (!plugin.getWorldGuardManager().regionExists(regionName, world)) {
             sender.sendMessage(ChatColor.RED + "Region '" + regionName + "' does not exist in world '" + world.getName() + "'!");
             return true;
         }
@@ -258,7 +258,7 @@ public class OverrideCommand implements CommandExecutor, TabCompleter {
 
         boolean allow = Boolean.parseBoolean(allowStr);
 
-        if (!plugin.getWorldGuardManager().doesRegionExist(regionName)) {
+        if (!plugin.getWorldGuardManager().regionExists(regionName, world)) {
             sender.sendMessage(ChatColor.RED + "Region '" + regionName + "' does not exist in world '" + world.getName() + "'!");
             return true;
         }
@@ -299,7 +299,7 @@ public class OverrideCommand implements CommandExecutor, TabCompleter {
             return true;
         }
 
-        if (!plugin.getWorldGuardManager().doesRegionExist(regionName)) {
+        if (!plugin.getWorldGuardManager().regionExists(regionName, world)) {
             sender.sendMessage(ChatColor.RED + "Region '" + regionName + "' does not exist in world '" + world.getName() + "'!");
             return true;
         }
