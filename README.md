@@ -566,7 +566,7 @@ rentals:
 
 ## 🆕 Recent Updates
 
-### Version 1.4.0 - Multi-World Support
+### Version 2.0.0 - Multi-World Support
 
 #### Complete Multi-World System
 - **World-Aware Rentals**: Each rental now tracks and operates in its specific world
