@@ -2,7 +2,7 @@
 
 **Complete WorldGuard Region Rental System with Clickable Signs**
 
-Version: 2.0.1
+Version: 2.1.0
 Minecraft: Paper/Spigot 1.21+
 Java: OpenJDK 21+
 Build System: Gradle 9.2.0
@@ -131,14 +131,14 @@ Or build directly with Gradle:
 
 4. **Find your JAR file:**
 ```
-build/libs/RegionRental-2.0.1.jar
+build/libs/RegionRental-2.1.0.jar
 ```
 
 ## 🚀 Installation
 
 1. **Copy the JAR to your server:**
 ```bash
-cp build/libs/RegionRental-2.0.1.jar /path/to/server/plugins/
+cp build/libs/RegionRental-2.1.0.jar /path/to/server/plugins/
 ```
 
 2. **Install required dependencies:**
@@ -567,6 +567,24 @@ rentals:
 - ✅ Fully automatic migration
 
 ## 🆕 Recent Updates
+
+### Version 2.1.0 - Command Prefix Registration Cleanup (Latest)
+Minor update cleaning up command prefix registration behavior:
+
+**Changes:**
+- **Command Prefix Fix** - Removed duplicate /rr command registration when custom prefix is configured
+  - Custom prefix users will only have their configured prefix registered (no more /rr fallback)
+  - Default prefix users (`prefix: 'rr'`) are unaffected
+  - Conflict resolution still works (falls back to 'rr' or auto-generated suffix)
+- **Console Message Cleanup** - Removed misleading log messages about fallback /rr registration
+  - Removed: "Fallback 'rr' prefix also registered for backward compatibility" (line 352)
+  - Removed: "Fallback 'rr' will be registered when conflicts resolve" (line 360)
+
+**Technical Summary:**
+- **Files modified:** 1 file (RegionRental.java)
+- **Lines removed:** 20 lines (18 from registration block + 2 misleading messages)
+- **Breaking change:** Users who configured custom prefix but used /rr commands must switch to custom prefix
+- **Benefits:** Cleaner command registration, less namespace pollution, more intuitive behavior
 
 ### Version 2.0.1 - Critical Bug Fixes and Performance Optimizations
 

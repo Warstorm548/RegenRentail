@@ -348,16 +348,12 @@ public class RegionRental extends JavaPlugin {
     private void logPrefixStatus(String configuredPrefix) {
         if (activePrefix.equals(configuredPrefix) && !usingFallback) {
             getLogger().info("✓ Using custom prefix '" + activePrefix + "' for all commands");
-            if (!activePrefix.equals("rr")) {
-                getLogger().info("✓ Fallback 'rr' prefix also registered for backward compatibility");
-            }
         } else if (usingFallback && activePrefix.equals("rr")) {
             getLogger().warning("⚠ Custom prefix '" + configuredPrefix + "' had conflicts");
             getLogger().info("✓ Using fallback prefix 'rr'");
         } else {
             getLogger().warning("⚠ Both custom prefix '" + configuredPrefix + "' and 'rr' had conflicts");
             getLogger().info("✓ Using auto-generated prefix '" + activePrefix + "'");
-            getLogger().info("  Fallback 'rr' will be registered when conflicts resolve");
         }
 
         getLogger().info("Commands are now available! Example: /" + activePrefix + "info");
