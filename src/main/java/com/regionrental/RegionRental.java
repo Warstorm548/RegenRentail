@@ -231,24 +231,6 @@ public class RegionRental extends JavaPlugin {
         OverrideCommand overrideCommand = new OverrideCommand(this);
         registerCommandWithPrefix(commandMap, activePrefix, "override", overrideCommand, "regionrental.admin.override");
 
-        // Always register 'rr' prefix as fallback if not already the active prefix
-        if (!activePrefix.equals("rr")) {
-            getLogger().info("Registering 'rr' prefix as fallback for backward compatibility");
-            registerCommandWithPrefix(commandMap, "rr", "", new RRCommand(this), "regionrental.user");
-            registerCommandWithPrefix(commandMap, "rr", "reload", new ReloadCommand(this), "regionrental.admin.reload");
-            registerCommandWithPrefix(commandMap, "rr", "createsign", new CreateSignCommand(this), "regionrental.admin.createsign");
-            registerCommandWithPrefix(commandMap, "rr", "reset", new ResetCommand(this), "regionrental.admin.reset");
-            registerCommandWithPrefix(commandMap, "rr", "retrieve", new RetrieveCommand(this), "regionrental.retrieve");
-            registerCommandWithPrefix(commandMap, "rr", "info", new InfoCommand(this), "regionrental.info");
-            registerCommandWithPrefix(commandMap, "rr", "list", new ListCommand(this), "regionrental.list");
-            registerCommandWithPrefix(commandMap, "rr", "extend", new ExtendCommand(this), "regionrental.extend");
-            registerCommandWithPrefix(commandMap, "rr", "duration", new DurationCommand(this), "regionrental.admin.duration");
-            registerCommandWithPrefix(commandMap, "rr", "remove", new RemoveCommand(this), "regionrental.admin.remove");
-            registerCommandWithPrefix(commandMap, "rr", "refundhistory", new RefundHistoryCommand(this), "regionrental.admin.refundhistory");
-            registerCommandWithPrefix(commandMap, "rr", "verify", new VerifyCommand(this), "regionrental.admin.verify");
-            registerCommandWithPrefix(commandMap, "rr", "override", new OverrideCommand(this), "regionrental.admin.override");
-        }
-
         // Log final status
         logPrefixStatus(configuredPrefix);
 
@@ -267,7 +249,7 @@ public class RegionRental extends JavaPlugin {
 
         // Configured prefix has conflicts, log warning
         getLogger().warning("Custom prefix '" + configuredPrefix + "' conflicts with existing commands!");
-        getLogger().warning("Attempting to use 'rr' fallback prefix...");
+        getLogger().warning("Falling back to default 'rr' prefix due to conflicts...");
         usingFallback = true;
 
         // Check if 'rr' has conflicts
