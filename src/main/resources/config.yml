@@ -36,30 +36,9 @@ commands:
   # Conflict handling:
   #   - If custom prefix conflicts: automatically falls back to "rr"
   #   - If "rr" also conflicts: uses "rr1", "rr2", etc.
-  #   - Original "rr" prefix always kept as fallback for compatibility
   #
   # NOTE: Changing prefix requires server restart
   prefix: 'rr'
-
-  # Enable short command aliases (DEPRECATED - will be removed in future version)
-  # Prefix-only mode is now recommended for better compatibility
-  # If false or conflicts detected, all commands use configured prefix
-  enable-aliases: false
-
-  # List of aliases to attempt registering (if no conflicts)
-  # DEPRECATED: This feature will be removed in a future version
-  # Format: shortname: fullcommand
-  aliases:
-    reload: rrreload
-    createsign: rrcreatesign
-    reset: rrreset
-    retime: rrretime
-    retrieve: rrretrieve
-    info: rrinfo
-    list: rrlist
-    extend: rrextend
-    duration: rrduration
-    override: rroverride
 
 # ============================================
 # ECONOMY SETTINGS

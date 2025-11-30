@@ -44,10 +44,6 @@ public class RegionRental extends JavaPlugin {
     private boolean usingFallback = false;
     private List<String> registeredCommands = new ArrayList<>();
 
-    // Track if aliases are enabled
-    private boolean aliasesEnabled = false;
-    private List<String> registeredAliases = new ArrayList<>();
-    
     @Override
     public void onEnable() {
         instance = this;
@@ -84,18 +80,10 @@ public class RegionRental extends JavaPlugin {
         
         // Start tasks
         startTasks();
-        
-        // Try to register command aliases if no conflicts
-        registerAliasesIfPossible();
-        
+
         getLogger().info("RegionRental has been enabled successfully!");
-        getLogger().info("Commands start with /rr to avoid conflicts");
-        
-        if (aliasesEnabled) {
-            getLogger().info("Short command aliases have been enabled!");
-        } else {
-            getLogger().info("Short aliases disabled due to conflicts. Use /rr prefix for all commands.");
-        }
+        getLogger().info("Commands start with /" + activePrefix);
+        getLogger().info("Example: /" + activePrefix + "info, /" + activePrefix + "extend, /" + activePrefix + "list");
     }
     
     @Override
@@ -116,9 +104,6 @@ public class RegionRental extends JavaPlugin {
 
         // Cancel tasks
         Bukkit.getScheduler().cancelTasks(this);
-
-        // Unregister aliases
-        unregisterAliases();
 
         getLogger().info("RegionRental has been disabled!");
     }
@@ -388,102 +373,7 @@ public class RegionRental extends JavaPlugin {
     public String getActivePrefix() {
         return activePrefix != null ? activePrefix : "rr";
     }
-    
-    private void registerAliasesIfPossible() {
-        // Check if aliases are enabled in config
-        if (!getConfig().getBoolean("commands.enable-aliases", true)) {
-            getLogger().info("Command aliases disabled in config");
-            return;
-        }
-        
-        try {
-            CommandMap commandMap = getCommandMap();
-            if (commandMap == null) {
-                getLogger().warning("Could not access command map for aliases");
-                return;
-            }
-            
-            // List of aliases to try registering
-            String[][] aliasesToTry = {
-                {"reload", "rrreload"},
-                {"createsign", "rrcreatesign"},
-                {"reset", "rrreset"},
-                {"retime", "rrretime"},
-                {"retrieve", "rrretrieve"},
-                {"info", "rrinfo"},
-                {"list", "rrlist"},
-                {"extend", "rrextend"},
-                {"duration", "rrduration"},
-                {"remove", "rrremove"},
-                {"verify", "rrverify"}
-            };
-            
-            boolean allAliasesRegistered = true;
-            
-            for (String[] alias : aliasesToTry) {
-                String shortCommand = alias[0];
-                String fullCommand = alias[1];
-                
-                // Check if command already exists
-                if (commandMap.getCommand(shortCommand) != null) {
-                    getLogger().info("Alias /" + shortCommand + " conflicts with existing command, skipping");
-                    allAliasesRegistered = false;
-                    continue;
-                }
-                
-                // Try to register the alias
-                Command command = getCommand(fullCommand);
-                if (command != null) {
-                    commandMap.register(getName(), new CommandAlias(shortCommand, command));
-                    registeredAliases.add(shortCommand);
-                    if (configManager.isDebug()) {
-                        getLogger().info("Registered alias: /" + shortCommand + " -> /" + fullCommand);
-                    }
-                }
-            }
-            
-            aliasesEnabled = allAliasesRegistered && !registeredAliases.isEmpty();
-            
-            if (aliasesEnabled) {
-                getLogger().info("All command aliases registered successfully!");
-            } else if (!registeredAliases.isEmpty()) {
-                getLogger().info("Some aliases registered. Conflicts detected for full alias support.");
-            }
-            
-        } catch (Exception e) {
-            getLogger().warning("Could not register command aliases: " + e.getMessage());
-        }
-    }
-    
-    private void unregisterAliases() {
-        if (registeredAliases.isEmpty()) {
-            return;
-        }
-        
-        try {
-            CommandMap commandMap = getCommandMap();
-            if (commandMap == null) {
-                return;
-            }
-            
-            // Unregister all aliases
-            Field knownCommandsField = commandMap.getClass().getDeclaredField("knownCommands");
-            knownCommandsField.setAccessible(true);
-            @SuppressWarnings("unchecked")
-            java.util.Map<String, Command> knownCommands = (java.util.Map<String, Command>) knownCommandsField.get(commandMap);
-            
-            for (String alias : registeredAliases) {
-                knownCommands.remove(alias);
-                knownCommands.remove(getName().toLowerCase() + ":" + alias);
-            }
-            
-            registeredAliases.clear();
-            
-        } catch (Exception e) {
-            getLogger().warning("Could not unregister command aliases: " + e.getMessage());
-        }
-    }
-    
+
     private CommandMap getCommandMap() {
         try {
             Field commandMapField = Bukkit.getServer().getClass().getDeclaredField("commandMap");
@@ -544,10 +434,6 @@ public class RegionRental extends JavaPlugin {
             regionsConfig.verifyAndRepairRegions();
         }
 
-        // Re-register aliases
-        unregisterAliases();
-        registerAliasesIfPossible();
-
         // Update /rr command description in case prefix changed
         updateHelpCommandDescription();
 
@@ -605,28 +491,6 @@ public class RegionRental extends JavaPlugin {
 
     public Economy getEconomy() {
         return economy;
-    }
-    
-    public boolean areAliasesEnabled() {
-        return aliasesEnabled;
-    }
-    
-    // Inner class for command aliases
-    private static class CommandAlias extends Command {
-        private final Command original;
-
-        public CommandAlias(String name, Command original) {
-            super(name);
-            this.original = original;
-            this.description = original.getDescription();
-            this.usageMessage = original.getUsage();
-            this.setPermission(original.getPermission());
-        }
-
-        @Override
-        public boolean execute(org.bukkit.command.CommandSender sender, String commandLabel, String[] args) {
-            return original.execute(sender, commandLabel, args);
-        }
     }
 
     // Inner class for dynamic command registration
