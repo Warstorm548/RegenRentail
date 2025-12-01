@@ -250,7 +250,7 @@ public class GroupCommand implements CommandExecutor, TabCompleter {
     /**
      * Processes group creation with region input
      */
-    void processCreateGroup(CommandSender sender, String groupName, String regionsInput) {
+    public void processCreateGroup(CommandSender sender, String groupName, String regionsInput) {
         // Parse regions
         ParseResult parseResult = parseRegionInput(sender, regionsInput);
 
@@ -289,7 +289,7 @@ public class GroupCommand implements CommandExecutor, TabCompleter {
     /**
      * Processes adding regions to a group
      */
-    void processAddRegions(CommandSender sender, String groupName, String regionsInput) {
+    public void processAddRegions(CommandSender sender, String groupName, String regionsInput) {
         // Parse regions
         ParseResult parseResult = parseRegionInput(sender, regionsInput);
 
@@ -330,7 +330,7 @@ public class GroupCommand implements CommandExecutor, TabCompleter {
     /**
      * Processes removing regions from a group
      */
-    void processRemoveRegions(CommandSender sender, String groupName, String regionsInput) {
+    public void processRemoveRegions(CommandSender sender, String groupName, String regionsInput) {
         // Parse regions
         ParseResult parseResult = parseRegionInput(sender, regionsInput);
 
