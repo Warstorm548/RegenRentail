@@ -159,75 +159,152 @@ public class RegionsConfig {
 
     /**
      * Get region price or fallback to default
+     * Lookup order: group override → region override → default
      */
     public double getRegionPrice(String region, org.bukkit.World world, double defaultPrice) {
         String compositeKey = world.getName() + ":" + region;
+
+        // Check if region is in a group and get group override
+        if (plugin.getGroupsConfig() != null && plugin.getGroupsConfig().isRegionInGroup(compositeKey)) {
+            String groupName = plugin.getGroupsConfig().getRegionGroup(compositeKey);
+            if (groupName != null) {
+                double groupPrice = getGroupPrice(groupName, defaultPrice);
+                // Only use group override if it's actually set (not the default fallback)
+                String groupPath = "groups." + groupName + ".price";
+                if (config.contains(groupPath)) {
+                    return groupPrice;
+                }
+            }
+        }
+
+        // Check region-specific override
         String path = "regions." + compositeKey + ".price";
         if (config.contains(path)) {
             return config.getDouble(path, defaultPrice);
         }
+
         return defaultPrice;
     }
 
     /**
      * Get region duration or fallback to default
+     * Lookup order: group override → region override → default
      */
     public int getRegionDuration(String region, org.bukkit.World world, int defaultDuration) {
         String compositeKey = world.getName() + ":" + region;
+
+        // Check group override first
+        if (plugin.getGroupsConfig() != null && plugin.getGroupsConfig().isRegionInGroup(compositeKey)) {
+            String groupName = plugin.getGroupsConfig().getRegionGroup(compositeKey);
+            if (groupName != null && config.contains("groups." + groupName + ".duration")) {
+                return getGroupDuration(groupName, defaultDuration);
+            }
+        }
+
+        // Check region override
         String path = "regions." + compositeKey + ".duration";
         if (config.contains(path)) {
             return config.getInt(path, defaultDuration);
         }
+
         return defaultDuration;
     }
 
     /**
      * Get region max extensions or fallback to default
+     * Lookup order: group override → region override → default
      */
     public int getRegionMaxExtensions(String region, org.bukkit.World world, int defaultMax) {
         String compositeKey = world.getName() + ":" + region;
+
+        // Check group override first
+        if (plugin.getGroupsConfig() != null && plugin.getGroupsConfig().isRegionInGroup(compositeKey)) {
+            String groupName = plugin.getGroupsConfig().getRegionGroup(compositeKey);
+            if (groupName != null && config.contains("groups." + groupName + ".max-extensions")) {
+                return getGroupMaxExtensions(groupName, defaultMax);
+            }
+        }
+
+        // Check region override
         String path = "regions." + compositeKey + ".max-extensions";
         if (config.contains(path)) {
             return config.getInt(path, defaultMax);
         }
+
         return defaultMax;
     }
 
     /**
      * Get region extension price or fallback to default
+     * Lookup order: group override → region override → default
      */
     public double getRegionExtensionPrice(String region, org.bukkit.World world, double defaultPrice) {
         String compositeKey = world.getName() + ":" + region;
+
+        // Check group override first
+        if (plugin.getGroupsConfig() != null && plugin.getGroupsConfig().isRegionInGroup(compositeKey)) {
+            String groupName = plugin.getGroupsConfig().getRegionGroup(compositeKey);
+            if (groupName != null && config.contains("groups." + groupName + ".extension-price")) {
+                double price = getGroupExtensionPrice(groupName, defaultPrice);
+                return price > 0 ? price : defaultPrice;
+            }
+        }
+
+        // Check region override
         String path = "regions." + compositeKey + ".extension-price";
         if (config.contains(path)) {
             double price = config.getDouble(path, defaultPrice);
-            // If set to 0, use calculated default
             return price > 0 ? price : defaultPrice;
         }
+
         return defaultPrice;
     }
 
     /**
      * Get region allow extensions or fallback to default
+     * Lookup order: group override → region override → default
      */
     public boolean getRegionAllowExtensions(String region, org.bukkit.World world, boolean defaultAllow) {
         String compositeKey = world.getName() + ":" + region;
+
+        // Check group override first
+        if (plugin.getGroupsConfig() != null && plugin.getGroupsConfig().isRegionInGroup(compositeKey)) {
+            String groupName = plugin.getGroupsConfig().getRegionGroup(compositeKey);
+            if (groupName != null && config.contains("groups." + groupName + ".allow-extensions")) {
+                return getGroupAllowExtensions(groupName, defaultAllow);
+            }
+        }
+
+        // Check region override
         String path = "regions." + compositeKey + ".allow-extensions";
         if (config.contains(path)) {
             return config.getBoolean(path, defaultAllow);
         }
+
         return defaultAllow;
     }
 
     /**
      * Get region extension duration or fallback to default
+     * Lookup order: group override → region override → default
      */
     public int getRegionExtensionDuration(String region, org.bukkit.World world, int defaultDuration) {
         String compositeKey = world.getName() + ":" + region;
+
+        // Check group override first
+        if (plugin.getGroupsConfig() != null && plugin.getGroupsConfig().isRegionInGroup(compositeKey)) {
+            String groupName = plugin.getGroupsConfig().getRegionGroup(compositeKey);
+            if (groupName != null && config.contains("groups." + groupName + ".extension-duration")) {
+                return getGroupExtensionDuration(groupName, defaultDuration);
+            }
+        }
+
+        // Check region override
         String path = "regions." + compositeKey + ".extension-duration";
         if (config.contains(path)) {
             return config.getInt(path, defaultDuration);
         }
+
         return defaultDuration;
     }
 

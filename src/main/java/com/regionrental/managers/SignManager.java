@@ -339,6 +339,16 @@ public class SignManager {
     }
 
     /**
+     * Marks multiple signs as dirty using composite keys (world:region format)
+     * Used for bulk operations like group overrides
+     *
+     * @param compositeKeys List of composite keys in "world:region" format
+     */
+    public void bulkMarkSignsDirty(List<String> compositeKeys) {
+        dirtySigns.addAll(compositeKeys);
+    }
+
+    /**
      * Updates all dirty signs and clears the dirty set.
      * This is much more efficient than updating ALL signs every 30 seconds.
      */
