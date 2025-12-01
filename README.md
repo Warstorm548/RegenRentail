@@ -2,7 +2,7 @@
 
 **Complete WorldGuard Region Rental System with Clickable Signs**
 
-Version: 2.1.0
+Version: 2.2.0
 Minecraft: Paper/Spigot 1.21+
 Java: OpenJDK 21+
 Build System: Gradle 9.2.0
@@ -131,14 +131,14 @@ Or build directly with Gradle:
 
 4. **Find your JAR file:**
 ```
-build/libs/RegionRental-2.1.0.jar
+build/libs/RegionRental-2.2.0.jar
 ```
 
 ## 🚀 Installation
 
 1. **Copy the JAR to your server:**
 ```bash
-cp build/libs/RegionRental-2.1.0.jar /path/to/server/plugins/
+cp build/libs/RegionRental-2.2.0.jar /path/to/server/plugins/
 ```
 
 2. **Install required dependencies:**
@@ -568,7 +568,47 @@ rentals:
 
 ## 🆕 Recent Updates
 
-### Version 2.1.0 - Command Prefix Registration Cleanup (Latest)
+### Version 2.2.0 - Region Grouping System (Latest)
+Minor update adding comprehensive region grouping and mass override management:
+
+**New Features:**
+- **Region Grouping System** - Group multiple regions together for unified configuration
+  - `/rrgroup create <name> [regions]` - Create region groups
+  - `/rrgroup edit <name> add/remove [regions]` - Modify group membership
+  - `/rrgroup delete <name>` - Delete groups with confirmation
+  - `/rrgroup list` and `/rrgroup view <name>` - Browse groups
+  - Multi-world support (regions from different worlds in same group)
+  - Hybrid command interface (inline arguments OR chat prompts with 60s timeout)
+
+- **Mass Override Operations** - Set overrides once for entire group
+  - `group:` prefix parser resolves naming conflicts (`/rroverride price group:shops 1000`)
+  - Override lookup priority: Group → Region → Default
+  - Bulk sign updates (all group signs update together)
+  - Automatic individual override cleanup when adding to groups
+
+- **Enhanced Tab Completion** - Smart suggestions for all commands
+  - `group:` prefix suggestions in override commands
+  - Region name completion from WorldGuard
+  - World prefix completion (`world:`, `world_nether:`)
+  - Context-aware suggestions (player's world vs explicit world)
+
+**Validation & Edge Cases:**
+- Exclusive group membership (regions can only be in one group)
+- Duplicate prevention (cannot add if already in another group)
+- Group name validation (2-30 chars, alphanumeric + underscore, reserved names blocked)
+- Region/world existence checks before adding
+- Automatic cleanup on group deletion (removes group overrides from regions.yml)
+
+**Technical Summary:**
+- **Files created:** 3 (GroupsConfig.java, GroupCommand.java, GroupChatListener.java)
+- **Files modified:** 5 (RegionRental.java, OverrideCommand.java, SignManager.java, RegionsConfig.java, CLAUDE.md)
+- **Lines added:** ~2000+ lines across 5 implementation phases
+- **Data files:** groups.yml (new), regions.yml (extended with group section)
+- **Documentation:** Comprehensive grouping system docs added to CLAUDE.md
+
+---
+
+### Version 2.1.0 - Command Prefix Registration Cleanup
 Minor update cleaning up command prefix registration behavior:
 
 **Changes:**

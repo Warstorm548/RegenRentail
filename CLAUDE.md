@@ -26,7 +26,7 @@ RegionRental is a Minecraft Paper/Spigot plugin (1.21+) that implements a comple
 ./gradlew clean build
 
 # Output location
-build/libs/RegionRental-2.1.0.jar
+build/libs/RegionRental-2.2.0.jar
 ```
 
 ### Development Commands
@@ -84,8 +84,8 @@ When updating the version, modify these files:
 - Output JAR: `build/libs/RegionRental-X.X.X.jar`
 
 ### Current Version
-- **Version:** 2.1.0
-- **Last Updated:** Command prefix registration cleanup (removed alias system, removed duplicate /rr fallback, improved console messages)
+- **Version:** 2.2.0
+- **Last Updated:** Region Grouping System (multi-world group management, mass override operations, hybrid command interface, group: prefix parser, enhanced tab completion)
 
 ## Architecture Overview
 
@@ -497,7 +497,7 @@ Add to `StorageManager.CONTAINER_TYPES` set (currently supports: chest, barrel, 
 
 ### Quick Test Workflow
 1. Build: `./gradlew build`
-2. Copy JAR: `cp build/libs/RegionRental-2.1.0.jar /path/to/server/plugins/`
+2. Copy JAR: `cp build/libs/RegionRental-2.2.0.jar /path/to/server/plugins/`
 3. Start server
 4. Create WorldGuard region: `/rg define testregion`
 5. Create rental sign: `/rrcreatesign testregion`
@@ -582,7 +582,30 @@ src/main/java/com/regionrental/
 
 ## Recent Features
 
-### Version 2.1.0 - Command Prefix Registration Cleanup (Latest)
+### Version 2.2.0 - Region Grouping System (Latest)
+Minor update adding comprehensive region grouping and mass override management:
+
+**New Features:**
+- **Region Grouping System** - Group multiple regions for unified configuration
+  - `/rrgroup create/edit/delete/list/view` commands
+  - Multi-world support, hybrid command interface (args OR chat prompts)
+  - Exclusive membership, automatic validation
+- **Mass Override Operations** - Set overrides once for entire group
+  - `group:` prefix parser (`/rroverride price group:shops 1000`)
+  - Override priority: Group → Region → Default
+  - Bulk sign updates, automatic cleanup
+- **Enhanced Tab Completion** - Smart suggestions for groups, regions, world prefixes
+
+**Technical Implementation:**
+- Files created: GroupsConfig.java, GroupCommand.java, GroupChatListener.java
+- Files modified: RegionRental.java, OverrideCommand.java, SignManager.java, RegionsConfig.java
+- ~2000+ lines across 5 implementation phases
+- Data files: groups.yml (new), regions.yml (extended)
+- Full documentation in CLAUDE.md
+
+---
+
+### Version 2.1.0 - Command Prefix Registration Cleanup
 Minor update simplifying command registration and removing deprecated features:
 
 **Changes:**
