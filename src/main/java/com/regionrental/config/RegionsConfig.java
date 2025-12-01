@@ -159,75 +159,152 @@ public class RegionsConfig {
 
     /**
      * Get region price or fallback to default
+     * Lookup order: group override → region override → default
      */
     public double getRegionPrice(String region, org.bukkit.World world, double defaultPrice) {
         String compositeKey = world.getName() + ":" + region;
+
+        // Check if region is in a group and get group override
+        if (plugin.getGroupsConfig() != null && plugin.getGroupsConfig().isRegionInGroup(compositeKey)) {
+            String groupName = plugin.getGroupsConfig().getRegionGroup(compositeKey);
+            if (groupName != null) {
+                double groupPrice = getGroupPrice(groupName, defaultPrice);
+                // Only use group override if it's actually set (not the default fallback)
+                String groupPath = "groups." + groupName + ".price";
+                if (config.contains(groupPath)) {
+                    return groupPrice;
+                }
+            }
+        }
+
+        // Check region-specific override
         String path = "regions." + compositeKey + ".price";
         if (config.contains(path)) {
             return config.getDouble(path, defaultPrice);
         }
+
         return defaultPrice;
     }
 
     /**
      * Get region duration or fallback to default
+     * Lookup order: group override → region override → default
      */
     public int getRegionDuration(String region, org.bukkit.World world, int defaultDuration) {
         String compositeKey = world.getName() + ":" + region;
+
+        // Check group override first
+        if (plugin.getGroupsConfig() != null && plugin.getGroupsConfig().isRegionInGroup(compositeKey)) {
+            String groupName = plugin.getGroupsConfig().getRegionGroup(compositeKey);
+            if (groupName != null && config.contains("groups." + groupName + ".duration")) {
+                return getGroupDuration(groupName, defaultDuration);
+            }
+        }
+
+        // Check region override
         String path = "regions." + compositeKey + ".duration";
         if (config.contains(path)) {
             return config.getInt(path, defaultDuration);
         }
+
         return defaultDuration;
     }
 
     /**
      * Get region max extensions or fallback to default
+     * Lookup order: group override → region override → default
      */
     public int getRegionMaxExtensions(String region, org.bukkit.World world, int defaultMax) {
         String compositeKey = world.getName() + ":" + region;
+
+        // Check group override first
+        if (plugin.getGroupsConfig() != null && plugin.getGroupsConfig().isRegionInGroup(compositeKey)) {
+            String groupName = plugin.getGroupsConfig().getRegionGroup(compositeKey);
+            if (groupName != null && config.contains("groups." + groupName + ".max-extensions")) {
+                return getGroupMaxExtensions(groupName, defaultMax);
+            }
+        }
+
+        // Check region override
         String path = "regions." + compositeKey + ".max-extensions";
         if (config.contains(path)) {
             return config.getInt(path, defaultMax);
         }
+
         return defaultMax;
     }
 
     /**
      * Get region extension price or fallback to default
+     * Lookup order: group override → region override → default
      */
     public double getRegionExtensionPrice(String region, org.bukkit.World world, double defaultPrice) {
         String compositeKey = world.getName() + ":" + region;
+
+        // Check group override first
+        if (plugin.getGroupsConfig() != null && plugin.getGroupsConfig().isRegionInGroup(compositeKey)) {
+            String groupName = plugin.getGroupsConfig().getRegionGroup(compositeKey);
+            if (groupName != null && config.contains("groups." + groupName + ".extension-price")) {
+                double price = getGroupExtensionPrice(groupName, defaultPrice);
+                return price > 0 ? price : defaultPrice;
+            }
+        }
+
+        // Check region override
         String path = "regions." + compositeKey + ".extension-price";
         if (config.contains(path)) {
             double price = config.getDouble(path, defaultPrice);
-            // If set to 0, use calculated default
             return price > 0 ? price : defaultPrice;
         }
+
         return defaultPrice;
     }
 
     /**
      * Get region allow extensions or fallback to default
+     * Lookup order: group override → region override → default
      */
     public boolean getRegionAllowExtensions(String region, org.bukkit.World world, boolean defaultAllow) {
         String compositeKey = world.getName() + ":" + region;
+
+        // Check group override first
+        if (plugin.getGroupsConfig() != null && plugin.getGroupsConfig().isRegionInGroup(compositeKey)) {
+            String groupName = plugin.getGroupsConfig().getRegionGroup(compositeKey);
+            if (groupName != null && config.contains("groups." + groupName + ".allow-extensions")) {
+                return getGroupAllowExtensions(groupName, defaultAllow);
+            }
+        }
+
+        // Check region override
         String path = "regions." + compositeKey + ".allow-extensions";
         if (config.contains(path)) {
             return config.getBoolean(path, defaultAllow);
         }
+
         return defaultAllow;
     }
 
     /**
      * Get region extension duration or fallback to default
+     * Lookup order: group override → region override → default
      */
     public int getRegionExtensionDuration(String region, org.bukkit.World world, int defaultDuration) {
         String compositeKey = world.getName() + ":" + region;
+
+        // Check group override first
+        if (plugin.getGroupsConfig() != null && plugin.getGroupsConfig().isRegionInGroup(compositeKey)) {
+            String groupName = plugin.getGroupsConfig().getRegionGroup(compositeKey);
+            if (groupName != null && config.contains("groups." + groupName + ".extension-duration")) {
+                return getGroupExtensionDuration(groupName, defaultDuration);
+            }
+        }
+
+        // Check region override
         String path = "regions." + compositeKey + ".extension-duration";
         if (config.contains(path)) {
             return config.getInt(path, defaultDuration);
         }
+
         return defaultDuration;
     }
 
@@ -487,5 +564,226 @@ public class RegionsConfig {
         report.put("configuredRegions", new ArrayList<>(configuredRegions));
 
         return report;
+    }
+
+    // ========== Group Override Methods ==========
+
+    /**
+     * Set group price override
+     */
+    public void setGroupPrice(String groupName, double price) {
+        String path = "groups." + groupName + ".price";
+        config.set(path, price);
+        save();
+    }
+
+    /**
+     * Set group duration override
+     */
+    public void setGroupDuration(String groupName, int days) {
+        String path = "groups." + groupName + ".duration";
+        config.set(path, days);
+        save();
+    }
+
+    /**
+     * Set group max extensions override
+     */
+    public void setGroupMaxExtensions(String groupName, int maxExtensions) {
+        String path = "groups." + groupName + ".max-extensions";
+        config.set(path, maxExtensions);
+        save();
+    }
+
+    /**
+     * Set group extension price override
+     */
+    public void setGroupExtensionPrice(String groupName, double price) {
+        String path = "groups." + groupName + ".extension-price";
+        config.set(path, price);
+        save();
+    }
+
+    /**
+     * Set group allow extensions override
+     */
+    public void setGroupAllowExtensions(String groupName, boolean allow) {
+        String path = "groups." + groupName + ".allow-extensions";
+        config.set(path, allow);
+        save();
+    }
+
+    /**
+     * Set group extension duration override
+     */
+    public void setGroupExtensionDuration(String groupName, int days) {
+        String path = "groups." + groupName + ".extension-duration";
+        config.set(path, days);
+        save();
+    }
+
+    /**
+     * Get group price or fallback to default
+     */
+    public double getGroupPrice(String groupName, double defaultPrice) {
+        String path = "groups." + groupName + ".price";
+        if (config.contains(path)) {
+            return config.getDouble(path, defaultPrice);
+        }
+        return defaultPrice;
+    }
+
+    /**
+     * Get group duration or fallback to default
+     */
+    public int getGroupDuration(String groupName, int defaultDuration) {
+        String path = "groups." + groupName + ".duration";
+        if (config.contains(path)) {
+            return config.getInt(path, defaultDuration);
+        }
+        return defaultDuration;
+    }
+
+    /**
+     * Get group max extensions or fallback to default
+     */
+    public int getGroupMaxExtensions(String groupName, int defaultMax) {
+        String path = "groups." + groupName + ".max-extensions";
+        if (config.contains(path)) {
+            return config.getInt(path, defaultMax);
+        }
+        return defaultMax;
+    }
+
+    /**
+     * Get group extension price or fallback to default
+     */
+    public double getGroupExtensionPrice(String groupName, double defaultPrice) {
+        String path = "groups." + groupName + ".extension-price";
+        if (config.contains(path)) {
+            double price = config.getDouble(path, defaultPrice);
+            // If set to 0, use calculated default
+            return price > 0 ? price : defaultPrice;
+        }
+        return defaultPrice;
+    }
+
+    /**
+     * Get group allow extensions or fallback to default
+     */
+    public boolean getGroupAllowExtensions(String groupName, boolean defaultAllow) {
+        String path = "groups." + groupName + ".allow-extensions";
+        if (config.contains(path)) {
+            return config.getBoolean(path, defaultAllow);
+        }
+        return defaultAllow;
+    }
+
+    /**
+     * Get group extension duration or fallback to default
+     */
+    public int getGroupExtensionDuration(String groupName, int defaultDuration) {
+        String path = "groups." + groupName + ".extension-duration";
+        if (config.contains(path)) {
+            return config.getInt(path, defaultDuration);
+        }
+        return defaultDuration;
+    }
+
+    /**
+     * Check if group has any overrides configured
+     */
+    public boolean hasGroupOverrides(String groupName) {
+        return config.contains("groups." + groupName);
+    }
+
+    /**
+     * Get all override settings for a specific group
+     * Returns empty map if group has no overrides
+     */
+    public Map<String, Object> getGroupOverrides(String groupName) {
+        Map<String, Object> overrides = new HashMap<>();
+
+        if (!hasGroupOverrides(groupName)) {
+            return overrides;
+        }
+
+        String path = "groups." + groupName;
+        ConfigurationSection section = config.getConfigurationSection(path);
+
+        if (section == null) {
+            return overrides;
+        }
+
+        // Get all keys and values for this group
+        for (String key : section.getKeys(false)) {
+            overrides.put(key, section.get(key));
+        }
+
+        return overrides;
+    }
+
+    /**
+     * Remove all overrides for a group
+     * Called when group is deleted to ensure clean state
+     */
+    public void removeGroupOverrides(String groupName) {
+        if (!hasGroupOverrides(groupName)) {
+            return;
+        }
+
+        config.set("groups." + groupName, null);
+        save();
+
+        if (plugin.getConfigManager().isDebug()) {
+            plugin.getLogger().info("Removed overrides for group '" + groupName + "' from regions.yml");
+        }
+    }
+
+    /**
+     * Get all groups with overrides
+     */
+    public Set<String> getAllGroupsWithOverrides() {
+        if (!config.contains("groups")) {
+            return new HashSet<>();
+        }
+
+        ConfigurationSection section = config.getConfigurationSection("groups");
+        if (section == null) {
+            return new HashSet<>();
+        }
+
+        return section.getKeys(false);
+    }
+
+    /**
+     * Check if a region has individual overrides
+     * Used to detect conflicts when adding regions to groups
+     *
+     * @param compositeKey The composite key (world:region)
+     * @return true if the region has any individual overrides
+     */
+    public boolean hasRegionOverrides(String compositeKey) {
+        String path = "regions." + compositeKey;
+        return config.contains(path) && config.isConfigurationSection(path);
+    }
+
+    /**
+     * Remove all individual overrides for a region
+     * Called when adding region to a group to prevent conflicts
+     *
+     * @param compositeKey The composite key (world:region)
+     */
+    public void removeRegionOverrides(String compositeKey) {
+        if (!hasRegionOverrides(compositeKey)) {
+            return;
+        }
+
+        config.set("regions." + compositeKey, null);
+        save();
+
+        if (plugin.getConfigManager().isDebug()) {
+            plugin.getLogger().info("Removed individual overrides for region '" + compositeKey + "' from regions.yml");
+        }
     }
 }

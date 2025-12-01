@@ -14,6 +14,7 @@ import org.bukkit.block.data.BlockData;
 import org.bukkit.block.data.type.WallSign;
 
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -336,6 +337,16 @@ public class SignManager {
     public void markSignDirty(String regionName, World world) {
         String compositeKey = world.getName() + ":" + regionName;
         dirtySigns.add(compositeKey);
+    }
+
+    /**
+     * Marks multiple signs as dirty using composite keys (world:region format)
+     * Used for bulk operations like group overrides
+     *
+     * @param compositeKeys List of composite keys in "world:region" format
+     */
+    public void bulkMarkSignsDirty(List<String> compositeKeys) {
+        dirtySigns.addAll(compositeKeys);
     }
 
     /**

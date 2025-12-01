@@ -2,9 +2,11 @@ package com.regionrental;
 
 import com.regionrental.commands.*;
 import com.regionrental.config.ConfigManager;
+import com.regionrental.config.GroupsConfig;
 import com.regionrental.config.RegionsConfig;
 import com.regionrental.config.SignsConfig;
 import com.regionrental.config.StorageConfig;
+import com.regionrental.listeners.GroupChatListener;
 import com.regionrental.listeners.SignInteractListener;
 import com.regionrental.managers.*;
 import net.milkbowl.vault.economy.Economy;
@@ -28,6 +30,7 @@ public class RegionRental extends JavaPlugin {
     private SignsConfig signsConfig;
     private StorageConfig storageConfig;
     private RegionsConfig regionsConfig;
+    private GroupsConfig groupsConfig;
     private RentalManager rentalManager;
     private SignManager signManager;
     private StorageManager storageManager;
@@ -35,6 +38,12 @@ public class RegionRental extends JavaPlugin {
     private WorldGuardManager worldGuardManager;
     private WorldEditManager worldEditManager;
     private EzChestShopManager ezChestShopManager;
+
+    // Commands (for Phase 2 chat listener access)
+    private GroupCommand groupCommand;
+
+    // Listeners
+    private GroupChatListener groupChatListener;
 
     // Economy
     private Economy economy;
@@ -44,10 +53,6 @@ public class RegionRental extends JavaPlugin {
     private boolean usingFallback = false;
     private List<String> registeredCommands = new ArrayList<>();
 
-    // Track if aliases are enabled
-    private boolean aliasesEnabled = false;
-    private List<String> registeredAliases = new ArrayList<>();
-    
     @Override
     public void onEnable() {
         instance = this;
@@ -84,18 +89,10 @@ public class RegionRental extends JavaPlugin {
         
         // Start tasks
         startTasks();
-        
-        // Try to register command aliases if no conflicts
-        registerAliasesIfPossible();
-        
+
         getLogger().info("RegionRental has been enabled successfully!");
-        getLogger().info("Commands start with /rr to avoid conflicts");
-        
-        if (aliasesEnabled) {
-            getLogger().info("Short command aliases have been enabled!");
-        } else {
-            getLogger().info("Short aliases disabled due to conflicts. Use /rr prefix for all commands.");
-        }
+        getLogger().info("Commands start with /" + activePrefix);
+        getLogger().info("Example: /" + activePrefix + "info, /" + activePrefix + "extend, /" + activePrefix + "list");
     }
     
     @Override
@@ -113,12 +110,12 @@ public class RegionRental extends JavaPlugin {
         if (regionsConfig != null) {
             regionsConfig.save();
         }
+        if (groupsConfig != null) {
+            groupsConfig.save();
+        }
 
         // Cancel tasks
         Bukkit.getScheduler().cancelTasks(this);
-
-        // Unregister aliases
-        unregisterAliases();
 
         getLogger().info("RegionRental has been disabled!");
     }
@@ -130,6 +127,7 @@ public class RegionRental extends JavaPlugin {
             signsConfig = new SignsConfig(this);
             storageConfig = new StorageConfig(this);
             regionsConfig = new RegionsConfig(this);
+            groupsConfig = new GroupsConfig(this);
 
             // Migrate regions from config.yml to regions.yml (one-time)
             regionsConfig.migrateFromMainConfig(getConfig());
@@ -231,23 +229,8 @@ public class RegionRental extends JavaPlugin {
         OverrideCommand overrideCommand = new OverrideCommand(this);
         registerCommandWithPrefix(commandMap, activePrefix, "override", overrideCommand, "regionrental.admin.override");
 
-        // Always register 'rr' prefix as fallback if not already the active prefix
-        if (!activePrefix.equals("rr")) {
-            getLogger().info("Registering 'rr' prefix as fallback for backward compatibility");
-            registerCommandWithPrefix(commandMap, "rr", "", new RRCommand(this), "regionrental.user");
-            registerCommandWithPrefix(commandMap, "rr", "reload", new ReloadCommand(this), "regionrental.admin.reload");
-            registerCommandWithPrefix(commandMap, "rr", "createsign", new CreateSignCommand(this), "regionrental.admin.createsign");
-            registerCommandWithPrefix(commandMap, "rr", "reset", new ResetCommand(this), "regionrental.admin.reset");
-            registerCommandWithPrefix(commandMap, "rr", "retrieve", new RetrieveCommand(this), "regionrental.retrieve");
-            registerCommandWithPrefix(commandMap, "rr", "info", new InfoCommand(this), "regionrental.info");
-            registerCommandWithPrefix(commandMap, "rr", "list", new ListCommand(this), "regionrental.list");
-            registerCommandWithPrefix(commandMap, "rr", "extend", new ExtendCommand(this), "regionrental.extend");
-            registerCommandWithPrefix(commandMap, "rr", "duration", new DurationCommand(this), "regionrental.admin.duration");
-            registerCommandWithPrefix(commandMap, "rr", "remove", new RemoveCommand(this), "regionrental.admin.remove");
-            registerCommandWithPrefix(commandMap, "rr", "refundhistory", new RefundHistoryCommand(this), "regionrental.admin.refundhistory");
-            registerCommandWithPrefix(commandMap, "rr", "verify", new VerifyCommand(this), "regionrental.admin.verify");
-            registerCommandWithPrefix(commandMap, "rr", "override", new OverrideCommand(this), "regionrental.admin.override");
-        }
+        groupCommand = new GroupCommand(this);
+        registerCommandWithPrefix(commandMap, activePrefix, "group", groupCommand, "regionrental.admin.group");
 
         // Log final status
         logPrefixStatus(configuredPrefix);
@@ -267,7 +250,7 @@ public class RegionRental extends JavaPlugin {
 
         // Configured prefix has conflicts, log warning
         getLogger().warning("Custom prefix '" + configuredPrefix + "' conflicts with existing commands!");
-        getLogger().warning("Attempting to use 'rr' fallback prefix...");
+        getLogger().warning("Falling back to default 'rr' prefix due to conflicts...");
         usingFallback = true;
 
         // Check if 'rr' has conflicts
@@ -366,16 +349,12 @@ public class RegionRental extends JavaPlugin {
     private void logPrefixStatus(String configuredPrefix) {
         if (activePrefix.equals(configuredPrefix) && !usingFallback) {
             getLogger().info("✓ Using custom prefix '" + activePrefix + "' for all commands");
-            if (!activePrefix.equals("rr")) {
-                getLogger().info("✓ Fallback 'rr' prefix also registered for backward compatibility");
-            }
         } else if (usingFallback && activePrefix.equals("rr")) {
             getLogger().warning("⚠ Custom prefix '" + configuredPrefix + "' had conflicts");
             getLogger().info("✓ Using fallback prefix 'rr'");
         } else {
             getLogger().warning("⚠ Both custom prefix '" + configuredPrefix + "' and 'rr' had conflicts");
             getLogger().info("✓ Using auto-generated prefix '" + activePrefix + "'");
-            getLogger().info("  Fallback 'rr' will be registered when conflicts resolve");
         }
 
         getLogger().info("Commands are now available! Example: /" + activePrefix + "info");
@@ -410,102 +389,7 @@ public class RegionRental extends JavaPlugin {
     public String getActivePrefix() {
         return activePrefix != null ? activePrefix : "rr";
     }
-    
-    private void registerAliasesIfPossible() {
-        // Check if aliases are enabled in config
-        if (!getConfig().getBoolean("commands.enable-aliases", true)) {
-            getLogger().info("Command aliases disabled in config");
-            return;
-        }
-        
-        try {
-            CommandMap commandMap = getCommandMap();
-            if (commandMap == null) {
-                getLogger().warning("Could not access command map for aliases");
-                return;
-            }
-            
-            // List of aliases to try registering
-            String[][] aliasesToTry = {
-                {"reload", "rrreload"},
-                {"createsign", "rrcreatesign"},
-                {"reset", "rrreset"},
-                {"retime", "rrretime"},
-                {"retrieve", "rrretrieve"},
-                {"info", "rrinfo"},
-                {"list", "rrlist"},
-                {"extend", "rrextend"},
-                {"duration", "rrduration"},
-                {"remove", "rrremove"},
-                {"verify", "rrverify"}
-            };
-            
-            boolean allAliasesRegistered = true;
-            
-            for (String[] alias : aliasesToTry) {
-                String shortCommand = alias[0];
-                String fullCommand = alias[1];
-                
-                // Check if command already exists
-                if (commandMap.getCommand(shortCommand) != null) {
-                    getLogger().info("Alias /" + shortCommand + " conflicts with existing command, skipping");
-                    allAliasesRegistered = false;
-                    continue;
-                }
-                
-                // Try to register the alias
-                Command command = getCommand(fullCommand);
-                if (command != null) {
-                    commandMap.register(getName(), new CommandAlias(shortCommand, command));
-                    registeredAliases.add(shortCommand);
-                    if (configManager.isDebug()) {
-                        getLogger().info("Registered alias: /" + shortCommand + " -> /" + fullCommand);
-                    }
-                }
-            }
-            
-            aliasesEnabled = allAliasesRegistered && !registeredAliases.isEmpty();
-            
-            if (aliasesEnabled) {
-                getLogger().info("All command aliases registered successfully!");
-            } else if (!registeredAliases.isEmpty()) {
-                getLogger().info("Some aliases registered. Conflicts detected for full alias support.");
-            }
-            
-        } catch (Exception e) {
-            getLogger().warning("Could not register command aliases: " + e.getMessage());
-        }
-    }
-    
-    private void unregisterAliases() {
-        if (registeredAliases.isEmpty()) {
-            return;
-        }
-        
-        try {
-            CommandMap commandMap = getCommandMap();
-            if (commandMap == null) {
-                return;
-            }
-            
-            // Unregister all aliases
-            Field knownCommandsField = commandMap.getClass().getDeclaredField("knownCommands");
-            knownCommandsField.setAccessible(true);
-            @SuppressWarnings("unchecked")
-            java.util.Map<String, Command> knownCommands = (java.util.Map<String, Command>) knownCommandsField.get(commandMap);
-            
-            for (String alias : registeredAliases) {
-                knownCommands.remove(alias);
-                knownCommands.remove(getName().toLowerCase() + ":" + alias);
-            }
-            
-            registeredAliases.clear();
-            
-        } catch (Exception e) {
-            getLogger().warning("Could not unregister command aliases: " + e.getMessage());
-        }
-    }
-    
+
     private CommandMap getCommandMap() {
         try {
             Field commandMapField = Bukkit.getServer().getClass().getDeclaredField("commandMap");
@@ -518,6 +402,11 @@ public class RegionRental extends JavaPlugin {
     
     private void registerListeners() {
         getServer().getPluginManager().registerEvents(new SignInteractListener(this), this);
+
+        // Register GroupChatListener for hybrid command prompts (Phase 2)
+        groupChatListener = new GroupChatListener(this);
+        getServer().getPluginManager().registerEvents(groupChatListener, this);
+
         // StorageManager also registers itself as a listener
     }
     
@@ -532,7 +421,14 @@ public class RegionRental extends JavaPlugin {
         Bukkit.getScheduler().runTaskTimer(this, () -> {
             signManager.updateAllSigns();
         }, 600L, 600L); // 30 seconds
-        
+
+        // Cleanup expired group action prompts (runs every 30 seconds)
+        Bukkit.getScheduler().runTaskTimer(this, () -> {
+            if (groupCommand != null) {
+                groupCommand.cleanupExpiredActions();
+            }
+        }, 600L, 600L); // 30 seconds
+
         // Auto-save task (runs every 5 minutes)
         Bukkit.getScheduler().runTaskTimer(this, () -> {
             rentalManager.saveAllRentals();
@@ -566,10 +462,6 @@ public class RegionRental extends JavaPlugin {
             regionsConfig.verifyAndRepairRegions();
         }
 
-        // Re-register aliases
-        unregisterAliases();
-        registerAliasesIfPossible();
-
         // Update /rr command description in case prefix changed
         updateHelpCommandDescription();
 
@@ -595,6 +487,14 @@ public class RegionRental extends JavaPlugin {
 
     public RegionsConfig getRegionsConfig() {
         return regionsConfig;
+    }
+
+    public GroupsConfig getGroupsConfig() {
+        return groupsConfig;
+    }
+
+    public GroupCommand getGroupCommand() {
+        return groupCommand;
     }
 
     public RentalManager getRentalManager() {
@@ -627,28 +527,6 @@ public class RegionRental extends JavaPlugin {
 
     public Economy getEconomy() {
         return economy;
-    }
-    
-    public boolean areAliasesEnabled() {
-        return aliasesEnabled;
-    }
-    
-    // Inner class for command aliases
-    private static class CommandAlias extends Command {
-        private final Command original;
-
-        public CommandAlias(String name, Command original) {
-            super(name);
-            this.original = original;
-            this.description = original.getDescription();
-            this.usageMessage = original.getUsage();
-            this.setPermission(original.getPermission());
-        }
-
-        @Override
-        public boolean execute(org.bukkit.command.CommandSender sender, String commandLabel, String[] args) {
-            return original.execute(sender, commandLabel, args);
-        }
     }
 
     // Inner class for dynamic command registration
