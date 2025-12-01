@@ -179,7 +179,7 @@ Commands are registered dynamically at runtime using a configurable prefix (defa
 
 **Important:** Only the determined active prefix is registered. There are no fallback registrations or short aliases.
 
-**Command classes in `commands/` package (13 total):**
+**Command classes in `commands/` package (14 total):**
 - `RRCommand` - Main help command dispatcher
 - `ReloadCommand` - Reload configuration
 - `CreateSignCommand` - Create rental signs (signs use defaults until overrides set)
@@ -192,7 +192,8 @@ Commands are registered dynamically at runtime using a configurable prefix (defa
 - `DurationCommand` - Modify rental duration (add/remove/set/reset)
 - `RefundHistoryCommand` - View refund history for a rental
 - `VerifyCommand` - Verify region configurations (reports defaults vs custom overrides)
-- `OverrideCommand` - Set per-region custom settings **[NEW]**
+- `OverrideCommand` - Set per-region or per-group custom settings
+- `GroupCommand` - Manage region groups for mass override operations **[NEW]**
 
 ## Key Implementation Details
 
@@ -215,6 +216,128 @@ Located in `SignInteractListener.java`:
 ### Admin Reset vs Remove
 - **`/rrreset <region>`** - Resets active rental with full refund, but keeps rental setup (sign, support block protection, schematic)
 - **`/rrremove <region>`** - Completely removes rental setup (resets rental if active, restores support block, removes sign, deletes schematic)
+
+### Region Grouping System
+The plugin supports grouping multiple regions together for mass override operations:
+
+**Core Concept:**
+- Group regions across multiple worlds for unified configuration management
+- Set overrides once for entire group instead of per-region
+- Hybrid command interface: inline arguments or chat prompts (60s timeout)
+
+**Group Commands:**
+```bash
+/rrgroup create <name> [regions]       # Create group (prompt if no regions)
+/rrgroup edit <name> add [regions]     # Add regions to group
+/rrgroup edit <name> remove [regions]  # Remove regions from group
+/rrgroup delete <name> [confirm]       # Delete group (requires confirmation)
+/rrgroup list                          # List all groups
+/rrgroup view <name>                   # View group details
+```
+
+**Region Format:**
+- Same world as player: `shop1` or `world:shop1` (both valid)
+- Different world: `world_nether:shop1` (explicit prefix required)
+- Console: Always requires `world:region` format
+- Multiple regions: `shop1,shop2,world_nether:shop3` (comma-separated)
+
+**Group Override System:**
+
+The `group:` prefix parser resolves naming conflicts when a group and region share the same name:
+
+**With `group:` prefix** (targets groups ONLY):
+```bash
+/rroverride price group:shop_group 1000
+/rroverride duration group:stores 30
+/rroverride list group:premium_zones
+```
+
+**Without prefix** (targets regions ONLY):
+```bash
+/rroverride price shop1 500           # Targets region "shop1"
+/rroverride price world:shop1 500     # Explicit world prefix
+```
+
+**Override Lookup Priority:**
+1. **Group override** (if region is in a group) → highest priority
+2. **Individual region override** (from regions.yml)
+3. **Default values** (from config.yml)
+
+**Key Behaviors:**
+- **Individual override cleanup**: Adding regions to a group automatically removes their individual overrides
+- **Group deletion cleanup**: Deleting a group removes all group overrides from regions.yml
+- **Exclusive membership**: Regions can only be in one group at a time
+- **Duplicate prevention**: Cannot add region if already in another group
+- **Sign updates**: All signs in group update together when group override is set
+
+**Validation:**
+- Group names: 2-30 characters, alphanumeric + underscore only
+- Reserved names: "all", "none", "default" (blocked)
+- Region existence: Validated against WorldGuard before adding
+- World existence: Validated before accepting world: prefix
+
+**Data Storage:**
+
+**groups.yml** (managed by GroupsConfig):
+```yaml
+groups:
+  shop_group:
+    regions:
+      - "world:shop1"
+      - "world:shop2"
+      - "world_nether:shop3"
+```
+
+**regions.yml** (extended with group section):
+```yaml
+regions:
+  world:shop1:
+    price: 500.0  # Individual overrides (only if NOT in group)
+
+groups:
+  shop_group:
+    price: 1000.0           # Group overrides
+    duration: 30
+    max-extensions: 20
+    extension-price: 250.0
+    allow-extensions: true
+    extension-duration: 7
+```
+
+**Configuration Managers:**
+- **GroupsConfig.java** (~500 lines) - Manages groups.yml (CRUD operations, validation, membership)
+- **GroupCommand.java** (~650 lines) - Command handler with hybrid input and chat listener integration
+- **GroupChatListener.java** (~90 lines) - Intercepts chat for region input prompts
+
+**Workflow Example:**
+```bash
+# Create group with prompt
+/rrgroup create stores
+> Type regions (comma-separated): shop1,shop2,shop3
+
+# Or inline
+/rrgroup create stores shop1,shop2,world_nether:shop3
+
+# Set group override
+/rroverride price group:stores 1000
+> Set rental price for group stores to $1000.00
+> Updated 3 region(s) in group
+
+# Try to set individual override (blocked)
+/rroverride price shop1 500
+> Region world:shop1 is in group stores
+> Use: /rroverride price group:stores 500
+
+# Delete group (removes overrides)
+/rrgroup delete stores confirm
+> Deleted group 'stores' and removed all group overrides
+```
+
+**Tab Completion:**
+- Group commands: subcommands, group names, regions, world prefixes
+- Override commands: `group:` prefix, group names, region names, world prefixes
+- Context-aware: suggests regions from player's current world
+- Multi-format: supports both `region` and `world:region` completion
 
 ### Scheduled Tasks
 - **Expiration checker**: Every 1 minute (configurable via `expiration-check-interval`)
