@@ -6,6 +6,7 @@ import com.regionrental.config.GroupsConfig;
 import com.regionrental.config.RegionsConfig;
 import com.regionrental.config.SignsConfig;
 import com.regionrental.config.StorageConfig;
+import com.regionrental.listeners.GroupChatListener;
 import com.regionrental.listeners.SignInteractListener;
 import com.regionrental.managers.*;
 import net.milkbowl.vault.economy.Economy;
@@ -40,6 +41,9 @@ public class RegionRental extends JavaPlugin {
 
     // Commands (for Phase 2 chat listener access)
     private GroupCommand groupCommand;
+
+    // Listeners
+    private GroupChatListener groupChatListener;
 
     // Economy
     private Economy economy;
@@ -398,6 +402,11 @@ public class RegionRental extends JavaPlugin {
     
     private void registerListeners() {
         getServer().getPluginManager().registerEvents(new SignInteractListener(this), this);
+
+        // Register GroupChatListener for hybrid command prompts (Phase 2)
+        groupChatListener = new GroupChatListener(this);
+        getServer().getPluginManager().registerEvents(groupChatListener, this);
+
         // StorageManager also registers itself as a listener
     }
     
@@ -412,7 +421,14 @@ public class RegionRental extends JavaPlugin {
         Bukkit.getScheduler().runTaskTimer(this, () -> {
             signManager.updateAllSigns();
         }, 600L, 600L); // 30 seconds
-        
+
+        // Cleanup expired group action prompts (runs every 30 seconds)
+        Bukkit.getScheduler().runTaskTimer(this, () -> {
+            if (groupCommand != null) {
+                groupCommand.cleanupExpiredActions();
+            }
+        }, 600L, 600L); // 30 seconds
+
         // Auto-save task (runs every 5 minutes)
         Bukkit.getScheduler().runTaskTimer(this, () -> {
             rentalManager.saveAllRentals();

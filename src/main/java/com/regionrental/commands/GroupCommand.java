@@ -27,7 +27,7 @@ public class GroupCommand implements CommandExecutor, TabCompleter {
     private final Map<UUID, PendingGroupAction> pendingActions = new ConcurrentHashMap<>();
 
     // Timeout for pending actions (60 seconds)
-    private static final long PENDING_TIMEOUT = 60 * 1000;
+    public static final long PENDING_TIMEOUT = 60 * 1000;
 
     public GroupCommand(RegionRental plugin) {
         this.plugin = plugin;
@@ -250,7 +250,7 @@ public class GroupCommand implements CommandExecutor, TabCompleter {
     /**
      * Processes group creation with region input
      */
-    private void processCreateGroup(CommandSender sender, String groupName, String regionsInput) {
+    void processCreateGroup(CommandSender sender, String groupName, String regionsInput) {
         // Parse regions
         ParseResult parseResult = parseRegionInput(sender, regionsInput);
 
@@ -289,7 +289,7 @@ public class GroupCommand implements CommandExecutor, TabCompleter {
     /**
      * Processes adding regions to a group
      */
-    private void processAddRegions(CommandSender sender, String groupName, String regionsInput) {
+    void processAddRegions(CommandSender sender, String groupName, String regionsInput) {
         // Parse regions
         ParseResult parseResult = parseRegionInput(sender, regionsInput);
 
@@ -330,7 +330,7 @@ public class GroupCommand implements CommandExecutor, TabCompleter {
     /**
      * Processes removing regions from a group
      */
-    private void processRemoveRegions(CommandSender sender, String groupName, String regionsInput) {
+    void processRemoveRegions(CommandSender sender, String groupName, String regionsInput) {
         // Parse regions
         ParseResult parseResult = parseRegionInput(sender, regionsInput);
 
@@ -435,23 +435,34 @@ public class GroupCommand implements CommandExecutor, TabCompleter {
      * Prompts for region input (Phase 2 implementation)
      */
     private void promptForRegions(CommandSender sender, String groupName, String action) {
-        // Phase 2: Will implement chat listener integration
-        // For now, just tell user to use arguments
-        sender.sendMessage(ChatColor.YELLOW + "Please provide regions as arguments:");
-
-        switch (action) {
-            case "create":
-                sender.sendMessage(ChatColor.GRAY + "Usage: /rrgroup create " + groupName + " region1,region2,world:region3");
-                break;
-            case "add":
-                sender.sendMessage(ChatColor.GRAY + "Usage: /rrgroup edit " + groupName + " add region1,region2");
-                break;
-            case "remove":
-                sender.sendMessage(ChatColor.GRAY + "Usage: /rrgroup edit " + groupName + " remove region1,region2");
-                break;
+        // Only players can use chat prompts
+        if (!(sender instanceof Player)) {
+            sender.sendMessage(ChatColor.RED + "Console must provide regions as arguments.");
+            switch (action) {
+                case "create":
+                    sender.sendMessage(ChatColor.GRAY + "Usage: /rrgroup create " + groupName + " region1,region2,world:region3");
+                    break;
+                case "add":
+                    sender.sendMessage(ChatColor.GRAY + "Usage: /rrgroup edit " + groupName + " add region1,region2");
+                    break;
+                case "remove":
+                    sender.sendMessage(ChatColor.GRAY + "Usage: /rrgroup edit " + groupName + " remove region1,region2");
+                    break;
+            }
+            return;
         }
 
-        sender.sendMessage(ChatColor.GRAY + "Use world:region format for cross-world regions");
+        Player player = (Player) sender;
+
+        // Create pending action
+        PendingGroupAction pendingAction = new PendingGroupAction(groupName, action);
+        pendingActions.put(player.getUniqueId(), pendingAction);
+
+        // Inform player
+        sender.sendMessage(ChatColor.GREEN + "Please type the regions in chat:");
+        sender.sendMessage(ChatColor.GRAY + "Format: region1,region2 or world:region1,region2");
+        sender.sendMessage(ChatColor.GRAY + "Use world:region for regions in different worlds");
+        sender.sendMessage(ChatColor.YELLOW + "Type 'cancel' to abort (60 second timeout)");
     }
 
     // ========== Pending Actions (Phase 2) ==========
@@ -461,6 +472,21 @@ public class GroupCommand implements CommandExecutor, TabCompleter {
      */
     public boolean hasPendingAction(UUID playerUUID) {
         return pendingActions.containsKey(playerUUID);
+    }
+
+    /**
+     * Gets the pending action for a player
+     * @return PendingGroupAction or null if no pending action
+     */
+    public PendingGroupAction getPendingAction(UUID playerUUID) {
+        return pendingActions.get(playerUUID);
+    }
+
+    /**
+     * Cancels a pending action for a player
+     */
+    public void cancelPendingAction(UUID playerUUID) {
+        pendingActions.remove(playerUUID);
     }
 
     /**
@@ -564,12 +590,12 @@ public class GroupCommand implements CommandExecutor, TabCompleter {
     /**
      * Pending action for chat-based input
      */
-    static class PendingGroupAction {
-        String groupName;
-        String action;  // "create", "add", "remove"
-        long timestamp;
+    public static class PendingGroupAction {
+        public String groupName;
+        public String action;  // "create", "add", "remove"
+        public long timestamp;
 
-        PendingGroupAction(String groupName, String action) {
+        public PendingGroupAction(String groupName, String action) {
             this.groupName = groupName;
             this.action = action;
             this.timestamp = System.currentTimeMillis();
