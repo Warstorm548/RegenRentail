@@ -26,7 +26,7 @@ RegionRental is a Minecraft Paper/Spigot plugin (1.21+) that implements a comple
 ./gradlew clean build
 
 # Output location
-build/libs/RegionRental-2.0.1.jar
+build/libs/RegionRental-2.1.0.jar
 ```
 
 ### Development Commands
@@ -84,8 +84,8 @@ When updating the version, modify these files:
 - Output JAR: `build/libs/RegionRental-X.X.X.jar`
 
 ### Current Version
-- **Version:** 2.0.1
-- **Last Updated:** Critical bug fixes and performance optimizations (IndexOutOfBoundsException prevention, composite key parsing, performance improvements up to 1000x)
+- **Version:** 2.1.0
+- **Last Updated:** Command prefix registration cleanup (removed alias system, removed duplicate /rr fallback, improved console messages)
 
 ## Architecture Overview
 
@@ -93,9 +93,8 @@ When updating the version, modify these files:
 **`RegionRental.java`** - Main plugin entry point extending JavaPlugin. Handles:
 - Plugin lifecycle (onEnable/onDisable)
 - Manager initialization and coordination
-- Command registration with `/rr` prefix
+- Dynamic command registration with configurable prefix (defaults to `/rr`)
 - Scheduled tasks (expiration checking, sign updates, auto-save)
-- Command alias management (attempts to register short aliases if no conflicts)
 - Dependencies checking (Vault, WorldGuard, WorldEdit, Economy)
 
 ### Core Manager Architecture
@@ -173,7 +172,12 @@ Config managers: `ConfigManager`, `RegionsConfig`, `SignsConfig`, `StorageConfig
 
 ### Command Structure
 
-All commands use `/rr` prefix to avoid conflicts. The plugin attempts to register short aliases (e.g., `/reload`, `/info`) but falls back to prefixed versions if conflicts exist.
+Commands are registered dynamically at runtime using a configurable prefix (default: `/rr`). The prefix is determined during plugin startup:
+- If the configured prefix has no conflicts, it's used
+- If conflicts exist, falls back to `/rr`
+- If `/rr` also conflicts, auto-generates `rr1`, `rr2`, etc.
+
+**Important:** Only the determined active prefix is registered. There are no fallback registrations or short aliases.
 
 **Command classes in `commands/` package (13 total):**
 - `RRCommand` - Main help command dispatcher
@@ -341,9 +345,8 @@ Messages are retrieved via `ConfigManager.getMessage()` which handles color code
 ### Adding a New Command
 1. Create command class in `commands/` implementing `CommandExecutor`
 2. Register in `plugin.yml` under `commands:` section
-3. Add to `RegionRental.registerCommands()` method
-4. Add to alias registration in `registerAliasesIfPossible()` if needed
-5. Add permission node to `plugin.yml` under `permissions:`
+3. Add to `RegionRental.registerCommands()` method using `registerCommandWithPrefix()`
+4. Add permission node to `plugin.yml` under `permissions:`
 
 ### Adding a New Config Option
 1. Add default value to `src/main/resources/config.yml`
@@ -371,7 +374,7 @@ Add to `StorageManager.CONTAINER_TYPES` set (currently supports: chest, barrel, 
 
 ### Quick Test Workflow
 1. Build: `./gradlew build`
-2. Copy JAR: `cp build/libs/RegionRental-2.0.0.jar /path/to/server/plugins/`
+2. Copy JAR: `cp build/libs/RegionRental-2.1.0.jar /path/to/server/plugins/`
 3. Start server
 4. Create WorldGuard region: `/rg define testregion`
 5. Create rental sign: `/rrcreatesign testregion`
@@ -456,7 +459,46 @@ src/main/java/com/regionrental/
 
 ## Recent Features
 
-### Version 2.0.1 - Bug Fixes and Performance Optimizations (Latest)
+### Version 2.1.0 - Command Prefix Registration Cleanup (Latest)
+Minor update simplifying command registration and removing deprecated features:
+
+**Changes:**
+- **Removed Alias System** - Deleted deprecated command alias system (~130 lines)
+  - Short aliases like `/info`, `/extend`, `/list` no longer registered
+  - Pure prefix-based approach (e.g., `/rrinfo`, `/rrextend`, `/rrlist`)
+  - Cleaner codebase, simpler command resolution
+  - Config option `commands.enable-aliases` removed from config.yml
+
+- **Removed Duplicate /rr Registration** - Custom prefix no longer registers fallback `/rr`
+  - Users with custom prefix must use that prefix exclusively
+  - No more command namespace pollution with duplicate registrations
+  - **Breaking Change:** Users who configured custom prefix but continued using `/rr` commands must now use their configured prefix
+
+- **Console Message Improvements**
+  - Startup messages now show actual active prefix being used
+  - Helpful examples: `Example: /rrinfo, /rrextend, /rrlist`
+  - Removed outdated alias-related messages
+  - Clearer fallback warnings when prefix conflicts occur
+
+**Technical Details:**
+- **Files modified:** RegionRental.java, config.yml
+- **Lines removed:** ~161 lines total (alias system + duplicate registration logic)
+- **Methods removed:** `registerAliasesIfPossible()`, `unregisterAliases()`, `CommandAlias` inner class
+- **Config cleanup:** Removed `commands.enable-aliases` section (19 lines)
+- **No data migrations needed:** Purely code cleanup, no data format changes
+
+**Command Registration Flow:**
+1. Read configured prefix from `config.yml` (`commands.prefix`)
+2. Check for conflicts with existing commands
+3. Determine active prefix (configured → fallback to 'rr' → auto-generate 'rr1', 'rr2', etc.)
+4. Register ALL commands with the determined prefix ONLY
+5. Log active prefix with examples to console
+
+**Breaking Changes:**
+- Users with custom prefix (e.g., `commands.prefix: rental`) can no longer use `/rr` commands
+- Must use configured/active prefix exclusively (e.g., `/rentalinfo`, `/rentalextend`)
+
+### Version 2.0.1 - Bug Fixes and Performance Optimizations
 Critical patch release addressing stability and performance issues:
 
 **Bug Fixes:**
