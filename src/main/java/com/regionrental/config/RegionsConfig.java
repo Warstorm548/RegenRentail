@@ -755,4 +755,35 @@ public class RegionsConfig {
 
         return section.getKeys(false);
     }
+
+    /**
+     * Check if a region has individual overrides
+     * Used to detect conflicts when adding regions to groups
+     *
+     * @param compositeKey The composite key (world:region)
+     * @return true if the region has any individual overrides
+     */
+    public boolean hasRegionOverrides(String compositeKey) {
+        String path = "regions." + compositeKey;
+        return config.contains(path) && config.isConfigurationSection(path);
+    }
+
+    /**
+     * Remove all individual overrides for a region
+     * Called when adding region to a group to prevent conflicts
+     *
+     * @param compositeKey The composite key (world:region)
+     */
+    public void removeRegionOverrides(String compositeKey) {
+        if (!hasRegionOverrides(compositeKey)) {
+            return;
+        }
+
+        config.set("regions." + compositeKey, null);
+        save();
+
+        if (plugin.getConfigManager().isDebug()) {
+            plugin.getLogger().info("Removed individual overrides for region '" + compositeKey + "' from regions.yml");
+        }
+    }
 }

@@ -278,7 +278,20 @@ public class GroupCommand implements CommandExecutor, TabCompleter {
         // Create group
         plugin.getGroupsConfig().createGroup(groupName, parseResult.validRegions);
 
+        // Clean up individual region overrides to prevent conflicts with group overrides
+        int cleanedCount = 0;
+        for (String compositeKey : parseResult.validRegions) {
+            if (plugin.getRegionsConfig().hasRegionOverrides(compositeKey)) {
+                plugin.getRegionsConfig().removeRegionOverrides(compositeKey);
+                cleanedCount++;
+            }
+        }
+
         sender.sendMessage(ChatColor.GREEN + "Created group '" + groupName + "' with " + parseResult.validRegions.size() + " regions");
+
+        if (cleanedCount > 0) {
+            sender.sendMessage(ChatColor.YELLOW + "Removed individual overrides from " + cleanedCount + " region(s) to prevent conflicts with group overrides");
+        }
 
         if (!parseResult.errors.isEmpty()) {
             sender.sendMessage(ChatColor.YELLOW + "Warnings (" + parseResult.errors.size() + " regions skipped):");
@@ -318,8 +331,21 @@ public class GroupCommand implements CommandExecutor, TabCompleter {
         // Add regions
         plugin.getGroupsConfig().addRegionsToGroup(groupName, parseResult.validRegions);
 
+        // Clean up individual region overrides to prevent conflicts with group overrides
+        int cleanedCount = 0;
+        for (String compositeKey : parseResult.validRegions) {
+            if (plugin.getRegionsConfig().hasRegionOverrides(compositeKey)) {
+                plugin.getRegionsConfig().removeRegionOverrides(compositeKey);
+                cleanedCount++;
+            }
+        }
+
         int totalSize = plugin.getGroupsConfig().getGroupSize(groupName);
         sender.sendMessage(ChatColor.GREEN + "Added " + parseResult.validRegions.size() + " regions to group '" + groupName + "' (Total: " + totalSize + " regions)");
+
+        if (cleanedCount > 0) {
+            sender.sendMessage(ChatColor.YELLOW + "Removed individual overrides from " + cleanedCount + " region(s) to prevent conflicts with group overrides");
+        }
 
         if (!parseResult.errors.isEmpty()) {
             sender.sendMessage(ChatColor.YELLOW + "Warnings (" + parseResult.errors.size() + " regions skipped):");
