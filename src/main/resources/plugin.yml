@@ -46,6 +46,7 @@ permissions:
       regionrental.admin.refundhistory: true
       regionrental.admin.verify: true
       regionrental.admin.override: true
+      regionrental.admin.group: true
       regionrental.admin.bypass: true
       regionrental.admin.breaksign: true
       regionrental.admin.list.others: true
@@ -110,6 +111,10 @@ permissions:
 
   regionrental.admin.override:
     description: Set per-region custom rental settings
+    default: op
+
+  regionrental.admin.group:
+    description: Manage region groups for bulk overrides
     default: op
 
   regionrental.admin.refundhistory:

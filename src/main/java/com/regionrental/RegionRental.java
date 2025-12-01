@@ -2,6 +2,7 @@ package com.regionrental;
 
 import com.regionrental.commands.*;
 import com.regionrental.config.ConfigManager;
+import com.regionrental.config.GroupsConfig;
 import com.regionrental.config.RegionsConfig;
 import com.regionrental.config.SignsConfig;
 import com.regionrental.config.StorageConfig;
@@ -28,6 +29,7 @@ public class RegionRental extends JavaPlugin {
     private SignsConfig signsConfig;
     private StorageConfig storageConfig;
     private RegionsConfig regionsConfig;
+    private GroupsConfig groupsConfig;
     private RentalManager rentalManager;
     private SignManager signManager;
     private StorageManager storageManager;
@@ -35,6 +37,9 @@ public class RegionRental extends JavaPlugin {
     private WorldGuardManager worldGuardManager;
     private WorldEditManager worldEditManager;
     private EzChestShopManager ezChestShopManager;
+
+    // Commands (for Phase 2 chat listener access)
+    private GroupCommand groupCommand;
 
     // Economy
     private Economy economy;
@@ -101,6 +106,9 @@ public class RegionRental extends JavaPlugin {
         if (regionsConfig != null) {
             regionsConfig.save();
         }
+        if (groupsConfig != null) {
+            groupsConfig.save();
+        }
 
         // Cancel tasks
         Bukkit.getScheduler().cancelTasks(this);
@@ -115,6 +123,7 @@ public class RegionRental extends JavaPlugin {
             signsConfig = new SignsConfig(this);
             storageConfig = new StorageConfig(this);
             regionsConfig = new RegionsConfig(this);
+            groupsConfig = new GroupsConfig(this);
 
             // Migrate regions from config.yml to regions.yml (one-time)
             regionsConfig.migrateFromMainConfig(getConfig());
@@ -215,6 +224,9 @@ public class RegionRental extends JavaPlugin {
 
         OverrideCommand overrideCommand = new OverrideCommand(this);
         registerCommandWithPrefix(commandMap, activePrefix, "override", overrideCommand, "regionrental.admin.override");
+
+        groupCommand = new GroupCommand(this);
+        registerCommandWithPrefix(commandMap, activePrefix, "group", groupCommand, "regionrental.admin.group");
 
         // Log final status
         logPrefixStatus(configuredPrefix);
@@ -459,6 +471,14 @@ public class RegionRental extends JavaPlugin {
 
     public RegionsConfig getRegionsConfig() {
         return regionsConfig;
+    }
+
+    public GroupsConfig getGroupsConfig() {
+        return groupsConfig;
+    }
+
+    public GroupCommand getGroupCommand() {
+        return groupCommand;
     }
 
     public RentalManager getRentalManager() {
