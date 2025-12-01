@@ -2,7 +2,7 @@
 
 **Complete WorldGuard Region Rental System with Clickable Signs**
 
-Version: 2.2.0
+Version: 2.2.1
 Minecraft: Paper/Spigot 1.21+
 Java: OpenJDK 21+
 Build System: Gradle 9.2.0
@@ -131,14 +131,14 @@ Or build directly with Gradle:
 
 4. **Find your JAR file:**
 ```
-build/libs/RegionRental-2.2.0.jar
+build/libs/RegionRental-2.2.1.jar
 ```
 
 ## 🚀 Installation
 
 1. **Copy the JAR to your server:**
 ```bash
-cp build/libs/RegionRental-2.2.0.jar /path/to/server/plugins/
+cp build/libs/RegionRental-2.2.1.jar /path/to/server/plugins/
 ```
 
 2. **Install required dependencies:**
@@ -568,7 +568,25 @@ rentals:
 
 ## 🆕 Recent Updates
 
-### Version 2.2.0 - Region Grouping System (Latest)
+### Version 2.2.1 - Sign Update Bug Fix (Latest)
+Patch release fixing missing sign updates when regions are removed from groups:
+
+**Bug Fixes:**
+- **Sign Update Edge Cases** - Signs now update immediately when group membership changes
+  - Fixed: Signs not updating when regions are removed from groups (`/rrgroup edit <name> remove`)
+  - Fixed: Signs not updating when groups are deleted (`/rrgroup delete <name>`)
+  - Fixed: Signs not updating when regions are added to groups with existing overrides
+  - Added: `bulkMarkSignsDirty()` calls in 4 group command methods
+
+**Technical Details:**
+- Modified `GroupCommand.java` to mark signs as dirty after group membership changes
+- Signs now update within 30 seconds (next update cycle) instead of showing stale data
+- No performance impact (dirty tracking uses efficient HashSet operations)
+- Ensures override lookup priority works correctly: Group → Region → Default
+
+---
+
+### Version 2.2.0 - Region Grouping System
 Minor update adding comprehensive region grouping and mass override management:
 
 **New Features:**

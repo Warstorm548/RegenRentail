@@ -174,11 +174,17 @@ public class GroupCommand implements CommandExecutor, TabCompleter {
             return true;
         }
 
+        // Get all regions in group BEFORE deletion (needed for marking signs dirty)
+        List<String> groupRegions = plugin.getGroupsConfig().getGroupRegions(groupName);
+
         // Delete group from groups.yml
         plugin.getGroupsConfig().deleteGroup(groupName);
 
         // Remove group overrides from regions.yml
         plugin.getRegionsConfig().removeGroupOverrides(groupName);
+
+        // Mark all signs as dirty so they update to fallback prices
+        plugin.getSignManager().bulkMarkSignsDirty(groupRegions);
 
         sender.sendMessage(ChatColor.GREEN + "Deleted group '" + groupName + "' and removed all group overrides");
 
@@ -287,6 +293,9 @@ public class GroupCommand implements CommandExecutor, TabCompleter {
             }
         }
 
+        // Mark signs as dirty so they update if group overrides are set later
+        plugin.getSignManager().bulkMarkSignsDirty(parseResult.validRegions);
+
         sender.sendMessage(ChatColor.GREEN + "Created group '" + groupName + "' with " + parseResult.validRegions.size() + " regions");
 
         if (cleanedCount > 0) {
@@ -340,6 +349,9 @@ public class GroupCommand implements CommandExecutor, TabCompleter {
             }
         }
 
+        // Mark signs as dirty so they update to group overrides (if any exist)
+        plugin.getSignManager().bulkMarkSignsDirty(parseResult.validRegions);
+
         int totalSize = plugin.getGroupsConfig().getGroupSize(groupName);
         sender.sendMessage(ChatColor.GREEN + "Added " + parseResult.validRegions.size() + " regions to group '" + groupName + "' (Total: " + totalSize + " regions)");
 
@@ -387,6 +399,9 @@ public class GroupCommand implements CommandExecutor, TabCompleter {
 
         // Remove regions
         plugin.getGroupsConfig().removeRegionsFromGroup(groupName, toRemove);
+
+        // Mark signs as dirty so they update to fallback prices
+        plugin.getSignManager().bulkMarkSignsDirty(toRemove);
 
         int remainingSize = plugin.getGroupsConfig().getGroupSize(groupName);
         sender.sendMessage(ChatColor.GREEN + "Removed " + toRemove.size() + " regions from group '" + groupName + "' (Remaining: " + remainingSize + " regions)");

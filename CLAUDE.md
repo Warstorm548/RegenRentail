@@ -26,7 +26,7 @@ RegionRental is a Minecraft Paper/Spigot plugin (1.21+) that implements a comple
 ./gradlew clean build
 
 # Output location
-build/libs/RegionRental-2.2.0.jar
+build/libs/RegionRental-2.2.1.jar
 ```
 
 ### Development Commands
@@ -84,8 +84,8 @@ When updating the version, modify these files:
 - Output JAR: `build/libs/RegionRental-X.X.X.jar`
 
 ### Current Version
-- **Version:** 2.2.0
-- **Last Updated:** Region Grouping System (multi-world group management, mass override operations, hybrid command interface, group: prefix parser, enhanced tab completion)
+- **Version:** 2.2.1
+- **Last Updated:** Sign Update Bug Fix (fixed missing sign updates when regions are removed from groups, signs now update within 30 seconds via dirty tracking)
 
 ## Architecture Overview
 
@@ -497,7 +497,7 @@ Add to `StorageManager.CONTAINER_TYPES` set (currently supports: chest, barrel, 
 
 ### Quick Test Workflow
 1. Build: `./gradlew build`
-2. Copy JAR: `cp build/libs/RegionRental-2.2.0.jar /path/to/server/plugins/`
+2. Copy JAR: `cp build/libs/RegionRental-2.2.1.jar /path/to/server/plugins/`
 3. Start server
 4. Create WorldGuard region: `/rg define testregion`
 5. Create rental sign: `/rrcreatesign testregion`
@@ -582,7 +582,29 @@ src/main/java/com/regionrental/
 
 ## Recent Features
 
-### Version 2.2.0 - Region Grouping System (Latest)
+### Version 2.2.1 - Sign Update Bug Fix (Latest)
+Patch release fixing missing sign updates when regions are removed from groups:
+
+**Bug Fixes:**
+- **Sign Update Edge Cases** - Signs now update immediately when group membership changes
+  - Fixed: Signs not updating when regions are removed from groups (`/rrgroup edit <name> remove`)
+  - Fixed: Signs not updating when groups are deleted (`/rrgroup delete <name>`)
+  - Fixed: Signs not updating when regions are added to groups with existing overrides
+  - Fixed: Signs not updating when creating groups (consistency)
+
+**Technical Details:**
+- Modified `GroupCommand.java` - Added `bulkMarkSignsDirty()` calls in 4 methods:
+  - `handleDelete()` - Retrieves group regions before deletion, marks signs dirty
+  - `processRemoveRegions()` - Marks removed region signs dirty
+  - `processAddRegions()` - Marks added region signs dirty
+  - `processCreateGroup()` - Marks created group region signs dirty
+- Signs update within 30 seconds (next update cycle) instead of showing stale data
+- No performance impact (dirty tracking uses efficient HashSet operations)
+- Ensures override lookup priority: Group → Region → Default
+
+---
+
+### Version 2.2.0 - Region Grouping System
 Minor update adding comprehensive region grouping and mass override management:
 
 **New Features:**
