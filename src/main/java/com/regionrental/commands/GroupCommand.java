@@ -168,14 +168,19 @@ public class GroupCommand implements CommandExecutor, TabCompleter {
         if (args.length < 3 || !args[2].equalsIgnoreCase("confirm")) {
             int regionCount = plugin.getGroupsConfig().getGroupSize(groupName);
             sender.sendMessage(ChatColor.YELLOW + "WARNING: You are about to delete group '" + groupName + "' with " + regionCount + " regions!");
-            sender.sendMessage(ChatColor.YELLOW + "Region overrides in regions.yml will NOT be removed.");
+            sender.sendMessage(ChatColor.YELLOW + "Group overrides in regions.yml will be removed.");
+            sender.sendMessage(ChatColor.YELLOW + "Individual region overrides will remain intact.");
             sender.sendMessage(ChatColor.RED + "Type: /rrgroup delete " + groupName + " confirm");
             return true;
         }
 
-        // Delete group
+        // Delete group from groups.yml
         plugin.getGroupsConfig().deleteGroup(groupName);
-        sender.sendMessage(ChatColor.GREEN + "Deleted group '" + groupName + "'");
+
+        // Remove group overrides from regions.yml
+        plugin.getRegionsConfig().removeGroupOverrides(groupName);
+
+        sender.sendMessage(ChatColor.GREEN + "Deleted group '" + groupName + "' and removed all group overrides");
 
         return true;
     }
