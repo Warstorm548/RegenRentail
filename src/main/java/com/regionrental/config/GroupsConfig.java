@@ -1,6 +1,7 @@
 package com.regionrental.config;
 
 import com.regionrental.RegionRental;
+import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.configuration.file.YamlConfiguration;
 
@@ -66,7 +67,12 @@ public class GroupsConfig {
                 "  /rrgroup list                              # List all groups\n" +
                 "  /rrgroup view <group_name>                 # View group details"
             );
-            config.set("groups", new HashMap<>());
+            save();
+        }
+
+        // Ensure groups section exists
+        if (config.getConfigurationSection("groups") == null) {
+            config.createSection("groups");
             save();
         }
     }
@@ -205,7 +211,12 @@ public class GroupsConfig {
             return new HashSet<>();
         }
 
-        return config.getConfigurationSection("groups").getKeys(false);
+        ConfigurationSection section = config.getConfigurationSection("groups");
+        if (section == null) {
+            return new HashSet<>();
+        }
+
+        return section.getKeys(false);
     }
 
     /**
