@@ -775,11 +775,49 @@ public class OverrideCommand implements CommandExecutor, TabCompleter {
                 }
             }
         } else if (args.length == 2) {
-            // Region name suggestions - get all WorldGuard regions
+            // Target suggestions: group:group_name or world:region format
             String partial = args[1].toLowerCase();
-            for (String region : plugin.getWorldGuardManager().getAllRegionNames()) {
-                if (region.toLowerCase().startsWith(partial)) {
-                    completions.add(region);
+
+            // Check if typing group: prefix
+            if (partial.startsWith("group:")) {
+                // Suggest group names with group: prefix
+                String groupPrefix = partial.substring(6); // Strip "group:"
+                for (String groupName : plugin.getGroupsConfig().getAllGroups()) {
+                    if (groupName.toLowerCase().startsWith(groupPrefix)) {
+                        completions.add("group:" + groupName);
+                    }
+                }
+            } else {
+                // Suggest group: prefix itself
+                if ("group:".startsWith(partial)) {
+                    completions.add("group:");
+                }
+
+                // Suggest group names with group: prefix
+                for (String groupName : plugin.getGroupsConfig().getAllGroups()) {
+                    String suggestion = "group:" + groupName;
+                    if (suggestion.toLowerCase().startsWith(partial)) {
+                        completions.add(suggestion);
+                    }
+                }
+
+                // Suggest world:region format (world names)
+                if (sender instanceof org.bukkit.entity.Player) {
+                    org.bukkit.entity.Player player = (org.bukkit.entity.Player) sender;
+                    String worldName = player.getWorld().getName();
+
+                    // Suggest current world prefix
+                    String worldPrefix = worldName + ":";
+                    if (worldPrefix.toLowerCase().startsWith(partial)) {
+                        completions.add(worldPrefix);
+                    }
+                }
+
+                // Suggest region names (without world prefix for player's world)
+                for (String region : plugin.getWorldGuardManager().getAllRegionNames()) {
+                    if (region.toLowerCase().startsWith(partial)) {
+                        completions.add(region);
+                    }
                 }
             }
         } else if (args.length == 3) {

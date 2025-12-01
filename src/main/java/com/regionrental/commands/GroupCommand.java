@@ -580,6 +580,9 @@ public class GroupCommand implements CommandExecutor, TabCompleter {
             if (subcommand.equals("edit") || subcommand.equals("delete") || subcommand.equals("view")) {
                 // Group names
                 completions.addAll(plugin.getGroupsConfig().getAllGroups());
+            } else if (subcommand.equals("create")) {
+                // No suggestions for group name (user creates their own)
+                // Could suggest based on existing patterns, but better to let user decide
             }
         } else if (args.length == 3) {
             if (args[0].equalsIgnoreCase("edit")) {
@@ -588,6 +591,23 @@ public class GroupCommand implements CommandExecutor, TabCompleter {
             } else if (args[0].equalsIgnoreCase("delete")) {
                 // Confirm
                 completions.add("confirm");
+            } else if (args[0].equalsIgnoreCase("create")) {
+                // Suggest regions for create command
+                completions.addAll(getRegionSuggestions(sender, args[2]));
+            }
+        } else if (args.length >= 4) {
+            // Region suggestions for create and edit commands
+            String subcommand = args[0].toLowerCase();
+
+            if (subcommand.equals("create")) {
+                // Creating group with regions
+                completions.addAll(getRegionSuggestions(sender, args[args.length - 1]));
+            } else if (subcommand.equals("edit") && args.length >= 4) {
+                // Editing group (add/remove regions)
+                String action = args[2].toLowerCase();
+                if (action.equals("add") || action.equals("remove")) {
+                    completions.addAll(getRegionSuggestions(sender, args[args.length - 1]));
+                }
             }
         }
 
@@ -596,6 +616,68 @@ public class GroupCommand implements CommandExecutor, TabCompleter {
         return completions.stream()
                 .filter(s -> s.toLowerCase().startsWith(currentArg))
                 .collect(Collectors.toList());
+    }
+
+    /**
+     * Get region name suggestions for tab completion
+     * Supports world:region format
+     */
+    private List<String> getRegionSuggestions(CommandSender sender, String partial) {
+        List<String> suggestions = new ArrayList<>();
+
+        // Check if user is typing world: prefix
+        if (partial.contains(":")) {
+            String[] parts = partial.split(":", 2);
+            String worldName = parts[0];
+            String regionPrefix = parts.length > 1 ? parts[1] : "";
+
+            // Try to find the world
+            World world = Bukkit.getWorld(worldName);
+            if (world != null) {
+                // Suggest regions from that world with world: prefix
+                for (String regionName : plugin.getWorldGuardManager().getAllRegionNames()) {
+                    if (regionName.toLowerCase().startsWith(regionPrefix.toLowerCase())) {
+                        suggestions.add(worldName + ":" + regionName);
+                    }
+                }
+            } else {
+                // World not found, suggest world names
+                for (World w : Bukkit.getWorlds()) {
+                    String wName = w.getName();
+                    if (wName.toLowerCase().startsWith(worldName.toLowerCase())) {
+                        suggestions.add(wName + ":");
+                    }
+                }
+            }
+        } else {
+            // No colon - suggest regions from player's world and world prefixes
+            if (sender instanceof Player) {
+                Player player = (Player) sender;
+                String worldName = player.getWorld().getName();
+
+                // Suggest regions from player's current world (without prefix)
+                for (String regionName : plugin.getWorldGuardManager().getAllRegionNames()) {
+                    if (regionName.toLowerCase().startsWith(partial.toLowerCase())) {
+                        suggestions.add(regionName);
+                    }
+                }
+
+                // Also suggest world: prefix for current world
+                if ((worldName + ":").toLowerCase().startsWith(partial.toLowerCase())) {
+                    suggestions.add(worldName + ":");
+                }
+            }
+
+            // Suggest all world names with : suffix
+            for (World world : Bukkit.getWorlds()) {
+                String worldPrefix = world.getName() + ":";
+                if (worldPrefix.toLowerCase().startsWith(partial.toLowerCase())) {
+                    suggestions.add(worldPrefix);
+                }
+            }
+        }
+
+        return suggestions;
     }
 
     // ========== Help ==========
