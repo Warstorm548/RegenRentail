@@ -312,6 +312,10 @@ public class ConfigManager {
     public boolean isSignProtection() { return signProtection; }
     public Map<String, Double> getPermissionPrices() { return permissionPrices; }
 
+    // Member management settings
+    public boolean isMemberManagementEnabled() { return config.getBoolean("members.enabled", true); }
+    public int getMaxMembers() { return config.getInt("members.max-members", 5); }
+
     // Duration-related refund and charge settings
     public boolean isRefundOnTimeRemoval() { return config.getBoolean("duration.refund-on-time-removal", true); }
     public boolean isChargeForDurationAdd() { return config.getBoolean("duration.charge-for-add", false); }

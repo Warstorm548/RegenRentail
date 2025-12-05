@@ -153,6 +153,16 @@ limits:
   rental-cooldown: 0
 
 # ============================================
+# MEMBER MANAGEMENT SETTINGS
+# ============================================
+members:
+  # Enable member management feature
+  enabled: true
+
+  # Maximum members per rental (-1 for unlimited)
+  max-members: 5
+
+# ============================================
 # SIGN SETTINGS
 # ============================================
 signs:
@@ -420,7 +430,23 @@ messages:
   config-reloaded: '&aConfiguration reloaded!'
   aliases-enabled: '&aShort command aliases have been enabled!'
   aliases-disabled: '&eShort aliases disabled due to conflicts. Use /rr prefix.'
-  
+
+  # Member management messages
+  member-added: '&aAdded &e{member}&a as a member of &6{region}&a!'
+  member-removed: '&aRemoved &e{member}&a from &6{region}&a!'
+  member-already-added: '&cPlayer &e{member}&c is already a member!'
+  member-not-found: '&cPlayer &e{member}&c is not a member!'
+  member-limit-reached: '&cMember limit reached! ({current}/{max})'
+  member-management-disabled: '&cMember management is disabled!'
+  cannot-add-self: '&cYou cannot add yourself as a member!'
+  members-list-header: '&6=== Members of {region} ==='
+  members-list-entry: '&e  - {member}'
+  members-list-empty: '&7No members added'
+  members-list-footer: '&7Total: {count}/{max} members'
+  member-added-notify: '&aYou were added as member of &6{region}&a by &e{owner}&a!'
+  member-removed-notify: '&cYou were removed from &6{region}&c by &e{owner}&c!'
+  not-rental-owner: '&cYou do not own this rental!'
+
   # Help messages
   help-header: '&6=== RegionRental Help ==='
   help-footer: '&6======================='
