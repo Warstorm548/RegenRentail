@@ -84,8 +84,8 @@ When updating the version, modify these files:
 - Output JAR: `build/libs/RegionRental-X.X.X.jar`
 
 ### Current Version
-- **Version:** 2.2.1
-- **Last Updated:** Sign Update Bug Fix (fixed missing sign updates when regions are removed from groups, signs now update within 30 seconds via dirty tracking)
+- **Version:** 2.3.0
+- **Last Updated:** Member Management System (allows renters to add/remove members to their rented regions with configurable limits and automatic cleanup)
 
 ## Architecture Overview
 
@@ -582,7 +582,62 @@ src/main/java/com/regionrental/
 
 ## Recent Features
 
-### Version 2.2.1 - Sign Update Bug Fix (Latest)
+### Version 2.3.0 - Member Management System (Latest)
+Minor update adding complete member management for rented regions:
+
+**New Features:**
+- **Member Management Commands** - Renters can add/remove players as members
+  - `/rrmember add <region> <username>` - Add member to rented region
+  - `/rrmember remove <region> <username>` - Remove member from rented region
+  - `/rrmembers <region>` - List all members of a region
+  - World-aware region format support (e.g., `world:region`)
+
+- **WorldGuard Integration** - Members added to WorldGuard region members
+  - Members can build and manage the rented area
+  - Automatic cleanup on rental expiration
+  - Members removed from WorldGuard when rental expires
+
+- **Configurable Limits** - Server admins have full control
+  - `members.max-members: 5` - Set member limit (default: 5)
+  - `-1` for unlimited members
+  - `members.enabled: true` - Enable/disable feature
+
+- **Access Control** - Proper security and restrictions
+  - Only renter can add/remove members
+  - Members do NOT get retrieval storage access
+  - Cannot add yourself as a member
+  - Duplicate prevention and limit enforcement
+
+- **Persistence** - Member data saved to rentals.yml
+  - Backward compatible with existing rentals
+  - Automatic member cleanup on expiration
+  - Member list tracked per rental
+
+**Technical Implementation:**
+- Files created: `MemberCommand.java`, `MembersCommand.java`
+- Files modified: `Rental.java`, `RentalManager.java`, `ConfigManager.java`, `config.yml`, `plugin.yml`, `RegionRental.java`
+- New permissions: `regionrental.member`, `regionrental.members`
+- ~400+ lines of new code across 7 files
+- Full documentation in implementation plan
+
+**Command Examples:**
+```bash
+/rrmember add shop1 PlayerName          # Add member to region in current world
+/rrmember add world:shop1 PlayerName    # Add member to region in specific world
+/rrmember remove shop1 PlayerName       # Remove member
+/rrmembers shop1                        # List all members
+```
+
+**Configuration:**
+```yaml
+members:
+  enabled: true
+  max-members: 5  # -1 for unlimited
+```
+
+---
+
+### Version 2.2.1 - Sign Update Bug Fix
 Patch release fixing missing sign updates when regions are removed from groups:
 
 **Bug Fixes:**
