@@ -218,6 +218,8 @@ public class RegionRental extends JavaPlugin {
         registerCommandWithPrefix(commandMap, activePrefix, "info", new InfoCommand(this), "regionrental.info");
         registerCommandWithPrefix(commandMap, activePrefix, "list", new ListCommand(this), "regionrental.list");
         registerCommandWithPrefix(commandMap, activePrefix, "extend", new ExtendCommand(this), "regionrental.extend");
+        registerCommandWithPrefix(commandMap, activePrefix, "member", new MemberCommand(this), "regionrental.member");
+        registerCommandWithPrefix(commandMap, activePrefix, "members", new MembersCommand(this), "regionrental.members");
 
         DurationCommand durationCommand = new DurationCommand(this);
         registerCommandWithPrefix(commandMap, activePrefix, "duration", durationCommand, "regionrental.admin.duration");
