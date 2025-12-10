@@ -84,8 +84,8 @@ When updating the version, modify these files:
 - Output JAR: `build/libs/RegionRental-X.X.X.jar`
 
 ### Current Version
-- **Version:** 2.4.0
-- **Last Updated:** Teleportation System (allows rental owners and members to teleport to their rented regions with safe location detection, cooldown system, and cross-world support)
+- **Version:** 2.4.1
+- **Last Updated:** Teleportation Bug Fix (fixed safe location detection with 3D search algorithm, wall sign teleportation, and standing sign rotation handling)
 
 ## Architecture Overview
 
@@ -559,7 +559,59 @@ src/main/java/com/regionrental/
 
 ## Recent Features
 
-### Version 2.4.0 - Teleportation System (Latest)
+### Version 2.4.1 - Teleportation Safe Location Bug Fix (Latest)
+Patch release fixing critical teleportation bugs and implementing enhanced 3D search algorithm:
+
+**Bug Fixes:**
+- **Wall Sign Teleportation** - Fixed "no safe location found" error for wall-mounted signs
+  - Original algorithm only searched upward from sign level
+  - New 3D search algorithm searches forward, down, and up
+  - Correctly handles signs embedded in walls
+
+- **Standing Sign Direction** - Fixed standing signs using player's facing instead of sign rotation
+  - Standing signs now use their own rotation direction
+  - Both wall signs and standing signs use consistent logic
+  - Teleportation works correctly regardless of player orientation
+
+**Enhanced 3D Search Algorithm:**
+- **Forward Search** - Searches 1-20 blocks in front of sign (configurable, default: 5)
+  - Tests multiple positions instead of just one
+  - Handles obstructions immediately in front of sign
+
+- **Downward Floor Search** - Searches up to 20 blocks down to find floor (configurable)
+  - Correctly handles signs at any height
+  - Finds solid ground below player spawn position
+
+- **Upward Floor Search** - Searches up to 20 blocks up if no floor below (configurable)
+  - Handles floating platforms and elevated structures
+  - Fallback when downward search finds nothing
+
+**New Configuration Settings:**
+```yaml
+teleport:
+  forward-search-distance: 5   # How many blocks forward to search (max: 20)
+  floor-search-down: 20        # How many blocks down to search for floor (max: 20)
+  floor-search-up: 20          # How many blocks up to search for floor
+```
+
+**Technical Implementation:**
+- Files modified: `TpCommand.java`, `ConfigManager.java`, `config.yml`
+- Added `getSignFacing()` - Extracts facing direction for both sign types
+- Added `findFloorLocation()` - Searches up or down for solid floor
+- Added `centerLocation()` - Centers player spawn position
+- Refactored `findSafeLocation()` - Implements 3D search algorithm
+- ~120 lines of code changes
+- Backward compatible with existing configurations
+
+**Benefits:**
+- Teleportation works reliably for complex building geometries
+- Handles wall signs, standing signs, multi-story buildings
+- Configurable search distances for performance tuning
+- No more "no safe location found" for valid spawn points
+
+---
+
+### Version 2.4.0 - Teleportation System
 Minor update adding teleportation feature for rental owners and members:
 
 **New Features:**

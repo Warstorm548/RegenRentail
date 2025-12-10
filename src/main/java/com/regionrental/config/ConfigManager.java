@@ -51,6 +51,9 @@ public class ConfigManager {
     // Teleport settings
     private boolean teleportEnabled;
     private int teleportMaxSearchDistance;
+    private int teleportForwardSearchDistance;
+    private int teleportFloorSearchDown;
+    private int teleportFloorSearchUp;
     private int teleportCooldown;
     private boolean teleportCrossWorldWarning;
     private boolean teleportSoundEnabled;
@@ -146,6 +149,9 @@ public class ConfigManager {
         // Teleport settings
         teleportEnabled = config.getBoolean("teleport.enabled", true);
         teleportMaxSearchDistance = config.getInt("teleport.max-search-distance", 20);
+        teleportForwardSearchDistance = Math.min(config.getInt("teleport.forward-search-distance", 5), 20);
+        teleportFloorSearchDown = Math.min(config.getInt("teleport.floor-search-down", 20), 20);
+        teleportFloorSearchUp = config.getInt("teleport.floor-search-up", 20);
         teleportCooldown = config.getInt("teleport.cooldown", 30);
         teleportCrossWorldWarning = config.getBoolean("teleport.cross-world-warning", true);
         teleportSoundEnabled = config.getBoolean("teleport.sound-enabled", true);
@@ -335,6 +341,9 @@ public class ConfigManager {
     // Teleport settings
     public boolean isTeleportEnabled() { return teleportEnabled; }
     public int getTeleportMaxSearchDistance() { return teleportMaxSearchDistance; }
+    public int getTeleportForwardSearchDistance() { return teleportForwardSearchDistance; }
+    public int getTeleportFloorSearchDown() { return teleportFloorSearchDown; }
+    public int getTeleportFloorSearchUp() { return teleportFloorSearchUp; }
     public int getTeleportCooldown() { return teleportCooldown; }
     public boolean isTeleportCrossWorldWarning() { return teleportCrossWorldWarning; }
     public boolean isTeleportSoundEnabled() { return teleportSoundEnabled; }

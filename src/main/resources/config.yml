@@ -172,6 +172,15 @@ teleport:
   # Maximum blocks to search upward for safe teleport location
   max-search-distance: 20
 
+  # How many blocks forward from sign to search for safe location (max: 20)
+  forward-search-distance: 5
+
+  # How many blocks downward to search for floor (max: 20)
+  floor-search-down: 20
+
+  # How many blocks upward to search for floor if not found below
+  floor-search-up: 20
+
   # Cooldown in seconds between teleports (0 to disable)
   cooldown: 30
 

@@ -164,33 +164,68 @@ public class TpCommand implements CommandExecutor, TabCompleter {
     }
 
     /**
-     * Finds a safe teleport location starting from the sign location
-     * Searches upward only (no downward search)
+     * Finds a safe teleport location using 3D search algorithm
+     * Searches forward from sign, then down/up for floor at each position
      *
      * @param signLocation The location of the rental sign
      * @param signBlock The sign block
      * @param player The player teleporting
-     * @param maxSearchDistance Maximum blocks to search upward
+     * @param maxSearchDistance Maximum blocks to search upward (deprecated, kept for compatibility)
      * @return Safe location or null if none found
      */
     private Location findSafeLocation(Location signLocation, Block signBlock, Player player, int maxSearchDistance) {
-        // Get starting location (1 block in front of sign)
-        Location startLocation = getLocationInFrontOfSign(signLocation, signBlock, player);
+        // Get sign's facing direction
+        BlockFace facing = getSignFacing(signBlock);
 
-        // Search upward for safe location
-        for (int y = 0; y <= maxSearchDistance; y++) {
-            Location testLocation = startLocation.clone().add(0, y, 0);
+        // Get search configuration
+        ConfigManager config = plugin.getConfigManager();
+        int forwardSearchDistance = config.getTeleportForwardSearchDistance();
+        int floorSearchDown = config.getTeleportFloorSearchDown();
+        int floorSearchUp = config.getTeleportFloorSearchUp();
 
-            if (isSafeLocation(testLocation)) {
-                // Center the location and preserve yaw
-                Location safeLocation = testLocation.clone().add(0.5, 0, 0.5);
-                safeLocation.setYaw(startLocation.getYaw());
-                safeLocation.setPitch(0);
-                return safeLocation;
+        // Calculate yaw from sign's facing direction
+        float yaw = getYawFromBlockFace(facing);
+
+        // PHASE 1: Forward search loop (1 to N blocks in front of sign)
+        for (int forward = 1; forward <= forwardSearchDistance; forward++) {
+            // Calculate position N blocks forward from sign
+            Location forwardLocation = signLocation.clone().add(
+                facing.getModX() * forward,
+                0,
+                facing.getModZ() * forward
+            );
+
+            // PHASE 2: Search downward for floor at this forward position
+            Location floorLocation = findFloorLocation(forwardLocation, floorSearchDown, false);
+
+            if (floorLocation != null) {
+                // PHASE 3: Validate spawn position at floor level (1 block above floor)
+                Location spawnLocation = floorLocation.clone().add(0, 1, 0);
+                if (isSafeLocation(spawnLocation)) {
+                    spawnLocation.setYaw(yaw);
+                    spawnLocation.setPitch(0);
+                    return centerLocation(spawnLocation);
+                }
             }
+
+            // PHASE 4: If no floor found downward, search upward
+            floorLocation = findFloorLocation(forwardLocation, floorSearchUp, true);
+
+            if (floorLocation != null) {
+                // PHASE 3: Validate spawn position at floor level (1 block above floor)
+                Location spawnLocation = floorLocation.clone().add(0, 1, 0);
+                if (isSafeLocation(spawnLocation)) {
+                    spawnLocation.setYaw(yaw);
+                    spawnLocation.setPitch(0);
+                    return centerLocation(spawnLocation);
+                }
+            }
+
+            // Continue to next forward position
         }
 
-        return null; // No safe location found
+        // PHASE 5: No safe location found after all searches
+        return null;
     }
 
     /**
@@ -280,6 +315,65 @@ public class TpCommand implements CommandExecutor, TabCompleter {
         }
 
         return true;
+    }
+
+    /**
+     * Gets the facing direction of a sign block
+     * Extracts the direction for both wall signs and standing signs
+     *
+     * @param signBlock The sign block
+     * @return BlockFace direction the sign is facing
+     */
+    private BlockFace getSignFacing(Block signBlock) {
+        BlockData blockData = signBlock.getBlockData();
+
+        if (blockData instanceof WallSign wallSign) {
+            // Wall sign - use sign's facing direction
+            return wallSign.getFacing();
+        } else if (blockData instanceof org.bukkit.block.data.type.Sign standingSign) {
+            // Standing sign - use sign's rotation (NOT player's facing!)
+            return standingSign.getRotation();
+        }
+
+        return BlockFace.NORTH; // Fallback
+    }
+
+    /**
+     * Searches for solid floor starting from a location
+     * Can search either upward or downward
+     *
+     * @param startLocation Starting position
+     * @param maxDistance Maximum blocks to search
+     * @param searchUp If true, search upward; if false, search downward
+     * @return Location of floor block, or null if not found
+     */
+    private Location findFloorLocation(Location startLocation, int maxDistance, boolean searchUp) {
+        for (int offset = 0; offset <= maxDistance; offset++) {
+            int yOffset = searchUp ? offset : -offset;
+            Location testLocation = startLocation.clone().add(0, yOffset, 0);
+            Block block = testLocation.getBlock();
+
+            // Check if this block is solid and not dangerous
+            if (block.getType().isSolid() && !isDangerousBlock(block)) {
+                return testLocation; // Found valid floor
+            }
+        }
+        return null; // No floor found
+    }
+
+    /**
+     * Centers a location within its block (adds 0.5 to X and Z)
+     * This ensures the player spawns in the center of the block
+     *
+     * @param location Location to center
+     * @return Centered location with proper yaw and pitch
+     */
+    private Location centerLocation(Location location) {
+        Location centered = location.clone().add(0.5, 0, 0.5);
+        // Preserve yaw and pitch if they were set
+        centered.setYaw(location.getYaw());
+        centered.setPitch(location.getPitch());
+        return centered;
     }
 
     /**
