@@ -1,6 +1,7 @@
 package com.regionrental.commands;
 
 import com.regionrental.RegionRental;
+import com.regionrental.config.ConfigManager;
 import com.regionrental.managers.Rental;
 import com.regionrental.util.WorldRegionParser;
 import org.bukkit.*;
