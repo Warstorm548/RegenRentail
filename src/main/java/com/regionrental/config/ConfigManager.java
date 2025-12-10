@@ -47,7 +47,15 @@ public class ConfigManager {
     private boolean autoDeleteSchematics;
     private boolean itemStorage;
     private boolean signProtection;
-    
+
+    // Teleport settings
+    private boolean teleportEnabled;
+    private int teleportMaxSearchDistance;
+    private int teleportCooldown;
+    private boolean teleportCrossWorldWarning;
+    private boolean teleportSoundEnabled;
+    private boolean teleportParticleEnabled;
+
     public ConfigManager(RegionRental plugin) {
         this.plugin = plugin;
         this.config = plugin.getConfig();
@@ -134,6 +142,14 @@ public class ConfigManager {
         autoDeleteSchematics = config.getBoolean("restoration.auto-delete-schematics", true);
         itemStorage = config.getBoolean("storage.enabled", true);
         signProtection = config.getBoolean("signs.protect-signs", true);
+
+        // Teleport settings
+        teleportEnabled = config.getBoolean("teleport.enabled", true);
+        teleportMaxSearchDistance = config.getInt("teleport.max-search-distance", 20);
+        teleportCooldown = config.getInt("teleport.cooldown", 30);
+        teleportCrossWorldWarning = config.getBoolean("teleport.cross-world-warning", true);
+        teleportSoundEnabled = config.getBoolean("teleport.sound-enabled", true);
+        teleportParticleEnabled = config.getBoolean("teleport.particle-enabled", true);
     }
     
     private void loadMessages() {
@@ -315,6 +331,14 @@ public class ConfigManager {
     // Member management settings
     public boolean isMemberManagementEnabled() { return config.getBoolean("members.enabled", true); }
     public int getMaxMembers() { return config.getInt("members.max-members", 5); }
+
+    // Teleport settings
+    public boolean isTeleportEnabled() { return teleportEnabled; }
+    public int getTeleportMaxSearchDistance() { return teleportMaxSearchDistance; }
+    public int getTeleportCooldown() { return teleportCooldown; }
+    public boolean isTeleportCrossWorldWarning() { return teleportCrossWorldWarning; }
+    public boolean isTeleportSoundEnabled() { return teleportSoundEnabled; }
+    public boolean isTeleportParticleEnabled() { return teleportParticleEnabled; }
 
     // Duration-related refund and charge settings
     public boolean isRefundOnTimeRemoval() { return config.getBoolean("duration.refund-on-time-removal", true); }

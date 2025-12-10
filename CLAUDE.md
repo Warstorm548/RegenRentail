@@ -26,7 +26,7 @@ RegionRental is a Minecraft Paper/Spigot plugin (1.21+) that implements a comple
 ./gradlew clean build
 
 # Output location
-build/libs/RegionRental-2.2.1.jar
+build/libs/RegionRental-2.3.0.jar
 ```
 
 ### Development Commands
@@ -84,8 +84,8 @@ When updating the version, modify these files:
 - Output JAR: `build/libs/RegionRental-X.X.X.jar`
 
 ### Current Version
-- **Version:** 2.3.0
-- **Last Updated:** Member Management System (allows renters to add/remove members to their rented regions with configurable limits and automatic cleanup)
+- **Version:** 2.4.0
+- **Last Updated:** Teleportation System (allows rental owners and members to teleport to their rented regions with safe location detection, cooldown system, and cross-world support)
 
 ## Architecture Overview
 
@@ -179,7 +179,7 @@ Commands are registered dynamically at runtime using a configurable prefix (defa
 
 **Important:** Only the determined active prefix is registered. There are no fallback registrations or short aliases.
 
-**Command classes in `commands/` package (14 total):**
+**Command classes in `commands/` package (16 total):**
 - `RRCommand` - Main help command dispatcher
 - `ReloadCommand` - Reload configuration
 - `CreateSignCommand` - Create rental signs (signs use defaults until overrides set)
@@ -193,7 +193,9 @@ Commands are registered dynamically at runtime using a configurable prefix (defa
 - `RefundHistoryCommand` - View refund history for a rental
 - `VerifyCommand` - Verify region configurations (reports defaults vs custom overrides)
 - `OverrideCommand` - Set per-region or per-group custom settings
-- `GroupCommand` - Manage region groups for mass override operations **[NEW]**
+- `GroupCommand` - Manage region groups for mass override operations
+- `MemberCommand` - Add/remove members to/from rented regions
+- `MembersCommand` - List members of a rented region
 
 ## Key Implementation Details
 
@@ -308,36 +310,6 @@ groups:
 - **GroupsConfig.java** (~500 lines) - Manages groups.yml (CRUD operations, validation, membership)
 - **GroupCommand.java** (~650 lines) - Command handler with hybrid input and chat listener integration
 - **GroupChatListener.java** (~90 lines) - Intercepts chat for region input prompts
-
-**Workflow Example:**
-```bash
-# Create group with prompt
-/rrgroup create stores
-> Type regions (comma-separated): shop1,shop2,shop3
-
-# Or inline
-/rrgroup create stores shop1,shop2,world_nether:shop3
-
-# Set group override
-/rroverride price group:stores 1000
-> Set rental price for group stores to $1000.00
-> Updated 3 region(s) in group
-
-# Try to set individual override (blocked)
-/rroverride price shop1 500
-> Region world:shop1 is in group stores
-> Use: /rroverride price group:stores 500
-
-# Delete group (removes overrides)
-/rrgroup delete stores confirm
-> Deleted group 'stores' and removed all group overrides
-```
-
-**Tab Completion:**
-- Group commands: subcommands, group names, regions, world prefixes
-- Override commands: `group:` prefix, group names, region names, world prefixes
-- Context-aware: suggests regions from player's current world
-- Multi-format: supports both `region` and `world:region` completion
 
 ### Scheduled Tasks
 - **Expiration checker**: Every 1 minute (configurable via `expiration-check-interval`)
@@ -497,7 +469,7 @@ Add to `StorageManager.CONTAINER_TYPES` set (currently supports: chest, barrel, 
 
 ### Quick Test Workflow
 1. Build: `./gradlew build`
-2. Copy JAR: `cp build/libs/RegionRental-2.2.1.jar /path/to/server/plugins/`
+2. Copy JAR: `cp build/libs/RegionRental-2.3.0.jar /path/to/server/plugins/`
 3. Start server
 4. Create WorldGuard region: `/rg define testregion`
 5. Create rental sign: `/rrcreatesign testregion`
@@ -546,7 +518,7 @@ Add to `StorageManager.CONTAINER_TYPES` set (currently supports: chest, barrel, 
 ```
 src/main/java/com/regionrental/
 ├── RegionRental.java           # Main plugin class
-├── commands/                   # Command executors (13 classes)
+├── commands/                   # Command executors (16 classes)
 │   ├── RRCommand.java          # Main help command dispatcher
 │   ├── ReloadCommand.java      # Reload configuration
 │   ├── CreateSignCommand.java  # Create rental signs
@@ -559,14 +531,19 @@ src/main/java/com/regionrental/
 │   ├── DurationCommand.java    # Modify rental duration (add/remove/set/reset)
 │   ├── RefundHistoryCommand.java  # View refund transaction history
 │   ├── VerifyCommand.java      # Verify region configs (defaults vs overrides)
-│   └── OverrideCommand.java    # Set per-region custom settings
-├── config/                     # Config managers (4 classes)
+│   ├── OverrideCommand.java    # Set per-region custom settings
+│   ├── GroupCommand.java       # Manage region groups
+│   ├── MemberCommand.java      # Add/remove members
+│   └── MembersCommand.java     # List members
+├── config/                     # Config managers (5 classes)
 │   ├── ConfigManager.java      # Main configuration manager
 │   ├── RegionsConfig.java      # Per-region settings manager
 │   ├── SignsConfig.java        # Sign locations and support blocks
-│   └── StorageConfig.java      # Item storage configuration
-├── listeners/                  # Event listeners (1 class)
-│   └── SignInteractListener.java  # Sign interaction and protection
+│   ├── StorageConfig.java      # Item storage configuration
+│   └── GroupsConfig.java       # Region groups manager
+├── listeners/                  # Event listeners (2 classes)
+│   ├── SignInteractListener.java  # Sign interaction and protection
+│   └── GroupChatListener.java     # Chat prompts for group commands
 ├── managers/                   # Business logic managers (8 classes)
 │   ├── Rental.java             # Rental data model
 │   ├── RentalManager.java      # Rental lifecycle management
@@ -582,7 +559,81 @@ src/main/java/com/regionrental/
 
 ## Recent Features
 
-### Version 2.3.0 - Member Management System (Latest)
+### Version 2.4.0 - Teleportation System (Latest)
+Minor update adding teleportation feature for rental owners and members:
+
+**New Features:**
+- **Teleport Command** - `/rrtp <region>` allows teleporting to rented regions
+  - Supports both explicit (`world:region`) and implicit (`region`) formats
+  - Works for rental owners and members
+  - Prevents non-members from teleporting to others' rentals
+
+- **Safe Location Detection** - Intelligent algorithm finds safe teleport spots
+  - Starts 1 block in front of sign (based on sign's facing direction)
+  - Searches upward only (configurable max: 20 blocks)
+  - Validates floor solidity, head clearance, and dangerous blocks
+  - Shows error if no safe location found within search limit
+
+- **Cooldown System** - Prevents spam teleporting
+  - Configurable cooldown (default: 30 seconds)
+  - Admin bypass permission available
+  - Per-player cooldown tracking
+  - Automatic cleanup on plugin reload
+
+- **Cross-World Support** - Seamless teleportation between worlds
+  - Optional warning message when teleporting to different world
+  - World-aware region parsing
+  - Works across overworld, nether, end, and custom worlds
+
+- **Effects & Feedback** - Enhanced user experience
+  - Enderman teleport sound effect (configurable)
+  - Portal particle effects (configurable)
+  - Success/error messages with region information
+
+- **Configurable Settings** - Full control via config.yml
+  - `teleport.enabled` - Enable/disable feature
+  - `teleport.max-search-distance` - Upward search limit (default: 20)
+  - `teleport.cooldown` - Cooldown in seconds (0 to disable)
+  - `teleport.cross-world-warning` - Show/hide cross-world warning
+  - `teleport.sound-enabled` - Enable/disable sound effects
+  - `teleport.particle-enabled` - Enable/disable particle effects
+
+**Technical Implementation:**
+- Files created: `TeleportCooldownManager.java` (~100 lines), `TpCommand.java` (~350 lines)
+- Files modified: `RentalManager.java`, `ConfigManager.java`, `config.yml`, `RegionRental.java`, `plugin.yml`
+- New permission: `regionrental.tp` (default: true)
+- ~550 lines of new code across 7 files
+- Safe location algorithm with dangerous block detection
+- Tab completion for owned and member rentals
+
+**Command Examples:**
+```bash
+/rrtp shop1                  # Teleport to shop1 in current world
+/rrtp world:shop1            # Teleport to shop1 in specific world
+/rrtp world_nether:shop2     # Teleport to shop2 in nether
+```
+
+**Configuration:**
+```yaml
+teleport:
+  enabled: true
+  max-search-distance: 20
+  cooldown: 30
+  cross-world-warning: true
+  sound-enabled: true
+  particle-enabled: true
+```
+
+**Safety Features:**
+- Avoids dangerous blocks (lava, fire, cactus, magma, wither rose, campfire, etc.)
+- Requires solid floor block
+- Validates 2-block height clearance (feet + head)
+- Detects wall sign facing direction vs standing signs
+- Searches upward only (prevents underground teleports)
+
+---
+
+### Version 2.3.0 - Member Management System
 Minor update adding complete member management for rented regions:
 
 **New Features:**
@@ -618,7 +669,6 @@ Minor update adding complete member management for rented regions:
 - Files modified: `Rental.java`, `RentalManager.java`, `ConfigManager.java`, `config.yml`, `plugin.yml`, `RegionRental.java`
 - New permissions: `regionrental.member`, `regionrental.members`
 - ~400+ lines of new code across 7 files
-- Full documentation in implementation plan
 
 **Command Examples:**
 ```bash
@@ -678,256 +728,6 @@ Minor update adding comprehensive region grouping and mass override management:
 - Files modified: RegionRental.java, OverrideCommand.java, SignManager.java, RegionsConfig.java
 - ~2000+ lines across 5 implementation phases
 - Data files: groups.yml (new), regions.yml (extended)
-- Full documentation in CLAUDE.md
-
----
-
-### Version 2.1.0 - Command Prefix Registration Cleanup
-Minor update simplifying command registration and removing deprecated features:
-
-**Changes:**
-- **Removed Alias System** - Deleted deprecated command alias system (~130 lines)
-  - Short aliases like `/info`, `/extend`, `/list` no longer registered
-  - Pure prefix-based approach (e.g., `/rrinfo`, `/rrextend`, `/rrlist`)
-  - Cleaner codebase, simpler command resolution
-  - Config option `commands.enable-aliases` removed from config.yml
-
-- **Removed Duplicate /rr Registration** - Custom prefix no longer registers fallback `/rr`
-  - Users with custom prefix must use that prefix exclusively
-  - No more command namespace pollution with duplicate registrations
-  - **Breaking Change:** Users who configured custom prefix but continued using `/rr` commands must now use their configured prefix
-
-- **Console Message Improvements**
-  - Startup messages now show actual active prefix being used
-  - Helpful examples: `Example: /rrinfo, /rrextend, /rrlist`
-  - Removed outdated alias-related messages
-  - Clearer fallback warnings when prefix conflicts occur
-
-**Technical Details:**
-- **Files modified:** RegionRental.java, config.yml
-- **Lines removed:** ~161 lines total (alias system + duplicate registration logic)
-- **Methods removed:** `registerAliasesIfPossible()`, `unregisterAliases()`, `CommandAlias` inner class
-- **Config cleanup:** Removed `commands.enable-aliases` section (19 lines)
-- **No data migrations needed:** Purely code cleanup, no data format changes
-
-**Command Registration Flow:**
-1. Read configured prefix from `config.yml` (`commands.prefix`)
-2. Check for conflicts with existing commands
-3. Determine active prefix (configured → fallback to 'rr' → auto-generate 'rr1', 'rr2', etc.)
-4. Register ALL commands with the determined prefix ONLY
-5. Log active prefix with examples to console
-
-**Breaking Changes:**
-- Users with custom prefix (e.g., `commands.prefix: rental`) can no longer use `/rr` commands
-- Must use configured/active prefix exclusively (e.g., `/rentalinfo`, `/rentalextend`)
-
-### Version 2.0.1 - Bug Fixes and Performance Optimizations
-Critical patch release addressing stability and performance issues:
-
-**Bug Fixes:**
-- **Composite Key Parsing Fix** - Fixed "region world:shop1 not found" error when renting regions
-  - `SignInteractListener.java`: Now properly parses composite keys ("world:region") to extract region name
-  - World-aware methods only need region name since they already take world as parameter
-  - Added `WorldRegionParser` import and validation for composite key format
-- **IndexOutOfBoundsException Prevention** - Added comprehensive bounds checking across codebase
-  - `WorldRegionParser.java`: Null checks and bounds validation in `extractRegionName()` and `extractWorldName()`
-  - `RRCommand.java`: Args validation before accessing `args[1]` in help command
-  - `DurationCommand.java`: Complete args validation for all subcommands
-  - `StorageManager.java`: Bounds checking in GUI pagination to prevent page index overflow
-- **Null Pointer Exception Prevention**
-  - `SignManager.java`: Null/empty checks for sign format lists before iteration
-  - Added null checks for individual format lines in `updateAvailableSign()` and `updateRentedSign()`
-
-**Performance Optimizations:**
-- **WorldGuardManager Optimization** - 3x-10x performance improvement
-  - Removed 9 deprecated methods that iterated through all worlds (133 lines)
-  - Forced all code to use world-aware direct lookup methods
-  - `OverrideCommand.java`: Updated to use `regionExists(region, world)` instead of `doesRegionExist(region)`
-- **RentalManager Optimization** - 100x-1000x performance improvement
-  - Removed 8 deprecated methods with O(n) rental searches (82 lines)
-  - Direct hash map access using composite keys for O(1) lookups
-  - All callers already using world-aware methods, no breaking changes
-- **SignManager Dirty Tracking** - 90%+ reduction in sign update overhead
-  - Implemented dirty tracking system to only update signs that changed
-  - Added `markSignDirty()` method and `dirtySigns` HashSet
-  - Modified `updateAllSigns()` to process only dirty signs (not all signs every 30 seconds)
-  - Updated `RentalManager` and `OverrideCommand` to mark signs dirty instead of immediate updates
-- **Thread Safety Improvements**
-  - `StorageManager.java`: Added synchronization around `session.items` access in GUI pagination
-  - Prevents concurrent modification exceptions during multi-page inventory navigation
-
-**Technical Summary:**
-- **Total lines removed:** ~215+ lines of deprecated/inefficient code
-- **Files modified:** 7 files (WorldRegionParser, RRCommand, DurationCommand, WorldGuardManager, RentalManager, SignManager, StorageManager, SignInteractListener, OverrideCommand)
-- **Commits:** 7 total (5 optimization phases + version bump + hotfix)
-- **Performance gains:** 3x-1000x depending on operation
-- **Stability:** 15 potential crash/error scenarios eliminated
-
-**Important Notes:**
-- All optimizations maintain backward compatibility
-- No breaking changes to API or data formats
-- Existing rentals continue to work without migration
-- All deprecated methods removed (no backward compatibility layer needed since all callers updated)
-
-### Command Consolidation - Duration Reset
-- **Removed `RetimeCommand`** - Functionality merged into `DurationCommand`
-- **New `/rrduration reset <region>` subcommand** - Resets rental duration to default
-- **Extension refund system** - Optionally refunds extension costs when resetting duration
-- **Simplified interface** - No longer requires player name, only region name
-- **Config option:** `extension.refund-on-duration-reset` - Enables/disables extension refunds (default: true)
-- **Rental tracking** - Added `initialPrice` field to `Rental` class to track extension costs separately
-
-**Technical Implementation:**
-- `Rental.java`: Added `initialPrice` field and `getExtensionCost()` method
-- `RentalManager.java`: Updated save/load to include `initialPrice`
-- `DurationCommand.java`: Added `resetDuration()` method with optional refund logic
-- `ConfigManager.java`: Added `isRefundOnDurationReset()` getter
-- `plugin.yml`: Removed `rrretime` command, deprecated `regionrental.admin.retime` permission
-- Backward compatible with existing rental data (defaults `initialPrice` to `totalPaid`)
-
-**Command comparison:**
-- Old: `/rrretime <player> <region> [days]` - Required player name, custom days
-- New: `/rrduration reset <region>` - Only region name, uses default duration, optional refund
-
-### Per-Region Configuration System (regions.yml)
-- **Separate config file** for per-region custom overrides
-- **Command-based configuration** using `/rroverride` commands
-- **Defaults for all regions** - regions NOT in regions.yml use config.yml defaults
-- **Migration system** automatically moves old `regions:` data from config.yml
-- **Verification via `/rrverify`** shows which regions use defaults vs custom settings
-- **Auto-removal** from regions.yml when `/rrremove` is used
-
-**Available per-region overrides:**
-- `price` - Rental price (overrides default)
-- `duration` - Rental duration in days
-- `max-extensions` - Maximum extensions allowed
-- `extension-price` - Price per extension day (auto-calculated if 0)
-- `allow-extensions` - Enable/disable extensions for region
-- `extension-duration` - Extension duration in days
-
-**Override Commands:**
-```bash
-/rroverride price <region> <amount>             # Set custom rental price
-/rroverride duration <region> <days>            # Set custom duration
-/rroverride maxextensions <region> <count>      # Set max extensions
-/rroverride extensionprice <region> <amount>    # Set extension price (0 for auto)
-/rroverride allowextensions <region> true|false # Enable/disable extensions
-/rroverride extensionduration <region> <days>   # Set extension duration
-/rroverride remove <region>                     # Remove all overrides (use defaults)
-/rroverride list [region]                       # View overrides for region or all regions
-```
-
-**Technical Implementation:**
-- `OverrideCommand.java`: New command for setting region overrides
-- `RegionsConfig.java`: Config manager with getter/setter methods for overrides
-- `ConfigManager.java`: Queries RegionsConfig first, falls back to defaults
-- `CreateSignCommand.java`: Does NOT auto-populate (signs use defaults)
-- `RemoveCommand.java`: Removes region from regions.yml on setup removal
-- `VerifyCommand.java`: Reports regions using defaults vs custom overrides
-- `RegionRental.java`: Initializes RegionsConfig, runs verification on startup/reload
-- Migration runs once on first startup if config.yml has `regions:` section
-
-**Config options (in config.yml):**
-```yaml
-regions-config:
-  auto-verify-regions: true       # Auto-verify on startup/reload (reports orphaned configs)
-  enable-verify-command: true     # Enable /rrverify command
-```
-
-**Verification behavior:**
-- **On startup/reload** (if auto-verify enabled): Reports orphaned configs (configs without signs)
-- **Regions without configs**: NOT an issue - they use default values from config.yml
-- **Orphaned configs**: Configs exist but no sign (can be cleaned up with `/rroverride remove`)
-- **Manual check**: `/rrverify` shows detailed breakdown of defaults vs custom overrides
-
-**Workflow:**
-1. Create rental sign: `/rrcreatesign testregion` (uses defaults from config.yml)
-2. Set custom price: `/rroverride price testregion 500.0`
-3. Sign automatically updates to show new price
-4. View overrides: `/rroverride list testregion`
-5. Remove overrides: `/rroverride remove testregion` (reverts to defaults)
-
-**Data format (regions.yml):**
-```yaml
-regions:
-  shop1:
-    price: 500.0
-    duration: 14
-    max-extensions: 20
-    extension-price: 250.0
-    allow-extensions: true
-    extension-duration: 7
-
-  shop2:
-    price: 300.0  # Only overriding price - other settings use defaults
-```
-
-**Benefits:**
-- Clean separation of region-specific settings
-- In-game configuration via commands (no manual file editing)
-- Clear defaults - regions not listed use config.yml values
-- Verification system prevents orphaned configs
-- Signs automatically update when overrides are set
-
-### Support Block Protection (Sign Protection Enhancement)
-- **Automatically detects support blocks** when creating rental signs
-- Stores original block type and BlockData in `signs.yml` under `support-block` section
-- **Protects wall signs**: Block the sign is attached to cannot be broken
-- **Protects standing signs**: Block below the sign cannot be broken
-- **Restores on removal**: `/rrremove` restores the support block to its original state
-- **Migration system**: Existing signs are automatically migrated on plugin startup
-- Prevents players from bypassing sign protection by breaking support blocks
-- Admin permission `regionrental.admin.breaksign` allows breaking both signs and support blocks
-
-**Technical Implementation:**
-- `SignsConfig.java`: 6 new methods for support block data storage
-- `SignManager.java`: `getSupportBlock()` detects wall/standing sign support blocks
-- `SignManager.java`: `migrateSupportBlocks()` auto-migrates existing signs
-- `SignInteractListener.java`: Enhanced `onBlockBreak()` to check support blocks
-- New config message: `sign-support-protected`
-
-**Data Format in signs.yml:**
-```yaml
-signs:
-  region_name:
-    world: world
-    x: 100
-    y: 64
-    z: 200
-    support-block:
-      x: 100
-      y: 63
-      z: 200
-      original-type: STONE
-      original-data: "minecraft:stone"
-```
-
-### Block Restoration (WorldEdit Integration)
-- Automatically captures region state when rental is created
-- Restores blocks and entities when rental expires
-- Schematics stored in `plugins/RegionRental/schematics/`
-- Configurable auto-delete of schematics after restoration
-
-### Full Refund System
-- Players receive 100% refund (initial payment + all extensions) when admin resets rental
-- Admins see detailed refund information
-- Players receive notification if online
-- All refunds logged to server console
-
-### Region Removal Command
-- `/rrremove <region>` completely removes rental setup
-- Resets active rentals with full refund
-- Removes signs from configuration
-- Deletes WorldEdit schematics
-- Useful for repurposing regions
-
-## Known Limitations
-
-- Signs must be manually placed before creating rental sign
-- Container scanning is synchronous (may cause lag on very large regions)
-- Extension limit is global (not per-region configurable)
-- Schematic serialization uses Java serialization (could be enhanced to Sponge format)
-- Support block detection requires sign to be properly attached when using `/rrcreatesign`
 
 ## Documentation Files
 
@@ -937,4 +737,3 @@ signs:
 - `REGION_REMOVAL.md` - Complete guide to region removal feature
 - `FEATURE_SUMMARY.md` - Comprehensive feature overview
 - `IMPLEMENTATION_SUMMARY.md` - Latest implementation details
-- ask me if i would like to update the verion number at the end of each editing session provide the options major update witch will corelate to the frist number in a 3 digit verion code, minor update for the secound number and 3rd number will be patchs. the number will go up by one with each version update if a minor update is done reset the 3rd number to 0 if its a major update so treat the same as minor update but instead reset the minor and patchs number to zero.

@@ -1,5 +1,5 @@
 name: RegionRental
-version: 2.3.0
+version: 2.4.0
 main: com.regionrental.RegionRental
 api-version: '1.21'
 author: Jean-Luc
@@ -62,7 +62,8 @@ permissions:
       regionrental.list: true
       regionrental.member: true
       regionrental.members: true
-      
+      regionrental.tp: true
+
   regionrental.rent:
     description: Rent regions
     default: true
@@ -89,6 +90,10 @@ permissions:
 
   regionrental.members:
     description: View members of rented regions
+    default: true
+
+  regionrental.tp:
+    description: Teleport to rented regions
     default: true
 
   regionrental.admin.reload:

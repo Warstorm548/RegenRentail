@@ -163,6 +163,28 @@ members:
   max-members: 5
 
 # ============================================
+# TELEPORTATION SETTINGS
+# ============================================
+teleport:
+  # Enable /rrtp command to teleport to rented regions
+  enabled: true
+
+  # Maximum blocks to search upward for safe teleport location
+  max-search-distance: 20
+
+  # Cooldown in seconds between teleports (0 to disable)
+  cooldown: 30
+
+  # Show warning when teleporting to different world
+  cross-world-warning: true
+
+  # Play sound effect on teleport (ENTITY_ENDERMAN_TELEPORT)
+  sound-enabled: true
+
+  # Show particle effect on teleport (PORTAL particles)
+  particle-enabled: true
+
+# ============================================
 # SIGN SETTINGS
 # ============================================
 signs:
@@ -445,6 +467,14 @@ messages:
   members-list-footer: '&7Total: {count}/{max} members'
   member-added-notify: '&aYou were added as member of &6{region}&a by &e{owner}&a!'
   member-removed-notify: '&cYou were removed from &6{region}&c by &e{owner}&c!'
+
+  # Teleport messages
+  tp-success: '&aTeleported to &e{region}&a!'
+  tp-no-permission: '&cYou don''t have permission to teleport to &e{region}&c!'
+  tp-not-rented: '&cRegion &e{region}&c is not currently rented!'
+  tp-no-safe-location: '&cNo safe teleport location found for &e{region}&c!'
+  tp-cooldown: '&cYou must wait &e{time}&c seconds before teleporting again!'
+  tp-cross-world-warning: '&eWarning: Teleporting to &6{region}&e in world &6{world}&e!'
   not-rental-owner: '&cYou do not own this rental!'
 
   # Help messages

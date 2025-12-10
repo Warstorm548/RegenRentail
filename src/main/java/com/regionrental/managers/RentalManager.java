@@ -511,7 +511,22 @@ public class RentalManager {
                 .filter(rental -> rental.getPlayerUUID().equals(playerUUID))
                 .collect(Collectors.toList());
     }
-    
+
+    /**
+     * Gets all rentals where player is a member (not owner)
+     * @param playerUUID The player's UUID
+     * @return List of rentals where player is a member
+     */
+    public List<Rental> getRentalsWhereMember(UUID playerUUID) {
+        List<Rental> memberRentals = new ArrayList<>();
+        for (Rental rental : rentals.values()) {
+            if (rental.hasMember(playerUUID) && !rental.getPlayerUUID().equals(playerUUID)) {
+                memberRentals.add(rental);
+            }
+        }
+        return memberRentals;
+    }
+
     public List<Rental> getAllRentals() {
         return new ArrayList<>(rentals.values());
     }
