@@ -109,10 +109,11 @@ public class GroupsConfig {
     public void save() {
         try {
             config.save(configFile);
-            isDirty = false;
         } catch (IOException e) {
             plugin.getLogger().severe("Could not save groups.yml: " + e.getMessage());
+            return;
         }
+        isDirty = false;
     }
 
     /**

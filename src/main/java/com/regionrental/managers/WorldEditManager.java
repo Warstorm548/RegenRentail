@@ -20,10 +20,11 @@ import org.bukkit.Bukkit;
 import org.bukkit.World;
 
 import java.io.*;
+import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Set;
-import java.util.HashSet;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.logging.Level;
 
 /**
@@ -41,15 +42,16 @@ public class WorldEditManager {
     private final Map<String, Clipboard> clipboardCache;
 
     // Track which schematics exist on disk (for hasCapture checks without loading)
-    private final Set<String> knownSchematics = new HashSet<>();
+    // Using thread-safe set for potential concurrent access
+    private final Set<String> knownSchematics = ConcurrentHashMap.newKeySet();
 
     public WorldEditManager(RegionRental plugin) {
         this.plugin = plugin;
         this.schematicsFolder = new File(plugin.getDataFolder(), "schematics");
         this.maxCacheSize = plugin.getConfigManager().getSchematicCacheSize(DEFAULT_CACHE_SIZE);
 
-        // Create LRU cache with access-order ordering
-        this.clipboardCache = new LinkedHashMap<String, Clipboard>(maxCacheSize, 0.75f, true) {
+        // Create LRU cache with access-order ordering, wrapped for thread safety
+        this.clipboardCache = Collections.synchronizedMap(new LinkedHashMap<String, Clipboard>(maxCacheSize, 0.75f, true) {
             @Override
             protected boolean removeEldestEntry(Map.Entry<String, Clipboard> eldest) {
                 boolean shouldRemove = size() > maxCacheSize;
@@ -58,7 +60,7 @@ public class WorldEditManager {
                 }
                 return shouldRemove;
             }
-        };
+        });
 
         // Create schematics folder if it doesn't exist
         if (!schematicsFolder.exists()) {

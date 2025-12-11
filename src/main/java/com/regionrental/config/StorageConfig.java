@@ -68,10 +68,11 @@ public class StorageConfig {
     public void save() {
         try {
             config.save(configFile);
-            isDirty = false;
         } catch (IOException e) {
             plugin.getLogger().log(Level.SEVERE, "Could not save storage.yml!", e);
+            return;
         }
+        isDirty = false;
     }
 
     public void reload() {

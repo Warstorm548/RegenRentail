@@ -84,8 +84,8 @@ When updating the version, modify these files:
 - Output JAR: `build/libs/RegionRental-X.X.X.jar`
 
 ### Current Version
-- **Version:** 2.5.0
-- **Last Updated:** Performance Optimization (dirty tracking, lazy schematic loading, O(1) indexes, memory leak fixes)
+- **Version:** 2.5.1
+- **Last Updated:** PR Review Fixes (cache invalidation bug, thread safety, cleaner save pattern)
 
 ## Architecture Overview
 
@@ -559,7 +559,33 @@ src/main/java/com/regionrental/
 
 ## Recent Features
 
-### Version 2.5.0 - Performance Optimization (Latest)
+### Version 2.5.1 - PR Review Fixes (Latest)
+Patch release addressing GitHub Copilot PR review comments:
+
+**Bug Fixes:**
+- **Cache Invalidation** - Fixed `invalidateGroupCache()` never being called after group modifications
+  - Added calls to: processCreateGroup, handleDelete, processAddRegions, processRemoveRegions
+  - Tab completion now immediately reflects group changes
+
+**Thread Safety Improvements:**
+- **WorldEditManager** - Made collections thread-safe for potential concurrent access
+  - `knownSchematics`: Changed from HashSet to ConcurrentHashMap.newKeySet()
+  - `clipboardCache`: Wrapped LinkedHashMap with Collections.synchronizedMap()
+
+**Code Quality:**
+- **Cleaner Save Pattern** - Refactored save methods across 5 files
+  - Moved `isDirty = false` outside try block with early return on failure
+  - More explicit success-only flag reset
+  - Files: StorageConfig, RegionsConfig, SignsConfig, GroupsConfig, RentalManager
+
+**Technical Details:**
+- Files modified: 7 files
+- ~43 lines changed (+31/-12)
+- Backward compatible
+
+---
+
+### Version 2.5.0 - Performance Optimization
 Minor update with comprehensive performance optimizations:
 
 **Optimizations:**

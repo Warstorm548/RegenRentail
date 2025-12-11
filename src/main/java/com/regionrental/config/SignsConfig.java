@@ -138,10 +138,11 @@ public class SignsConfig {
     public void save() {
         try {
             config.save(configFile);
-            isDirty = false;
         } catch (IOException e) {
             plugin.getLogger().log(Level.SEVERE, "Could not save signs.yml!", e);
+            return;
         }
+        isDirty = false;
     }
 
     public void reload() {

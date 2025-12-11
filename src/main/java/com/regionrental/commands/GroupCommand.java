@@ -213,6 +213,9 @@ public class GroupCommand implements CommandExecutor, TabCompleter {
 
         sender.sendMessage(ChatColor.GREEN + "Deleted group '" + groupName + "' and removed all group overrides");
 
+        // Invalidate cache so tab completion removes the deleted group immediately
+        invalidateGroupCache();
+
         return true;
     }
 
@@ -331,6 +334,9 @@ public class GroupCommand implements CommandExecutor, TabCompleter {
             sender.sendMessage(ChatColor.YELLOW + "Warnings (" + parseResult.errors.size() + " regions skipped):");
             parseResult.errors.forEach(error -> sender.sendMessage(ChatColor.YELLOW + "  - " + error));
         }
+
+        // Invalidate cache so tab completion shows the new group immediately
+        invalidateGroupCache();
     }
 
     /**
@@ -388,6 +394,9 @@ public class GroupCommand implements CommandExecutor, TabCompleter {
             sender.sendMessage(ChatColor.YELLOW + "Warnings (" + parseResult.errors.size() + " regions skipped):");
             parseResult.errors.forEach(error -> sender.sendMessage(ChatColor.YELLOW + "  - " + error));
         }
+
+        // Invalidate cache so tab completion reflects the updated group
+        invalidateGroupCache();
     }
 
     /**
@@ -434,6 +443,9 @@ public class GroupCommand implements CommandExecutor, TabCompleter {
         if (!notInGroup.isEmpty()) {
             sender.sendMessage(ChatColor.YELLOW + "Note: " + notInGroup.size() + " regions were not in the group");
         }
+
+        // Invalidate cache so tab completion reflects the updated group
+        invalidateGroupCache();
     }
 
     // ========== Helper Methods ==========

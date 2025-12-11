@@ -149,10 +149,11 @@ public class RegionsConfig {
     public void save() {
         try {
             config.save(configFile);
-            isDirty = false;
         } catch (IOException e) {
             plugin.getLogger().log(Level.SEVERE, "Could not save regions.yml!", e);
+            return;
         }
+        isDirty = false;
     }
 
     public void reload() {

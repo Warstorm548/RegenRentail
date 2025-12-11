@@ -274,12 +274,13 @@ public class RentalManager {
 
         try {
             rentalsConfig.save(rentalsFile);
-            // Reset dirty flags after successful save
-            isDirty = false;
-            modifiedRentals.clear();
         } catch (IOException e) {
             plugin.getLogger().log(Level.SEVERE, "Could not save rentals.yml!", e);
+            return;
         }
+        // Reset dirty flags after successful save
+        isDirty = false;
+        modifiedRentals.clear();
     }
     
     public boolean createRental(String regionName, org.bukkit.World world, Player player, int days, double price) {
