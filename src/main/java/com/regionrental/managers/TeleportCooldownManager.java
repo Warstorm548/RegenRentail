@@ -90,4 +90,40 @@ public class TeleportCooldownManager {
     public void clearAll() {
         cooldowns.clear();
     }
+
+    /**
+     * Removes expired cooldowns from memory to prevent memory leaks.
+     * Should be called periodically (e.g., every 10 minutes).
+     * @return Number of expired entries removed
+     */
+    public int cleanupExpired() {
+        if (cooldownSeconds <= 0 || cooldowns.isEmpty()) {
+            return 0;
+        }
+
+        long currentTime = System.currentTimeMillis();
+        long cooldownMillis = cooldownSeconds * 1000L;
+        int removed = 0;
+
+        // Use iterator to safely remove while iterating
+        var iterator = cooldowns.entrySet().iterator();
+        while (iterator.hasNext()) {
+            var entry = iterator.next();
+            long elapsed = currentTime - entry.getValue();
+            // Remove if cooldown has expired (add 60 second buffer)
+            if (elapsed > cooldownMillis + 60000L) {
+                iterator.remove();
+                removed++;
+            }
+        }
+
+        return removed;
+    }
+
+    /**
+     * Get current number of tracked cooldowns (for debugging/monitoring)
+     */
+    public int size() {
+        return cooldowns.size();
+    }
 }

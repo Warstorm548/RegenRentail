@@ -21,6 +21,7 @@ import org.bukkit.event.Listener;
 import org.bukkit.event.inventory.ClickType;
 import org.bukkit.event.inventory.InventoryClickEvent;
 import org.bukkit.event.inventory.InventoryCloseEvent;
+import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.InventoryHolder;
 import org.bukkit.inventory.ItemStack;
@@ -682,11 +683,11 @@ public class StorageManager implements Listener {
         if (!(event.getInventory().getHolder() instanceof StorageGUIHolder)) {
             return;
         }
-        
+
         if (!(event.getPlayer() instanceof Player)) {
             return;
         }
-        
+
         Player player = (Player) event.getPlayer();
         UUID playerUUID = player.getUniqueId();
 
@@ -717,6 +718,27 @@ public class StorageManager implements Listener {
                                  remainingItems.size() + " items remain in storage. Use /rrretrieve to get them.");
             }
         }
+    }
+
+    /**
+     * Clean up GUI session when player disconnects to prevent memory leaks.
+     * Items remain in storage (untouched) since the GUI wasn't properly closed.
+     */
+    @EventHandler
+    public void onPlayerQuit(PlayerQuitEvent event) {
+        UUID playerUUID = event.getPlayer().getUniqueId();
+        StorageGUISession session = activeGUISessions.remove(playerUUID);
+
+        if (session != null && plugin.getConfigManager().isDebug()) {
+            plugin.getLogger().info("Cleaned up orphaned GUI session for " + event.getPlayer().getName());
+        }
+    }
+
+    /**
+     * Get number of active GUI sessions (for debugging/monitoring)
+     */
+    public int getActiveSessionCount() {
+        return activeGUISessions.size();
     }
     
     private World findWorldForRegion(String regionName) {

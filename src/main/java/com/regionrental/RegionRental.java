@@ -447,6 +447,16 @@ public class RegionRental extends JavaPlugin {
                 getLogger().info("Auto-save check completed (dirty configs saved)");
             }
         }, 6000L, 6000L); // 5 minutes
+
+        // Cleanup expired teleport cooldowns (runs every 10 minutes) - prevents memory leaks
+        Bukkit.getScheduler().runTaskTimer(this, () -> {
+            if (teleportCooldownManager != null) {
+                int removed = teleportCooldownManager.cleanupExpired();
+                if (removed > 0 && configManager.isDebug()) {
+                    getLogger().info("Cleaned up " + removed + " expired teleport cooldown(s)");
+                }
+            }
+        }, 12000L, 12000L); // 10 minutes
     }
     
     public void reloadPlugin() {
