@@ -14,10 +14,13 @@ import java.util.logging.Level;
 import org.bukkit.configuration.ConfigurationSection;
 
 public class SignsConfig {
-    
+
     private final RegionRental plugin;
     private File configFile;
     private FileConfiguration config;
+
+    // Dirty tracking for optimized saves
+    private volatile boolean isDirty = false;
     
     public SignsConfig(RegionRental plugin) {
         this.plugin = plugin;
@@ -105,16 +108,41 @@ public class SignsConfig {
         }
     }
     
+    /**
+     * Marks the config as needing to be saved
+     */
+    private void markDirty() {
+        isDirty = true;
+    }
+
+    /**
+     * Checks if there are unsaved changes
+     */
+    public boolean isDirty() {
+        return isDirty;
+    }
+
+    /**
+     * Saves only if there are unsaved changes
+     */
+    public void saveIfDirty() {
+        if (isDirty) {
+            save();
+        }
+    }
+
     public void save() {
         try {
             config.save(configFile);
+            isDirty = false;
         } catch (IOException e) {
             plugin.getLogger().log(Level.SEVERE, "Could not save signs.yml!", e);
         }
     }
-    
+
     public void reload() {
         config = YamlConfiguration.loadConfiguration(configFile);
+        isDirty = false;
     }
     
     public void addSign(String region, Location location) {
@@ -124,7 +152,7 @@ public class SignsConfig {
         config.set(path + ".x", location.getBlockX());
         config.set(path + ".y", location.getBlockY());
         config.set(path + ".z", location.getBlockZ());
-        save();
+        markDirty();
     }
 
     public void addSupportBlock(String region, org.bukkit.World world, Location supportLoc, String blockType, String blockData) {
@@ -135,7 +163,7 @@ public class SignsConfig {
         config.set(path + ".z", supportLoc.getBlockZ());
         config.set(path + ".original-type", blockType);
         config.set(path + ".original-data", blockData);
-        save();
+        markDirty();
     }
 
     public boolean hasSupportBlock(String region, org.bukkit.World world) {
@@ -179,13 +207,13 @@ public class SignsConfig {
     public void removeSupportBlock(String region, org.bukkit.World world) {
         String compositeKey = world.getName() + ":" + region;
         config.set("signs." + compositeKey + ".support-block", null);
-        save();
+        markDirty();
     }
 
     public void removeSign(String region, org.bukkit.World world) {
         String compositeKey = world.getName() + ":" + region;
         config.set("signs." + compositeKey, null);
-        save();
+        markDirty();
     }
 
     public boolean hasSign(String region, org.bukkit.World world) {

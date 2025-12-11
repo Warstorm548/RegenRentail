@@ -21,6 +21,9 @@ public class GroupsConfig {
     private File configFile;
     private FileConfiguration config;
 
+    // Dirty tracking for optimized saves
+    private volatile boolean isDirty = false;
+
     // Reserved group names that cannot be used
     private static final Set<String> RESERVED_NAMES = Set.of("all", "none", "default");
 
@@ -78,11 +81,35 @@ public class GroupsConfig {
     }
 
     /**
+     * Marks the config as needing to be saved
+     */
+    private void markDirty() {
+        isDirty = true;
+    }
+
+    /**
+     * Checks if there are unsaved changes
+     */
+    public boolean isDirty() {
+        return isDirty;
+    }
+
+    /**
+     * Saves only if there are unsaved changes
+     */
+    public void saveIfDirty() {
+        if (isDirty) {
+            save();
+        }
+    }
+
+    /**
      * Saves the configuration to disk
      */
     public void save() {
         try {
             config.save(configFile);
+            isDirty = false;
         } catch (IOException e) {
             plugin.getLogger().severe("Could not save groups.yml: " + e.getMessage());
         }
@@ -93,6 +120,7 @@ public class GroupsConfig {
      */
     public void reload() {
         config = YamlConfiguration.loadConfiguration(configFile);
+        isDirty = false;
     }
 
     // ========== CRUD Operations ==========
@@ -111,7 +139,7 @@ public class GroupsConfig {
 
         String path = "groups." + groupName + ".regions";
         config.set(path, compositeKeys);
-        save();
+        markDirty();
 
         plugin.getLogger().info("Created group '" + groupName + "' with " + compositeKeys.size() + " regions");
         return true;
@@ -129,7 +157,7 @@ public class GroupsConfig {
         }
 
         config.set("groups." + groupName, null);
-        save();
+        markDirty();
 
         plugin.getLogger().info("Deleted group '" + groupName + "'");
         return true;
@@ -158,7 +186,7 @@ public class GroupsConfig {
 
         String path = "groups." + groupName + ".regions";
         config.set(path, currentRegions);
-        save();
+        markDirty();
 
         plugin.getLogger().info("Added " + compositeKeys.size() + " regions to group '" + groupName + "'");
         return true;
@@ -181,7 +209,7 @@ public class GroupsConfig {
 
         String path = "groups." + groupName + ".regions";
         config.set(path, currentRegions);
-        save();
+        markDirty();
 
         plugin.getLogger().info("Removed " + compositeKeys.size() + " regions from group '" + groupName + "'");
         return true;

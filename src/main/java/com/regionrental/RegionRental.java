@@ -436,13 +436,15 @@ public class RegionRental extends JavaPlugin {
             }
         }, 600L, 600L); // 30 seconds
 
-        // Auto-save task (runs every 5 minutes)
+        // Auto-save task (runs every 5 minutes) - uses dirty tracking to avoid unnecessary I/O
         Bukkit.getScheduler().runTaskTimer(this, () -> {
-            rentalManager.saveAllRentals();
-            signsConfig.save();
-            storageConfig.save();
+            rentalManager.saveIfDirty();
+            signsConfig.saveIfDirty();
+            storageConfig.saveIfDirty();
+            regionsConfig.saveIfDirty();
+            groupsConfig.saveIfDirty();
             if (configManager.isDebug()) {
-                getLogger().info("Auto-saved all data");
+                getLogger().info("Auto-save check completed (dirty configs saved)");
             }
         }, 6000L, 6000L); // 5 minutes
     }

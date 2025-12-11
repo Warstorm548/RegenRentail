@@ -13,11 +13,15 @@ import java.util.logging.Level;
 import java.util.stream.Collectors;
 
 public class RentalManager {
-    
+
     private final RegionRental plugin;
     private final Map<String, Rental> rentals;
     private File rentalsFile;
     private FileConfiguration rentalsConfig;
+
+    // Dirty tracking for optimized saves
+    private volatile boolean isDirty = false;
+    private final Set<String> modifiedRentals = ConcurrentHashMap.newKeySet();
     
     public RentalManager(RegionRental plugin) {
         this.plugin = plugin;
@@ -127,7 +131,41 @@ public class RentalManager {
         }
     }
     
+    /**
+     * Marks a rental as modified for dirty tracking
+     * @param compositeKey The composite key (world:region) of the modified rental
+     */
+    private void markDirty(String compositeKey) {
+        isDirty = true;
+        if (compositeKey != null) {
+            modifiedRentals.add(compositeKey);
+        }
+    }
+
+    /**
+     * Checks if there are unsaved changes
+     * @return true if there are changes that need to be saved
+     */
+    public boolean isDirty() {
+        return isDirty;
+    }
+
+    /**
+     * Saves rentals only if there are unsaved changes
+     * Called by the auto-save task to avoid unnecessary I/O
+     */
+    public void saveIfDirty() {
+        if (isDirty) {
+            saveAllRentals();
+        }
+    }
+
     public void saveAllRentals() {
+        // Skip save if nothing has changed
+        if (!isDirty && modifiedRentals.isEmpty()) {
+            return;
+        }
+
         // Clear existing data
         rentalsConfig = new YamlConfiguration();
 
@@ -169,6 +207,9 @@ public class RentalManager {
 
         try {
             rentalsConfig.save(rentalsFile);
+            // Reset dirty flags after successful save
+            isDirty = false;
+            modifiedRentals.clear();
         } catch (IOException e) {
             plugin.getLogger().log(Level.SEVERE, "Could not save rentals.yml!", e);
         }
@@ -208,8 +249,8 @@ public class RentalManager {
         // Mark sign as dirty for next update cycle
         plugin.getSignManager().markSignDirty(regionName, world);
 
-        // Save
-        saveAllRentals();
+        // Mark for save (dirty tracking)
+        markDirty(compositeKey);
 
         return true;
     }
@@ -234,8 +275,8 @@ public class RentalManager {
         // Mark sign as dirty for next update cycle
         plugin.getSignManager().markSignDirty(regionName, world);
 
-        // Save
-        saveAllRentals();
+        // Mark for save (dirty tracking)
+        markDirty(compositeKey);
 
         return true;
     }
@@ -294,8 +335,8 @@ public class RentalManager {
         // Mark sign as dirty for next update cycle
         plugin.getSignManager().markSignDirty(regionName, world);
 
-        // Save
-        saveAllRentals();
+        // Mark for save (dirty tracking) - use null since rental was removed
+        markDirty(null);
 
         plugin.getLogger().info("Rental expired for region " + regionName + " in world " + world.getName());
     }
@@ -334,8 +375,8 @@ public class RentalManager {
             // Record refund in rental history
             rental.recordRefund(actualRefund, reason, adminName);
 
-            // Save rental data
-            saveAllRentals();
+            // Mark for save (dirty tracking)
+            markDirty(rental.getCompositeKey());
 
             // Log to console
             String formattedAmount = String.format(plugin.getConfigManager().getCurrencyFormat(), actualRefund);
@@ -413,8 +454,8 @@ public class RentalManager {
             // Add time with charge (does NOT increment extension count)
             rental.addTimeWithCharge(days, totalCost);
 
-            // Save
-            saveAllRentals();
+            // Mark for save (dirty tracking)
+            markDirty(rental.getCompositeKey());
 
             // Mark sign as dirty for next update cycle
             if (world != null) {
@@ -493,7 +534,7 @@ public class RentalManager {
         if (rental != null) {
             rental.resetTime(days);
             plugin.getSignManager().updateSign(regionName, world);
-            saveAllRentals();
+            markDirty(compositeKey);
         }
     }
 
@@ -574,7 +615,7 @@ public class RentalManager {
         // Add member to rental and WorldGuard region
         rental.addMember(memberUUID);
         plugin.getWorldGuardManager().addPlayerToRegion(regionName, world, memberUUID);
-        saveAllRentals();
+        markDirty(compositeKey);
 
         return true;
     }
@@ -604,7 +645,7 @@ public class RentalManager {
         // Remove member from rental and WorldGuard region
         rental.removeMember(memberUUID);
         plugin.getWorldGuardManager().removePlayerFromRegion(regionName, world, memberUUID);
-        saveAllRentals();
+        markDirty(compositeKey);
 
         return true;
     }
