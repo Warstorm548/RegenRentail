@@ -38,6 +38,7 @@ public class RegionRental extends JavaPlugin {
     private WorldGuardManager worldGuardManager;
     private WorldEditManager worldEditManager;
     private EzChestShopManager ezChestShopManager;
+    private TeleportCooldownManager teleportCooldownManager;
 
     // Commands (for Phase 2 chat listener access)
     private GroupCommand groupCommand;
@@ -183,6 +184,9 @@ public class RegionRental extends JavaPlugin {
         // Initialize integration managers
         ezChestShopManager = new EzChestShopManager(this);
 
+        // Initialize teleport cooldown manager
+        teleportCooldownManager = new TeleportCooldownManager(configManager.getTeleportCooldown());
+
         // Initialize other managers
         rentalManager = new RentalManager(this);
         signManager = new SignManager(this);
@@ -218,6 +222,9 @@ public class RegionRental extends JavaPlugin {
         registerCommandWithPrefix(commandMap, activePrefix, "info", new InfoCommand(this), "regionrental.info");
         registerCommandWithPrefix(commandMap, activePrefix, "list", new ListCommand(this), "regionrental.list");
         registerCommandWithPrefix(commandMap, activePrefix, "extend", new ExtendCommand(this), "regionrental.extend");
+        registerCommandWithPrefix(commandMap, activePrefix, "member", new MemberCommand(this), "regionrental.member");
+        registerCommandWithPrefix(commandMap, activePrefix, "members", new MembersCommand(this), "regionrental.members");
+        registerCommandWithPrefix(commandMap, activePrefix, "tp", new TpCommand(this), "regionrental.tp");
 
         DurationCommand durationCommand = new DurationCommand(this);
         registerCommandWithPrefix(commandMap, activePrefix, "duration", durationCommand, "regionrental.admin.duration");
@@ -453,6 +460,12 @@ public class RegionRental extends JavaPlugin {
             ezChestShopManager.reload();
         }
 
+        // Clear and reinitialize teleport cooldown manager with new config values
+        if (teleportCooldownManager != null) {
+            teleportCooldownManager.clearAll();
+        }
+        teleportCooldownManager = new TeleportCooldownManager(configManager.getTeleportCooldown());
+
         // Reload data
         rentalManager.loadAllRentals();
         signManager.loadAllSigns();
@@ -523,6 +536,10 @@ public class RegionRental extends JavaPlugin {
 
     public EzChestShopManager getEzChestShopManager() {
         return ezChestShopManager;
+    }
+
+    public TeleportCooldownManager getTeleportCooldownManager() {
+        return teleportCooldownManager;
     }
 
     public Economy getEconomy() {

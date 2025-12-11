@@ -96,8 +96,21 @@ public class RentalManager {
                     }
                 }
 
+                // Load members (backwards compatible)
+                Set<UUID> members = new HashSet<>();
+                if (rentalsConfig.contains(path + ".members")) {
+                    List<String> memberList = rentalsConfig.getStringList(path + ".members");
+                    for (String uuidStr : memberList) {
+                        try {
+                            members.add(UUID.fromString(uuidStr));
+                        } catch (IllegalArgumentException e) {
+                            plugin.getLogger().warning("Invalid member UUID in rental " + configKey + ": " + uuidStr);
+                        }
+                    }
+                }
+
                 Rental rental = new Rental(regionName, worldName, playerUUID, playerName, startDate, endDate,
-                        extensionCount, totalPaid, initialPrice, totalRefunded, refundHistory);
+                        extensionCount, totalPaid, initialPrice, totalRefunded, refundHistory, members);
 
                 // Use composite key (world:region) for storage
                 rentals.put(rental.getCompositeKey(), rental);
@@ -145,6 +158,13 @@ public class RentalManager {
                 refundHistoryData.add(refundData);
             }
             rentalsConfig.set(path + ".refund-history", refundHistoryData);
+
+            // Save members
+            List<String> memberUUIDs = new ArrayList<>();
+            for (UUID memberUUID : rental.getMembers()) {
+                memberUUIDs.add(memberUUID.toString());
+            }
+            rentalsConfig.set(path + ".members", memberUUIDs);
         }
 
         try {
@@ -230,6 +250,12 @@ public class RentalManager {
 
         // Remove player from region
         plugin.getWorldGuardManager().removePlayerFromRegion(regionName, world, rental.getPlayerUUID());
+
+        // Remove all members from region
+        for (UUID memberUUID : rental.getMembers()) {
+            plugin.getWorldGuardManager().removePlayerFromRegion(regionName, world, memberUUID);
+        }
+        rental.clearMembers();
 
         // Store container items and player-placed blocks (must happen BEFORE restoration)
         if (plugin.getConfigManager().isItemStorage()) {
@@ -485,7 +511,22 @@ public class RentalManager {
                 .filter(rental -> rental.getPlayerUUID().equals(playerUUID))
                 .collect(Collectors.toList());
     }
-    
+
+    /**
+     * Gets all rentals where player is a member (not owner)
+     * @param playerUUID The player's UUID
+     * @return List of rentals where player is a member
+     */
+    public List<Rental> getRentalsWhereMember(UUID playerUUID) {
+        List<Rental> memberRentals = new ArrayList<>();
+        for (Rental rental : rentals.values()) {
+            if (rental.hasMember(playerUUID) && !rental.getPlayerUUID().equals(playerUUID)) {
+                memberRentals.add(rental);
+            }
+        }
+        return memberRentals;
+    }
+
     public List<Rental> getAllRentals() {
         return new ArrayList<>(rentals.values());
     }
@@ -498,5 +539,73 @@ public class RentalManager {
     
     public Map<String, Rental> getRentalsMap() {
         return new HashMap<>(rentals);
+    }
+
+    // Member management methods
+
+    /**
+     * Adds a member to a rental
+     * @param regionName Region name
+     * @param world World the region is in
+     * @param renterUUID UUID of the renter (must own the rental)
+     * @param memberUUID UUID of the member to add
+     * @return true if member was added successfully
+     */
+    public boolean addMemberToRental(String regionName, org.bukkit.World world, UUID renterUUID, UUID memberUUID) {
+        String compositeKey = world.getName() + ":" + regionName;
+        Rental rental = rentals.get(compositeKey);
+
+        // Check if rental exists and renter owns it
+        if (rental == null || !rental.getPlayerUUID().equals(renterUUID)) {
+            return false;
+        }
+
+        // Check if member already exists
+        if (rental.hasMember(memberUUID)) {
+            return false;
+        }
+
+        // Check member limit
+        int maxMembers = plugin.getConfigManager().getMaxMembers();
+        if (maxMembers != -1 && rental.getMemberCount() >= maxMembers) {
+            return false;
+        }
+
+        // Add member to rental and WorldGuard region
+        rental.addMember(memberUUID);
+        plugin.getWorldGuardManager().addPlayerToRegion(regionName, world, memberUUID);
+        saveAllRentals();
+
+        return true;
+    }
+
+    /**
+     * Removes a member from a rental
+     * @param regionName Region name
+     * @param world World the region is in
+     * @param renterUUID UUID of the renter (must own the rental)
+     * @param memberUUID UUID of the member to remove
+     * @return true if member was removed successfully
+     */
+    public boolean removeMemberFromRental(String regionName, org.bukkit.World world, UUID renterUUID, UUID memberUUID) {
+        String compositeKey = world.getName() + ":" + regionName;
+        Rental rental = rentals.get(compositeKey);
+
+        // Check if rental exists and renter owns it
+        if (rental == null || !rental.getPlayerUUID().equals(renterUUID)) {
+            return false;
+        }
+
+        // Check if member exists
+        if (!rental.hasMember(memberUUID)) {
+            return false;
+        }
+
+        // Remove member from rental and WorldGuard region
+        rental.removeMember(memberUUID);
+        plugin.getWorldGuardManager().removePlayerFromRegion(regionName, world, memberUUID);
+        saveAllRentals();
+
+        return true;
     }
 }

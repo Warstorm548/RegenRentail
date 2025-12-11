@@ -153,6 +153,47 @@ limits:
   rental-cooldown: 0
 
 # ============================================
+# MEMBER MANAGEMENT SETTINGS
+# ============================================
+members:
+  # Enable member management feature
+  enabled: true
+
+  # Maximum members per rental (-1 for unlimited)
+  max-members: 5
+
+# ============================================
+# TELEPORTATION SETTINGS
+# ============================================
+teleport:
+  # Enable /rrtp command to teleport to rented regions
+  enabled: true
+
+  # Maximum blocks to search upward for safe teleport location
+  max-search-distance: 20
+
+  # How many blocks forward from sign to search for safe location (max: 20)
+  forward-search-distance: 5
+
+  # How many blocks downward to search for floor (max: 20)
+  floor-search-down: 20
+
+  # How many blocks upward to search for floor if not found below
+  floor-search-up: 20
+
+  # Cooldown in seconds between teleports (0 to disable)
+  cooldown: 30
+
+  # Show warning when teleporting to different world
+  cross-world-warning: true
+
+  # Play sound effect on teleport (ENTITY_ENDERMAN_TELEPORT)
+  sound-enabled: true
+
+  # Show particle effect on teleport (PORTAL particles)
+  particle-enabled: true
+
+# ============================================
 # SIGN SETTINGS
 # ============================================
 signs:
@@ -420,7 +461,31 @@ messages:
   config-reloaded: '&aConfiguration reloaded!'
   aliases-enabled: '&aShort command aliases have been enabled!'
   aliases-disabled: '&eShort aliases disabled due to conflicts. Use /rr prefix.'
-  
+
+  # Member management messages
+  member-added: '&aAdded &e{member}&a as a member of &6{region}&a!'
+  member-removed: '&aRemoved &e{member}&a from &6{region}&a!'
+  member-already-added: '&cPlayer &e{member}&c is already a member!'
+  member-not-found: '&cPlayer &e{member}&c is not a member!'
+  member-limit-reached: '&cMember limit reached! ({current}/{max})'
+  member-management-disabled: '&cMember management is disabled!'
+  cannot-add-self: '&cYou cannot add yourself as a member!'
+  members-list-header: '&6=== Members of {region} ==='
+  members-list-entry: '&e  - {member}'
+  members-list-empty: '&7No members added'
+  members-list-footer: '&7Total: {count}/{max} members'
+  member-added-notify: '&aYou were added as member of &6{region}&a by &e{owner}&a!'
+  member-removed-notify: '&cYou were removed from &6{region}&c by &e{owner}&c!'
+
+  # Teleport messages
+  tp-success: '&aTeleported to &e{region}&a!'
+  tp-no-permission: '&cYou don''t have permission to teleport to &e{region}&c!'
+  tp-not-rented: '&cRegion &e{region}&c is not currently rented!'
+  tp-no-safe-location: '&cNo safe teleport location found for &e{region}&c!'
+  tp-cooldown: '&cYou must wait &e{time}&c seconds before teleporting again!'
+  tp-cross-world-warning: '&eWarning: Teleporting to &6{region}&e in world &6{world}&e!'
+  not-rental-owner: '&cYou do not own this rental!'
+
   # Help messages
   help-header: '&6=== RegionRental Help ==='
   help-footer: '&6======================='

@@ -24,6 +24,7 @@ public class Rental {
     private double totalRefunded; // Track total amount refunded to prevent double-refunds
     private final List<RefundRecord> refundHistory; // Detailed refund history
     private final Set<String> warningSent;
+    private final Set<UUID> members; // UUIDs of players added as members
 
     /**
      * Represents a single refund transaction for audit trail
@@ -70,12 +71,13 @@ public class Rental {
         this.totalRefunded = 0.0;
         this.refundHistory = new ArrayList<>();
         this.warningSent = new HashSet<>();
+        this.members = new HashSet<>();
     }
 
     // Constructor for loading from storage (with refund data)
     public Rental(String regionName, String worldName, UUID playerUUID, String playerName, long startDate, long endDate,
                   int extensionCount, double totalPaid, double initialPrice, double totalRefunded,
-                  List<RefundRecord> refundHistory) {
+                  List<RefundRecord> refundHistory, Set<UUID> members) {
         this.regionName = regionName;
         this.worldName = worldName;
         this.playerUUID = playerUUID;
@@ -88,20 +90,21 @@ public class Rental {
         this.totalRefunded = totalRefunded;
         this.refundHistory = refundHistory != null ? refundHistory : new ArrayList<>();
         this.warningSent = new HashSet<>();
+        this.members = members != null ? members : new HashSet<>();
     }
 
     // Backward compatibility constructor (for old data without refund tracking)
     public Rental(String regionName, String worldName, UUID playerUUID, String playerName, long startDate, long endDate,
                   int extensionCount, double totalPaid, double initialPrice) {
         this(regionName, worldName, playerUUID, playerName, startDate, endDate, extensionCount, totalPaid,
-             initialPrice, 0.0, new ArrayList<>());
+             initialPrice, 0.0, new ArrayList<>(), new HashSet<>());
     }
 
     // Backward compatibility constructor (for old data without initialPrice or refund tracking)
     public Rental(String regionName, String worldName, UUID playerUUID, String playerName, long startDate, long endDate,
                   int extensionCount, double totalPaid) {
         this(regionName, worldName, playerUUID, playerName, startDate, endDate, extensionCount, totalPaid,
-             totalPaid, 0.0, new ArrayList<>());
+             totalPaid, 0.0, new ArrayList<>(), new HashSet<>());
     }
 
     // Backward compatibility constructor (for migration from old data without world field)
@@ -110,7 +113,7 @@ public class Rental {
                   int extensionCount, double totalPaid, double initialPrice, double totalRefunded,
                   List<RefundRecord> refundHistory, String defaultWorldName) {
         this(regionName, defaultWorldName, playerUUID, playerName, startDate, endDate, extensionCount, totalPaid,
-             initialPrice, totalRefunded, refundHistory);
+             initialPrice, totalRefunded, refundHistory, new HashSet<>());
     }
     
     public boolean isExpired() {
@@ -241,5 +244,57 @@ public class Rental {
      */
     public String getCompositeKey() {
         return worldName + ":" + regionName;
+    }
+
+    // Member management methods
+
+    /**
+     * Gets all members of this rental (defensive copy)
+     * @return Set of member UUIDs
+     */
+    public Set<UUID> getMembers() {
+        return new HashSet<>(members);
+    }
+
+    /**
+     * Adds a member to this rental
+     * @param memberUUID UUID of the member to add
+     * @return true if member was added, false if already exists
+     */
+    public boolean addMember(UUID memberUUID) {
+        return members.add(memberUUID);
+    }
+
+    /**
+     * Removes a member from this rental
+     * @param memberUUID UUID of the member to remove
+     * @return true if member was removed, false if not found
+     */
+    public boolean removeMember(UUID memberUUID) {
+        return members.remove(memberUUID);
+    }
+
+    /**
+     * Checks if a player is a member of this rental
+     * @param memberUUID UUID of the member to check
+     * @return true if player is a member
+     */
+    public boolean hasMember(UUID memberUUID) {
+        return members.contains(memberUUID);
+    }
+
+    /**
+     * Gets the number of members in this rental
+     * @return Member count
+     */
+    public int getMemberCount() {
+        return members.size();
+    }
+
+    /**
+     * Clears all members from this rental
+     */
+    public void clearMembers() {
+        members.clear();
     }
 }

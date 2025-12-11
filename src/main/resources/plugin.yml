@@ -1,5 +1,5 @@
 name: RegionRental
-version: 2.2.1
+version: 2.4.1
 main: com.regionrental.RegionRental
 api-version: '1.21'
 author: Jean-Luc
@@ -60,7 +60,10 @@ permissions:
       regionrental.retrieve: true
       regionrental.info: true
       regionrental.list: true
-      
+      regionrental.member: true
+      regionrental.members: true
+      regionrental.tp: true
+
   regionrental.rent:
     description: Rent regions
     default: true
@@ -80,7 +83,19 @@ permissions:
   regionrental.list:
     description: List your rentals
     default: true
-    
+
+  regionrental.member:
+    description: Manage members in rented regions
+    default: true
+
+  regionrental.members:
+    description: View members of rented regions
+    default: true
+
+  regionrental.tp:
+    description: Teleport to rented regions
+    default: true
+
   regionrental.admin.reload:
     description: Reload the plugin
     default: op
