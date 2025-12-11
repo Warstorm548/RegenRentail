@@ -20,8 +20,10 @@ import org.bukkit.Bukkit;
 import org.bukkit.World;
 
 import java.io.*;
-import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.Set;
+import java.util.HashSet;
 import java.util.logging.Level;
 
 /**
@@ -31,20 +33,40 @@ import java.util.logging.Level;
 public class WorldEditManager {
 
     private final RegionRental plugin;
-    private final Map<String, Clipboard> savedRegions;
     private final File schematicsFolder;
+
+    // LRU cache for clipboards - limits memory usage
+    private static final int DEFAULT_CACHE_SIZE = 20;
+    private final int maxCacheSize;
+    private final Map<String, Clipboard> clipboardCache;
+
+    // Track which schematics exist on disk (for hasCapture checks without loading)
+    private final Set<String> knownSchematics = new HashSet<>();
 
     public WorldEditManager(RegionRental plugin) {
         this.plugin = plugin;
-        this.savedRegions = new HashMap<>();
         this.schematicsFolder = new File(plugin.getDataFolder(), "schematics");
+        this.maxCacheSize = plugin.getConfigManager().getSchematicCacheSize(DEFAULT_CACHE_SIZE);
+
+        // Create LRU cache with access-order ordering
+        this.clipboardCache = new LinkedHashMap<String, Clipboard>(maxCacheSize, 0.75f, true) {
+            @Override
+            protected boolean removeEldestEntry(Map.Entry<String, Clipboard> eldest) {
+                boolean shouldRemove = size() > maxCacheSize;
+                if (shouldRemove && plugin.getConfigManager().isDebug()) {
+                    plugin.getLogger().info("Evicting schematic from cache: " + eldest.getKey());
+                }
+                return shouldRemove;
+            }
+        };
 
         // Create schematics folder if it doesn't exist
         if (!schematicsFolder.exists()) {
             schematicsFolder.mkdirs();
         }
 
-        loadAllSchematics();
+        // Index existing schematics (don't load them into memory)
+        indexSchematics();
     }
 
     /**
@@ -92,7 +114,8 @@ public class WorldEditManager {
 
             // Store clipboard with world-aware key
             String compositeKey = world.getName() + ":" + regionName;
-            savedRegions.put(compositeKey, clipboard);
+            clipboardCache.put(compositeKey, clipboard);
+            knownSchematics.add(compositeKey);
 
             // Save to disk with world-aware filename
             saveSchematic(compositeKey, clipboard);
@@ -128,7 +151,9 @@ public class WorldEditManager {
         }
 
         String compositeKey = world.getName() + ":" + regionName;
-        Clipboard clipboard = savedRegions.get(compositeKey);
+
+        // Lazy load: try cache first, then load from disk
+        Clipboard clipboard = getOrLoadClipboard(compositeKey);
         if (clipboard == null) {
             plugin.getLogger().warning("No saved state found for region: " + regionName + " in world " + world.getName());
             return false;
@@ -153,9 +178,10 @@ public class WorldEditManager {
                 plugin.getLogger().info("Restored region state for: " + regionName + " in world " + world.getName());
             }
 
-            // Remove from memory if auto-delete is enabled
+            // Remove from memory and disk if auto-delete is enabled
             if (plugin.getConfigManager().isAutoDeleteSchematics()) {
-                savedRegions.remove(compositeKey);
+                clipboardCache.remove(compositeKey);
+                knownSchematics.remove(compositeKey);
                 deleteSchematic(compositeKey);
             }
 
@@ -175,27 +201,81 @@ public class WorldEditManager {
     }
 
     /**
-     * Checks if a region state has been captured
+     * Checks if a region state has been captured (checks index, doesn't load from disk)
      */
     public boolean hasCapture(String regionName) {
-        return savedRegions.containsKey(regionName);
+        return knownSchematics.contains(regionName);
     }
 
     /**
-     * Gets the captured clipboard for a region
-     * @param regionName The WorldGuard region name
+     * Gets the captured clipboard for a region (lazy loads from disk if needed)
+     * @param regionName The WorldGuard region name (or composite key world:region)
      * @return The clipboard, or null if not found
      */
     public Clipboard getClipboard(String regionName) {
-        return savedRegions.get(regionName);
+        return getOrLoadClipboard(regionName);
     }
 
     /**
-     * Deletes a captured region state
+     * Deletes a captured region state from cache, index, and disk
      */
     public void deleteCapture(String regionName) {
-        savedRegions.remove(regionName);
+        clipboardCache.remove(regionName);
+        knownSchematics.remove(regionName);
         deleteSchematic(regionName);
+    }
+
+    /**
+     * Gets the current cache size (for monitoring/debugging)
+     */
+    public int getCacheSize() {
+        return clipboardCache.size();
+    }
+
+    /**
+     * Gets the total number of known schematics on disk
+     */
+    public int getTotalSchematicCount() {
+        return knownSchematics.size();
+    }
+
+    /**
+     * Clears the memory cache (schematics remain on disk)
+     * Useful for freeing memory if needed
+     */
+    public void clearCache() {
+        clipboardCache.clear();
+        if (plugin.getConfigManager().isDebug()) {
+            plugin.getLogger().info("Schematic cache cleared");
+        }
+    }
+
+    /**
+     * Lazy loads a clipboard from cache or disk
+     * @param compositeKey The composite key (world:region)
+     * @return The clipboard, or null if not found
+     */
+    private Clipboard getOrLoadClipboard(String compositeKey) {
+        // Check cache first
+        Clipboard cached = clipboardCache.get(compositeKey);
+        if (cached != null) {
+            return cached;
+        }
+
+        // Not in cache - check if it exists on disk
+        if (!knownSchematics.contains(compositeKey)) {
+            return null;
+        }
+
+        // Load from disk
+        Clipboard loaded = loadSchematic(compositeKey);
+        if (loaded != null) {
+            clipboardCache.put(compositeKey, loaded);
+            if (plugin.getConfigManager().isDebug()) {
+                plugin.getLogger().info("Lazy loaded schematic from disk: " + compositeKey);
+            }
+        }
+        return loaded;
     }
 
     /**
@@ -232,9 +312,10 @@ public class WorldEditManager {
     }
 
     /**
-     * Loads all schematics from disk
+     * Indexes existing schematics without loading them into memory.
+     * This allows hasCapture() to work without memory overhead.
      */
-    private void loadAllSchematics() {
+    private void indexSchematics() {
         if (!schematicsFolder.exists()) {
             return;
         }
@@ -244,21 +325,33 @@ public class WorldEditManager {
             return;
         }
 
-        int loaded = 0;
         for (File file : files) {
             String regionName = file.getName().replace(".dat", "");
-
-            try (ObjectInputStream ois = new ObjectInputStream(new FileInputStream(file))) {
-                SerializableClipboard wrapper = (SerializableClipboard) ois.readObject();
-                savedRegions.put(regionName, wrapper.toClipboard());
-                loaded++;
-            } catch (Exception e) {
-                plugin.getLogger().log(Level.WARNING, "Failed to load schematic: " + file.getName(), e);
-            }
+            knownSchematics.add(regionName);
         }
 
-        if (loaded > 0) {
-            plugin.getLogger().info("Loaded " + loaded + " region schematics");
+        if (!knownSchematics.isEmpty()) {
+            plugin.getLogger().info("Indexed " + knownSchematics.size() + " region schematics (lazy loading enabled)");
+        }
+    }
+
+    /**
+     * Loads a single schematic from disk
+     * @param regionName The region name (composite key)
+     * @return The loaded clipboard, or null if failed
+     */
+    private Clipboard loadSchematic(String regionName) {
+        File file = new File(schematicsFolder, regionName + ".dat");
+        if (!file.exists()) {
+            return null;
+        }
+
+        try (ObjectInputStream ois = new ObjectInputStream(new FileInputStream(file))) {
+            SerializableClipboard wrapper = (SerializableClipboard) ois.readObject();
+            return wrapper.toClipboard();
+        } catch (Exception e) {
+            plugin.getLogger().log(Level.WARNING, "Failed to load schematic: " + file.getName(), e);
+            return null;
         }
     }
 

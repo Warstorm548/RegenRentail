@@ -328,6 +328,9 @@ public class ConfigManager {
     public List<String> getRentedSignFormat() { return rentedSignFormat; }
     public boolean isBlockRestoration() { return blockRestoration; }
     public boolean isAutoDeleteSchematics() { return autoDeleteSchematics; }
+    public int getSchematicCacheSize(int defaultSize) {
+        return config.getInt("restoration.schematic-cache-size", defaultSize);
+    }
     public boolean isItemStorage() { return itemStorage; }
     public boolean isBlockStorage() { return config.getBoolean("storage.store-player-blocks", true); }
     public List<String> getBlockBlacklist() { return config.getStringList("storage.block-blacklist"); }
