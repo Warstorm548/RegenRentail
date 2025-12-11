@@ -22,6 +22,12 @@ public class RentalManager {
     // Dirty tracking for optimized saves
     private volatile boolean isDirty = false;
     private final Set<String> modifiedRentals = ConcurrentHashMap.newKeySet();
+
+    // Secondary indexes for O(1) player/member lookups
+    // playerUUID -> Set of composite keys (world:region) they OWN
+    private final Map<UUID, Set<String>> playerRentalIndex = new ConcurrentHashMap<>();
+    // playerUUID -> Set of composite keys (world:region) they are a MEMBER of (not owner)
+    private final Map<UUID, Set<String>> memberRentalIndex = new ConcurrentHashMap<>();
     
     public RentalManager(RegionRental plugin) {
         this.plugin = plugin;
@@ -47,6 +53,8 @@ public class RentalManager {
     
     public void loadAllRentals() {
         rentals.clear();
+        playerRentalIndex.clear();
+        memberRentalIndex.clear();
 
         if (!rentalsConfig.contains("rentals")) {
             return;
@@ -117,7 +125,14 @@ public class RentalManager {
                         extensionCount, totalPaid, initialPrice, totalRefunded, refundHistory, members);
 
                 // Use composite key (world:region) for storage
-                rentals.put(rental.getCompositeKey(), rental);
+                String compositeKey = rental.getCompositeKey();
+                rentals.put(compositeKey, rental);
+
+                // Update secondary indexes
+                addToPlayerIndex(playerUUID, compositeKey);
+                for (UUID memberUUID : members) {
+                    addToMemberIndex(memberUUID, compositeKey);
+                }
             } catch (Exception e) {
                 plugin.getLogger().warning("Failed to load rental for config key " + configKey + ": " + e.getMessage());
             }
@@ -139,6 +154,58 @@ public class RentalManager {
         isDirty = true;
         if (compositeKey != null) {
             modifiedRentals.add(compositeKey);
+        }
+    }
+
+    // ========== Secondary Index Management ==========
+
+    /**
+     * Adds a rental to the player ownership index
+     */
+    private void addToPlayerIndex(UUID playerUUID, String compositeKey) {
+        playerRentalIndex.computeIfAbsent(playerUUID, k -> ConcurrentHashMap.newKeySet()).add(compositeKey);
+    }
+
+    /**
+     * Removes a rental from the player ownership index
+     */
+    private void removeFromPlayerIndex(UUID playerUUID, String compositeKey) {
+        Set<String> rentalsSet = playerRentalIndex.get(playerUUID);
+        if (rentalsSet != null) {
+            rentalsSet.remove(compositeKey);
+            if (rentalsSet.isEmpty()) {
+                playerRentalIndex.remove(playerUUID);
+            }
+        }
+    }
+
+    /**
+     * Adds a rental to the member index
+     */
+    private void addToMemberIndex(UUID memberUUID, String compositeKey) {
+        memberRentalIndex.computeIfAbsent(memberUUID, k -> ConcurrentHashMap.newKeySet()).add(compositeKey);
+    }
+
+    /**
+     * Removes a rental from the member index
+     */
+    private void removeFromMemberIndex(UUID memberUUID, String compositeKey) {
+        Set<String> rentalsSet = memberRentalIndex.get(memberUUID);
+        if (rentalsSet != null) {
+            rentalsSet.remove(compositeKey);
+            if (rentalsSet.isEmpty()) {
+                memberRentalIndex.remove(memberUUID);
+            }
+        }
+    }
+
+    /**
+     * Removes a rental from all member indexes (used when rental expires)
+     */
+    private void removeAllMembersFromIndex(Rental rental) {
+        String compositeKey = rental.getCompositeKey();
+        for (UUID memberUUID : rental.getMembers()) {
+            removeFromMemberIndex(memberUUID, compositeKey);
         }
     }
 
@@ -243,6 +310,9 @@ public class RentalManager {
 
         rentals.put(compositeKey, rental);
 
+        // Update player ownership index
+        addToPlayerIndex(player.getUniqueId(), compositeKey);
+
         // Add player to region
         plugin.getWorldGuardManager().addPlayerToRegion(regionName, world, player.getUniqueId());
 
@@ -292,7 +362,8 @@ public class RentalManager {
         // Remove player from region
         plugin.getWorldGuardManager().removePlayerFromRegion(regionName, world, rental.getPlayerUUID());
 
-        // Remove all members from region
+        // Remove all members from region and member index
+        removeAllMembersFromIndex(rental);
         for (UUID memberUUID : rental.getMembers()) {
             plugin.getWorldGuardManager().removePlayerFromRegion(regionName, world, memberUUID);
         }
@@ -328,6 +399,9 @@ public class RentalManager {
                 plugin.getLogger().warning("Failed to restore blocks for region: " + regionName + " in world " + world.getName());
             }
         }
+
+        // Remove from player ownership index
+        removeFromPlayerIndex(rental.getPlayerUUID(), compositeKey);
 
         // Remove rental
         rentals.remove(compositeKey);
@@ -547,25 +621,46 @@ public class RentalManager {
         String compositeKey = world.getName() + ":" + regionName;
         return rentals.get(compositeKey);
     }
+    /**
+     * Gets all rentals owned by a player using O(1) index lookup
+     * @param playerUUID The player's UUID
+     * @return List of rentals owned by the player
+     */
     public List<Rental> getPlayerRentals(UUID playerUUID) {
-        return rentals.values().stream()
-                .filter(rental -> rental.getPlayerUUID().equals(playerUUID))
-                .collect(Collectors.toList());
+        Set<String> playerKeys = playerRentalIndex.get(playerUUID);
+        if (playerKeys == null || playerKeys.isEmpty()) {
+            return new ArrayList<>();
+        }
+
+        List<Rental> result = new ArrayList<>(playerKeys.size());
+        for (String compositeKey : playerKeys) {
+            Rental rental = rentals.get(compositeKey);
+            if (rental != null) {
+                result.add(rental);
+            }
+        }
+        return result;
     }
 
     /**
-     * Gets all rentals where player is a member (not owner)
+     * Gets all rentals where player is a member (not owner) using O(1) index lookup
      * @param playerUUID The player's UUID
      * @return List of rentals where player is a member
      */
     public List<Rental> getRentalsWhereMember(UUID playerUUID) {
-        List<Rental> memberRentals = new ArrayList<>();
-        for (Rental rental : rentals.values()) {
-            if (rental.hasMember(playerUUID) && !rental.getPlayerUUID().equals(playerUUID)) {
-                memberRentals.add(rental);
+        Set<String> memberKeys = memberRentalIndex.get(playerUUID);
+        if (memberKeys == null || memberKeys.isEmpty()) {
+            return new ArrayList<>();
+        }
+
+        List<Rental> result = new ArrayList<>(memberKeys.size());
+        for (String compositeKey : memberKeys) {
+            Rental rental = rentals.get(compositeKey);
+            if (rental != null) {
+                result.add(rental);
             }
         }
-        return memberRentals;
+        return result;
     }
 
     public List<Rental> getAllRentals() {
@@ -615,6 +710,10 @@ public class RentalManager {
         // Add member to rental and WorldGuard region
         rental.addMember(memberUUID);
         plugin.getWorldGuardManager().addPlayerToRegion(regionName, world, memberUUID);
+
+        // Update member index
+        addToMemberIndex(memberUUID, compositeKey);
+
         markDirty(compositeKey);
 
         return true;
@@ -645,6 +744,10 @@ public class RentalManager {
         // Remove member from rental and WorldGuard region
         rental.removeMember(memberUUID);
         plugin.getWorldGuardManager().removePlayerFromRegion(regionName, world, memberUUID);
+
+        // Update member index
+        removeFromMemberIndex(memberUUID, compositeKey);
+
         markDirty(compositeKey);
 
         return true;
