@@ -29,8 +29,33 @@ public class GroupCommand implements CommandExecutor, TabCompleter {
     // Timeout for pending actions (60 seconds)
     public static final long PENDING_TIMEOUT = 60 * 1000;
 
+    // Tab completion cache for group names (avoids disk reads on every keystroke)
+    private static final long GROUP_CACHE_TTL = 5000; // 5 seconds
+    private List<String> cachedGroupNames = null;
+    private long groupCacheExpiry = 0;
+
     public GroupCommand(RegionRental plugin) {
         this.plugin = plugin;
+    }
+
+    /**
+     * Gets group names with caching to avoid repeated disk reads during tab completion
+     */
+    private List<String> getCachedGroupNames() {
+        long now = System.currentTimeMillis();
+        if (cachedGroupNames == null || now > groupCacheExpiry) {
+            cachedGroupNames = new ArrayList<>(plugin.getGroupsConfig().getAllGroups());
+            groupCacheExpiry = now + GROUP_CACHE_TTL;
+        }
+        return cachedGroupNames;
+    }
+
+    /**
+     * Invalidates the group name cache (call when groups are modified)
+     */
+    public void invalidateGroupCache() {
+        cachedGroupNames = null;
+        groupCacheExpiry = 0;
     }
 
     @Override
@@ -593,8 +618,8 @@ public class GroupCommand implements CommandExecutor, TabCompleter {
             String subcommand = args[0].toLowerCase();
 
             if (subcommand.equals("edit") || subcommand.equals("delete") || subcommand.equals("view")) {
-                // Group names
-                completions.addAll(plugin.getGroupsConfig().getAllGroups());
+                // Group names (cached to avoid repeated lookups)
+                completions.addAll(getCachedGroupNames());
             } else if (subcommand.equals("create")) {
                 // No suggestions for group name (user creates their own)
                 // Could suggest based on existing patterns, but better to let user decide
