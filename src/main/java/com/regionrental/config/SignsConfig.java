@@ -21,10 +21,14 @@ public class SignsConfig {
 
     // Dirty tracking for optimized saves
     private volatile boolean isDirty = false;
-    
+
+    // Support block index for O(1) lookups: "world:x:y:z" -> compositeKey (world:region)
+    private final Map<String, String> supportBlockIndex = new HashMap<>();
+
     public SignsConfig(RegionRental plugin) {
         this.plugin = plugin;
         createConfig();
+        rebuildSupportBlockIndex();
     }
     
     private void createConfig() {
@@ -143,8 +147,67 @@ public class SignsConfig {
     public void reload() {
         config = YamlConfiguration.loadConfiguration(configFile);
         isDirty = false;
+        rebuildSupportBlockIndex();
     }
-    
+
+    /**
+     * Builds the support block index from config data.
+     * Called on load and reload for O(1) support block lookups.
+     */
+    public void rebuildSupportBlockIndex() {
+        supportBlockIndex.clear();
+
+        if (!config.contains("signs")) {
+            return;
+        }
+
+        ConfigurationSection signsSection = config.getConfigurationSection("signs");
+        if (signsSection == null) {
+            return;
+        }
+
+        for (String compositeKey : signsSection.getKeys(false)) {
+            String path = "signs." + compositeKey + ".support-block";
+            if (config.contains(path)) {
+                String worldName = config.getString("signs." + compositeKey + ".world");
+                int x = config.getInt(path + ".x");
+                int y = config.getInt(path + ".y");
+                int z = config.getInt(path + ".z");
+
+                String locationKey = locationToKey(worldName, x, y, z);
+                supportBlockIndex.put(locationKey, compositeKey);
+            }
+        }
+
+        if (plugin.getConfigManager() != null && plugin.getConfigManager().isDebug()) {
+            plugin.getLogger().info("Built support block index with " + supportBlockIndex.size() + " entries");
+        }
+    }
+
+    /**
+     * Converts a location to an index key format "world:x:y:z"
+     */
+    private String locationToKey(String worldName, int x, int y, int z) {
+        return worldName + ":" + x + ":" + y + ":" + z;
+    }
+
+    /**
+     * Converts a Location to an index key format "world:x:y:z"
+     */
+    private String locationToKey(Location loc) {
+        return locationToKey(loc.getWorld().getName(), loc.getBlockX(), loc.getBlockY(), loc.getBlockZ());
+    }
+
+    /**
+     * O(1) lookup to get composite key (world:region) for a support block location
+     * @param location The location to check
+     * @return Composite key "world:region" if this is a support block, null otherwise
+     */
+    public String getSupportBlockByLocation(Location location) {
+        String key = locationToKey(location);
+        return supportBlockIndex.get(key);
+    }
+
     public void addSign(String region, Location location) {
         String compositeKey = location.getWorld().getName() + ":" + region;
         String path = "signs." + compositeKey;
@@ -163,6 +226,11 @@ public class SignsConfig {
         config.set(path + ".z", supportLoc.getBlockZ());
         config.set(path + ".original-type", blockType);
         config.set(path + ".original-data", blockData);
+
+        // Update index for O(1) lookups
+        String locationKey = locationToKey(supportLoc);
+        supportBlockIndex.put(locationKey, compositeKey);
+
         markDirty();
     }
 
@@ -206,12 +274,28 @@ public class SignsConfig {
 
     public void removeSupportBlock(String region, org.bukkit.World world) {
         String compositeKey = world.getName() + ":" + region;
+
+        // Remove from index before clearing config
+        Location supportLoc = getSupportBlockLocation(region, world);
+        if (supportLoc != null) {
+            String locationKey = locationToKey(supportLoc);
+            supportBlockIndex.remove(locationKey);
+        }
+
         config.set("signs." + compositeKey + ".support-block", null);
         markDirty();
     }
 
     public void removeSign(String region, org.bukkit.World world) {
         String compositeKey = world.getName() + ":" + region;
+
+        // Remove support block from index before clearing config
+        Location supportLoc = getSupportBlockLocation(region, world);
+        if (supportLoc != null) {
+            String locationKey = locationToKey(supportLoc);
+            supportBlockIndex.remove(locationKey);
+        }
+
         config.set("signs." + compositeKey, null);
         markDirty();
     }

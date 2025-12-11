@@ -390,43 +390,13 @@ public class SignManager {
 
     /**
      * Gets the region name if the given location is a protected support block
+     * Uses O(1) index lookup instead of O(n) linear scan for better performance
      * @param location The block location to check
      * @return Composite key "world:region" if this is a support block, null otherwise
      */
     public String getSupportBlockRegion(Location location) {
-        Map<String, Location> signs = plugin.getSignsConfig().getAllSigns();
-
-        for (String compositeKey : signs.keySet()) {
-            // Parse composite key "world:region"
-            String worldName = WorldRegionParser.extractWorldName(compositeKey);
-            String regionName = WorldRegionParser.extractRegionName(compositeKey);
-
-            if (worldName == null) {
-                continue;
-            }
-
-            World world = plugin.getServer().getWorld(worldName);
-            if (world == null) {
-                continue;
-            }
-
-            Location supportLoc = plugin.getSignsConfig().getSupportBlockLocation(regionName, world);
-            if (supportLoc != null && isSameLocation(location, supportLoc)) {
-                return compositeKey; // Return full composite key
-            }
-        }
-
-        return null;
-    }
-
-    /**
-     * Checks if two locations represent the same block
-     */
-    private boolean isSameLocation(Location loc1, Location loc2) {
-        return loc1.getWorld().getName().equals(loc2.getWorld().getName()) &&
-               loc1.getBlockX() == loc2.getBlockX() &&
-               loc1.getBlockY() == loc2.getBlockY() &&
-               loc1.getBlockZ() == loc2.getBlockZ();
+        // O(1) lookup via support block index
+        return plugin.getSignsConfig().getSupportBlockByLocation(location);
     }
 
     private String color(String text) {
