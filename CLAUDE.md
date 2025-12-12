@@ -835,8 +835,8 @@ Minor update adding comprehensive region grouping and mass override management:
 ## Documentation Files
 
 - `README.md` - User guide and feature list
-- `BUILD_VERIFICATION.md` - Build and deployment verification
-- `REFUND_IMPLEMENTATION.md` - Details on refund system
-- `REGION_REMOVAL.md` - Complete guide to region removal feature
-- `FEATURE_SUMMARY.md` - Comprehensive feature overview
-- `IMPLEMENTATION_SUMMARY.md` - Latest implementation details
+- `CHANGELOG.md` - Version history and release notes
+- `BUILDING.md` - Build instructions and project structure
+- `CLAUDE.md` - Developer documentation and technical details
+- `FEATURES.md` - Comprehensive feature overview
+- `REFUND_SYSTEM_IMPLEMENTATION_PROGRESS.md` - Details on refund system implementation
