@@ -13,10 +13,13 @@ import java.util.UUID;
 import java.util.logging.Level;
 
 public class StorageConfig {
-    
+
     private final RegionRental plugin;
     private File configFile;
     private FileConfiguration config;
+
+    // Dirty tracking for optimized saves
+    private volatile boolean isDirty = false;
     
     public StorageConfig(RegionRental plugin) {
         this.plugin = plugin;
@@ -39,16 +42,42 @@ public class StorageConfig {
         config = YamlConfiguration.loadConfiguration(configFile);
     }
     
+    /**
+     * Marks the config as needing to be saved
+     */
+    private void markDirty() {
+        isDirty = true;
+    }
+
+    /**
+     * Checks if there are unsaved changes
+     */
+    public boolean isDirty() {
+        return isDirty;
+    }
+
+    /**
+     * Saves only if there are unsaved changes
+     */
+    public void saveIfDirty() {
+        if (isDirty) {
+            save();
+        }
+    }
+
     public void save() {
         try {
             config.save(configFile);
         } catch (IOException e) {
             plugin.getLogger().log(Level.SEVERE, "Could not save storage.yml!", e);
+            return;
         }
+        isDirty = false;
     }
-    
+
     public void reload() {
         config = YamlConfiguration.loadConfiguration(configFile);
+        isDirty = false;
     }
     
     public void storeItems(UUID playerUUID, String region, List<ItemStack> items) {
@@ -60,7 +89,7 @@ public class StorageConfig {
         config.set(path + ".timestamp", System.currentTimeMillis());
         config.set(path + ".items", containerItems);
         config.set(path + ".blocks", blockItems);
-        save();
+        markDirty();
     }
     
     public List<ItemStack> retrieveItems(UUID playerUUID, String region) {
@@ -81,8 +110,8 @@ public class StorageConfig {
             config.getConfigurationSection("storage." + playerUUID.toString()).getKeys(false).isEmpty()) {
             config.set("storage." + playerUUID.toString(), null);
         }
-        
-        save();
+
+        markDirty();
         return items;
     }
     
@@ -111,7 +140,7 @@ public class StorageConfig {
     
     public void clearPlayerStorage(UUID playerUUID) {
         config.set("storage." + playerUUID.toString(), null);
-        save();
+        markDirty();
     }
 
     /**
@@ -173,7 +202,7 @@ public class StorageConfig {
                 }
             }
         }
-        
-        save();
+
+        markDirty();
     }
 }

@@ -19,8 +19,25 @@ public class OverrideCommand implements CommandExecutor, TabCompleter {
 
     private final RegionRental plugin;
 
+    // Tab completion cache for group names (avoids disk reads on every keystroke)
+    private static final long GROUP_CACHE_TTL = 5000; // 5 seconds
+    private List<String> cachedGroupNames = null;
+    private long groupCacheExpiry = 0;
+
     public OverrideCommand(RegionRental plugin) {
         this.plugin = plugin;
+    }
+
+    /**
+     * Gets group names with caching to avoid repeated disk reads during tab completion
+     */
+    private List<String> getCachedGroupNames() {
+        long now = System.currentTimeMillis();
+        if (cachedGroupNames == null || now > groupCacheExpiry) {
+            cachedGroupNames = new ArrayList<>(plugin.getGroupsConfig().getAllGroups());
+            groupCacheExpiry = now + GROUP_CACHE_TTL;
+        }
+        return cachedGroupNames;
     }
 
     @Override
@@ -780,9 +797,9 @@ public class OverrideCommand implements CommandExecutor, TabCompleter {
 
             // Check if typing group: prefix
             if (partial.startsWith("group:")) {
-                // Suggest group names with group: prefix
+                // Suggest group names with group: prefix (cached)
                 String groupPrefix = partial.substring(6); // Strip "group:"
-                for (String groupName : plugin.getGroupsConfig().getAllGroups()) {
+                for (String groupName : getCachedGroupNames()) {
                     if (groupName.toLowerCase().startsWith(groupPrefix)) {
                         completions.add("group:" + groupName);
                     }
@@ -793,8 +810,8 @@ public class OverrideCommand implements CommandExecutor, TabCompleter {
                     completions.add("group:");
                 }
 
-                // Suggest group names with group: prefix
-                for (String groupName : plugin.getGroupsConfig().getAllGroups()) {
+                // Suggest group names with group: prefix (cached)
+                for (String groupName : getCachedGroupNames()) {
                     String suggestion = "group:" + groupName;
                     if (suggestion.toLowerCase().startsWith(partial)) {
                         completions.add(suggestion);

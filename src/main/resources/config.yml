@@ -309,6 +309,11 @@ restoration:
   # If false, schematics are kept for manual restoration
   auto-delete-schematics: true
 
+  # Maximum number of schematics to keep in memory cache
+  # Higher values use more RAM but improve restore performance
+  # Schematics are loaded from disk on-demand when not in cache
+  schematic-cache-size: 20
+
   # Restore entities (item frames, armor stands, etc.)
   restore-entities: true
 

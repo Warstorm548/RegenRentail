@@ -16,6 +16,9 @@ public class RegionsConfig {
     private File configFile;
     private FileConfiguration config;
 
+    // Dirty tracking for optimized saves
+    private volatile boolean isDirty = false;
+
     public RegionsConfig(RegionRental plugin) {
         this.plugin = plugin;
         createConfig();
@@ -120,16 +123,42 @@ public class RegionsConfig {
         }
     }
 
+    /**
+     * Marks the config as needing to be saved
+     */
+    private void markDirty() {
+        isDirty = true;
+    }
+
+    /**
+     * Checks if there are unsaved changes
+     */
+    public boolean isDirty() {
+        return isDirty;
+    }
+
+    /**
+     * Saves only if there are unsaved changes
+     */
+    public void saveIfDirty() {
+        if (isDirty) {
+            save();
+        }
+    }
+
     public void save() {
         try {
             config.save(configFile);
         } catch (IOException e) {
             plugin.getLogger().log(Level.SEVERE, "Could not save regions.yml!", e);
+            return;
         }
+        isDirty = false;
     }
 
     public void reload() {
         config = YamlConfiguration.loadConfiguration(configFile);
+        isDirty = false;
     }
 
     /**
@@ -142,7 +171,7 @@ public class RegionsConfig {
         }
 
         config.set("regions." + compositeKey, null);
-        save();
+        markDirty();
 
         if (plugin.getConfigManager().isDebug()) {
             plugin.getLogger().info("Removed region '" + compositeKey + "' from regions.yml");
@@ -315,7 +344,7 @@ public class RegionsConfig {
         String compositeKey = world.getName() + ":" + region;
         String path = "regions." + compositeKey + ".price";
         config.set(path, price);
-        save();
+        markDirty();
     }
 
     /**
@@ -325,7 +354,7 @@ public class RegionsConfig {
         String compositeKey = world.getName() + ":" + region;
         String path = "regions." + compositeKey + ".duration";
         config.set(path, days);
-        save();
+        markDirty();
     }
 
     /**
@@ -335,7 +364,7 @@ public class RegionsConfig {
         String compositeKey = world.getName() + ":" + region;
         String path = "regions." + compositeKey + ".max-extensions";
         config.set(path, maxExtensions);
-        save();
+        markDirty();
     }
 
     /**
@@ -345,7 +374,7 @@ public class RegionsConfig {
         String compositeKey = world.getName() + ":" + region;
         String path = "regions." + compositeKey + ".extension-price";
         config.set(path, price);
-        save();
+        markDirty();
     }
 
     /**
@@ -355,7 +384,7 @@ public class RegionsConfig {
         String compositeKey = world.getName() + ":" + region;
         String path = "regions." + compositeKey + ".allow-extensions";
         config.set(path, allow);
-        save();
+        markDirty();
     }
 
     /**
@@ -365,7 +394,7 @@ public class RegionsConfig {
         String compositeKey = world.getName() + ":" + region;
         String path = "regions." + compositeKey + ".extension-duration";
         config.set(path, days);
-        save();
+        markDirty();
     }
 
     /**
@@ -574,7 +603,7 @@ public class RegionsConfig {
     public void setGroupPrice(String groupName, double price) {
         String path = "groups." + groupName + ".price";
         config.set(path, price);
-        save();
+        markDirty();
     }
 
     /**
@@ -583,7 +612,7 @@ public class RegionsConfig {
     public void setGroupDuration(String groupName, int days) {
         String path = "groups." + groupName + ".duration";
         config.set(path, days);
-        save();
+        markDirty();
     }
 
     /**
@@ -592,7 +621,7 @@ public class RegionsConfig {
     public void setGroupMaxExtensions(String groupName, int maxExtensions) {
         String path = "groups." + groupName + ".max-extensions";
         config.set(path, maxExtensions);
-        save();
+        markDirty();
     }
 
     /**
@@ -601,7 +630,7 @@ public class RegionsConfig {
     public void setGroupExtensionPrice(String groupName, double price) {
         String path = "groups." + groupName + ".extension-price";
         config.set(path, price);
-        save();
+        markDirty();
     }
 
     /**
@@ -610,7 +639,7 @@ public class RegionsConfig {
     public void setGroupAllowExtensions(String groupName, boolean allow) {
         String path = "groups." + groupName + ".allow-extensions";
         config.set(path, allow);
-        save();
+        markDirty();
     }
 
     /**
@@ -619,7 +648,7 @@ public class RegionsConfig {
     public void setGroupExtensionDuration(String groupName, int days) {
         String path = "groups." + groupName + ".extension-duration";
         config.set(path, days);
-        save();
+        markDirty();
     }
 
     /**
@@ -733,7 +762,7 @@ public class RegionsConfig {
         }
 
         config.set("groups." + groupName, null);
-        save();
+        markDirty();
 
         if (plugin.getConfigManager().isDebug()) {
             plugin.getLogger().info("Removed overrides for group '" + groupName + "' from regions.yml");
@@ -780,7 +809,7 @@ public class RegionsConfig {
         }
 
         config.set("regions." + compositeKey, null);
-        save();
+        markDirty();
 
         if (plugin.getConfigManager().isDebug()) {
             plugin.getLogger().info("Removed individual overrides for region '" + compositeKey + "' from regions.yml");

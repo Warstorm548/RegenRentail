@@ -21,6 +21,7 @@ import org.bukkit.event.Listener;
 import org.bukkit.event.inventory.ClickType;
 import org.bukkit.event.inventory.InventoryClickEvent;
 import org.bukkit.event.inventory.InventoryCloseEvent;
+import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.InventoryHolder;
 import org.bukkit.inventory.ItemStack;
@@ -28,16 +29,47 @@ import org.bukkit.inventory.meta.BlockStateMeta;
 import org.bukkit.inventory.meta.ItemMeta;
 
 import java.util.*;
+import java.util.EnumSet;
 
 public class StorageManager implements Listener {
 
     private final RegionRental plugin;
-    private final List<Material> containerTypes;
     private final Map<UUID, StorageGUISession> activeGUISessions;
     private final int ITEMS_PER_PAGE = 45; // 45 items + 9 slots for navigation
 
-    // Blocks that should NOT be stored (too common/cheap)
-    private static final Set<Material> DEFAULT_BLOCK_BLACKLIST = new HashSet<>(Arrays.asList(
+    // Container types using EnumSet for O(1) contains() lookup
+    private static final Set<Material> CONTAINER_TYPES = EnumSet.of(
+        Material.CHEST,
+        Material.TRAPPED_CHEST,
+        Material.BARREL,
+        Material.HOPPER,
+        Material.DROPPER,
+        Material.DISPENSER,
+        Material.FURNACE,
+        Material.BLAST_FURNACE,
+        Material.SMOKER,
+        Material.BREWING_STAND,
+        Material.SHULKER_BOX,
+        Material.WHITE_SHULKER_BOX,
+        Material.ORANGE_SHULKER_BOX,
+        Material.MAGENTA_SHULKER_BOX,
+        Material.LIGHT_BLUE_SHULKER_BOX,
+        Material.YELLOW_SHULKER_BOX,
+        Material.LIME_SHULKER_BOX,
+        Material.PINK_SHULKER_BOX,
+        Material.GRAY_SHULKER_BOX,
+        Material.LIGHT_GRAY_SHULKER_BOX,
+        Material.CYAN_SHULKER_BOX,
+        Material.PURPLE_SHULKER_BOX,
+        Material.BLUE_SHULKER_BOX,
+        Material.BROWN_SHULKER_BOX,
+        Material.GREEN_SHULKER_BOX,
+        Material.RED_SHULKER_BOX,
+        Material.BLACK_SHULKER_BOX
+    );
+
+    // Blocks that should NOT be stored (too common/cheap) - EnumSet for O(1) lookup
+    private static final Set<Material> DEFAULT_BLOCK_BLACKLIST = EnumSet.of(
         Material.AIR,
         Material.CAVE_AIR,
         Material.VOID_AIR,
@@ -51,47 +83,14 @@ public class StorageManager implements Listener {
         Material.WATER,
         Material.LAVA,
         Material.BEDROCK
-    ));
-    
+    );
+
     public StorageManager(RegionRental plugin) {
         this.plugin = plugin;
-        this.containerTypes = new ArrayList<>();
         this.activeGUISessions = new HashMap<>();
-        initializeContainerTypes();
-        
+
         // Register as listener for GUI events
         plugin.getServer().getPluginManager().registerEvents(this, plugin);
-    }
-    
-    private void initializeContainerTypes() {
-        // Add all container types
-        containerTypes.add(Material.CHEST);
-        containerTypes.add(Material.TRAPPED_CHEST);
-        containerTypes.add(Material.BARREL);
-        containerTypes.add(Material.HOPPER);
-        containerTypes.add(Material.DROPPER);
-        containerTypes.add(Material.DISPENSER);
-        containerTypes.add(Material.FURNACE);
-        containerTypes.add(Material.BLAST_FURNACE);
-        containerTypes.add(Material.SMOKER);
-        containerTypes.add(Material.BREWING_STAND);
-        containerTypes.add(Material.SHULKER_BOX);
-        containerTypes.add(Material.WHITE_SHULKER_BOX);
-        containerTypes.add(Material.ORANGE_SHULKER_BOX);
-        containerTypes.add(Material.MAGENTA_SHULKER_BOX);
-        containerTypes.add(Material.LIGHT_BLUE_SHULKER_BOX);
-        containerTypes.add(Material.YELLOW_SHULKER_BOX);
-        containerTypes.add(Material.LIME_SHULKER_BOX);
-        containerTypes.add(Material.PINK_SHULKER_BOX);
-        containerTypes.add(Material.GRAY_SHULKER_BOX);
-        containerTypes.add(Material.LIGHT_GRAY_SHULKER_BOX);
-        containerTypes.add(Material.CYAN_SHULKER_BOX);
-        containerTypes.add(Material.PURPLE_SHULKER_BOX);
-        containerTypes.add(Material.BLUE_SHULKER_BOX);
-        containerTypes.add(Material.BROWN_SHULKER_BOX);
-        containerTypes.add(Material.GREEN_SHULKER_BOX);
-        containerTypes.add(Material.RED_SHULKER_BOX);
-        containerTypes.add(Material.BLACK_SHULKER_BOX);
     }
     
     /**
@@ -140,7 +139,7 @@ public class StorageManager implements Listener {
                     Location loc = new Location(world, x, y, z);
                     Block block = loc.getBlock();
 
-                    if (containerTypes.contains(block.getType())) {
+                    if (CONTAINER_TYPES.contains(block.getType())) {
                         // Skip shulker boxes - they preserve items when stored as blocks (vanilla behavior)
                         if (isShulkerBox(block.getType())) {
                             continue;
@@ -371,7 +370,7 @@ public class StorageManager implements Listener {
                     // Compare blocks - store if different
                     if (originalMaterial == null || currentMaterial != originalMaterial) {
                         // Skip containers - they're handled by collectItemsFromRegion()
-                        if (containerTypes.contains(currentMaterial)) {
+                        if (CONTAINER_TYPES.contains(currentMaterial)) {
                             continue;
                         }
 
@@ -449,7 +448,7 @@ public class StorageManager implements Listener {
         ItemStack item = new ItemStack(type, 1);
 
         // Preserve container state for containers (NBT data, inventory for shulker boxes)
-        if (containerTypes.contains(type)) {
+        if (CONTAINER_TYPES.contains(type)) {
             preserveContainerState(item, block);
         }
 
@@ -682,11 +681,11 @@ public class StorageManager implements Listener {
         if (!(event.getInventory().getHolder() instanceof StorageGUIHolder)) {
             return;
         }
-        
+
         if (!(event.getPlayer() instanceof Player)) {
             return;
         }
-        
+
         Player player = (Player) event.getPlayer();
         UUID playerUUID = player.getUniqueId();
 
@@ -717,6 +716,27 @@ public class StorageManager implements Listener {
                                  remainingItems.size() + " items remain in storage. Use /rrretrieve to get them.");
             }
         }
+    }
+
+    /**
+     * Clean up GUI session when player disconnects to prevent memory leaks.
+     * Items remain in storage (untouched) since the GUI wasn't properly closed.
+     */
+    @EventHandler
+    public void onPlayerQuit(PlayerQuitEvent event) {
+        UUID playerUUID = event.getPlayer().getUniqueId();
+        StorageGUISession session = activeGUISessions.remove(playerUUID);
+
+        if (session != null && plugin.getConfigManager().isDebug()) {
+            plugin.getLogger().info("Cleaned up orphaned GUI session for " + event.getPlayer().getName());
+        }
+    }
+
+    /**
+     * Get number of active GUI sessions (for debugging/monitoring)
+     */
+    public int getActiveSessionCount() {
+        return activeGUISessions.size();
     }
     
     private World findWorldForRegion(String regionName) {
