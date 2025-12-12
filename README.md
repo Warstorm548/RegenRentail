@@ -4,10 +4,8 @@
 
 Version: 2.5.1
 Minecraft: Paper/Spigot 1.21+
-Java: OpenJDK 21+
-Build System: Gradle 9.2.0
 
-## ✅ All Features Implemented
+## ✅ Features
 
 ### Core Features
 - ✅ **Multi-world support** - Rental regions work across multiple worlds (overworld, nether, end)
@@ -15,131 +13,29 @@ Build System: Gradle 9.2.0
 - ✅ **Vault economy** - Full money integration
 - ✅ **WorldGuard regions** - Automatic member management
 - ✅ **Time-based rentals** - Configurable durations
-- ✅ **Extension system** - Extend with limits
+- ✅ **Extension system** - Extend rentals with configurable limits
 - ✅ **Block restoration** - Auto-restore on expiry with WorldEdit (world-aware)
 - ✅ **Item storage** - Items saved from containers
 - ✅ **Item retrieval** - `/rrretrieve` command
 - ✅ **Per-region configuration** - Command-based override system via `/rroverride`
+- ✅ **Region grouping** - Group regions for mass override operations via `/rrgroup`
+- ✅ **Member management** - Add/remove members to rentals via `/rrmember`
+- ✅ **Teleportation** - Teleport to rented regions via `/rrtp`
+- ✅ **Duration management** - Add, remove, set, or reset rental time via `/rrduration`
 - ✅ **Config verification** - Verify region configurations and defaults
 - ✅ **Configurable pricing** - Per-region overrides or defaults
 - ✅ **Configurable durations** - Flexible time settings
 - ✅ **LuckPerms compatible** - Full permission support
-- ✅ **Sign protection** - Can't be broken (includes support block protection)
-- ✅ **Support block protection** - Blocks supporting signs are also protected
-- ✅ **Auto expiration** - Checks every minute
+- ✅ **Sign & support block protection** - Signs and their supporting blocks are protected from breaking
+- ✅ **Auto expiration** - Automatically checks for expired rentals
 - ✅ **Custom messages** - All configurable
 - ✅ **Refund tracking** - Complete refund history per rental
 - ✅ **EzChestShop integration** - Automatic shop removal on expiration
-- ✅ **Admin commands** - `/rr reload` and more
+- ✅ **Admin commands** - `/rrreload` and more
 
-### Additional Requirements Met
-- ✅ **All commands begin with `/rr`** - No conflicts with other plugins
-- ✅ **Comprehensive config** - 100+ configuration options
-- ✅ **Separate config files** - 4 config files (config.yml, regions.yml, signs.yml, storage.yml)
-- ✅ **Sign allows time extension** - Shift-click to extend
-- ✅ **Auto-verification system** - Ensures config integrity on startup
+## 🔨 Building from Source
 
-### Technical Requirements Verified
-- ✅ **Paper/Spigot 1.21+** - Built for Paper API 1.21.3
-- ✅ **WorldGuard 7.0.14** - Full integration implemented
-- ✅ **WorldEdit 7.3.16** - Block restoration implemented
-- ✅ **Vault plugin** - Economy system integrated
-- ✅ **Economy plugin support** - Works with EssentialsX, CMI, etc.
-- ✅ **All classes correct** - Proper package structure
-- ✅ **Correct JavaPlugin terms** - Extends JavaPlugin properly
-- ✅ **Build will run** - Gradle build configured correctly
-- ✅ **Java 21+** - Compiled with OpenJDK 21 target
-
-## 📦 Project Structure
-
-```
-RegionRental/
-├── build.gradle                     # Gradle build configuration
-├── settings.gradle                  # Gradle settings
-├── gradle.properties                # Gradle properties
-├── build.sh                         # Build script
-├── README.md                        # This file
-├── CLAUDE.md                        # Developer documentation
-└── src/main/
-    ├── java/com/regionrental/
-    │   ├── RegionRental.java        # Main plugin class
-    │   ├── commands/                # All command handlers (16 classes)
-    │   │   ├── RRCommand.java
-    │   │   ├── ReloadCommand.java
-    │   │   ├── CreateSignCommand.java
-    │   │   ├── ResetCommand.java
-    │   │   ├── RemoveCommand.java
-    │   │   ├── RetrieveCommand.java
-    │   │   ├── InfoCommand.java
-    │   │   ├── ListCommand.java
-    │   │   ├── ExtendCommand.java
-    │   │   ├── DurationCommand.java
-    │   │   ├── RefundHistoryCommand.java  # View refund transaction history
-    │   │   ├── VerifyCommand.java         # Verify region configurations
-    │   │   ├── OverrideCommand.java       # Set per-region custom overrides
-    │   │   ├── GroupCommand.java          # Manage region groups
-    │   │   ├── MemberCommand.java         # Add/remove rental members
-    │   │   ├── MembersCommand.java        # List rental members
-    │   │   └── TpCommand.java             # Teleport to rented regions
-    │   ├── config/                  # Configuration managers (5 classes)
-    │   │   ├── ConfigManager.java
-    │   │   ├── RegionsConfig.java   # Per-region settings manager
-    │   │   ├── SignsConfig.java
-    │   │   ├── StorageConfig.java
-    │   │   └── GroupsConfig.java    # Region groups manager
-    │   ├── listeners/               # Event listeners (2 classes)
-    │   │   ├── SignInteractListener.java
-    │   │   └── GroupChatListener.java  # Chat prompts for group commands
-    │   ├── managers/                # Core managers (9 classes)
-    │   │   ├── Rental.java          # Data model
-    │   │   ├── RentalManager.java
-    │   │   ├── SignManager.java
-    │   │   ├── StorageManager.java
-    │   │   ├── ExpirationManager.java
-    │   │   ├── EzChestShopManager.java  # EzChestShop integration
-    │   │   ├── TeleportCooldownManager.java  # Teleport cooldown tracking
-    │   │   ├── WorldGuardManager.java
-    │   │   └── WorldEditManager.java
-    │   └── util/                    # Utility classes (1 class)
-    │       └── WorldRegionParser.java   # Composite key parsing (world:region)
-    └── resources/
-        ├── plugin.yml               # Plugin metadata
-        └── config.yml               # Default configuration
-```
-
-**Total: 34 Java classes + 2 resource files**
-
-## 🔨 Build Instructions
-
-### Prerequisites
-
-1. **Java 21+** (OpenJDK recommended) - Required for compilation and runtime
-2. **Gradle 9.2.0** - Included via Gradle Wrapper (no installation needed)
-
-### Build the Plugin
-
-1. **Clone or download this project**
-
-2. **Navigate to the project directory:**
-```bash
-cd RegionRental
-```
-
-3. **Run the build script:**
-```bash
-chmod +x build.sh
-./build.sh
-```
-
-Or build directly with Gradle:
-```bash
-./gradlew clean build
-```
-
-4. **Find your JAR file:**
-```
-build/libs/RegionRental-2.5.1.jar
-```
+For build instructions and project structure, see [BUILDING.md](BUILDING.md).
 
 ## 🚀 Installation
 
@@ -183,7 +79,7 @@ cp build/libs/RegionRental-2.5.1.jar /path/to/server/plugins/
 
 ### Renting a Region
 
-- **Right-click** the sign to rent (automatically rents in the sign's world)
+- **Right-click** the sign to rent
 - **Shift + Right-click** to extend your rental
 
 ### Commands
@@ -192,9 +88,9 @@ All commands start with `/rr` to avoid conflicts:
 
 **User Commands:**
 - `/rr help` - Show help menu
-- `/rr info <region>` - View rental information (in your current world)
-- `/rr list [player]` - List active rentals (across all worlds)
-- `/rrextend <region>` - Extend a rental (in your current world)
+- `/rrinfo <region>` - View rental information
+- `/rrlist [player]` - List active rentals (across all worlds)
+- `/rrextend <region>` - Extend a rental
 - `/rrretrieve` - Get stored items from expired rentals
 - `/rrmember add <region> <player>` - Add a member to your rented region
 - `/rrmember remove <region> <player>` - Remove a member from your rented region
@@ -203,34 +99,43 @@ All commands start with `/rr` to avoid conflicts:
 
 **Admin Commands:**
 - `/rrreload` - Reload configuration
-- `/rrcreatesign <region>` - Create a rental sign in your current world (uses defaults until overrides set)
-- `/rrreset <region>` - Reset a rental in your current world (with full refund)
-- `/rrduration <add|remove|set|reset> <region> [<time>]` - Modify rental duration in your current world
-  - `add` - Add time to rental
-  - `remove` - Remove time from rental
+- `/rrcreatesign <region>` - Create a rental sign in your current world
+- `/rrreset <region>` - Reset a rental with full refund
+- `/rrduration <add|remove|set|reset> <region> [time] [--charge]` - Modify rental duration
+  - `add` - Add time to rental (use `--charge` flag to charge the player)
+  - `remove` - Remove time from rental (refunds proportionally if configured)
   - `set` - Set absolute duration
   - `reset` - Reset to default duration (refunds extensions if configured)
-- `/rroverride <subcommand> [args]` - Set per-region custom rental settings (world-independent, applies to all worlds)
-  - `price <region> <amount>` - Set custom rental price
-  - `duration <region> <days>` - Set custom duration
-  - `maxextensions <region> <count>` - Set max extensions
-  - `extensionprice <region> <amount>` - Set extension price
-  - `allowextensions <region> true|false` - Enable/disable extensions
-  - `extensionduration <region> <days>` - Set extension duration
-  - `remove <region>` - Remove all overrides (use defaults)
-  - `list [region]` - View overrides for region or all regions
-- `/rrremove <region>` - Remove RegionRental setup from a region in your current world
-- `/rrrefundhistory <region>` - View refund history for a rental in your current world
-- `/rrverify` - Verify region configurations across all worlds (shows defaults vs custom overrides)
+  - Time formats: `2d 3h 30m` or `2 days 3 hours 30 minutes`
+- `/rroverride <subcommand> [args]` - Set per-region or group custom settings
+  - `price <target> <amount>` - Set custom rental price
+  - `duration <target> <days>` - Set custom duration
+  - `maxextensions <target> <count>` - Set max extensions
+  - `extensionprice <target> <amount>` - Set extension price
+  - `allowextensions <target> true|false` - Enable/disable extensions
+  - `extensionduration <target> <days>` - Set extension duration
+  - `remove <target>` - Remove all overrides (use defaults)
+  - `list [target]` - View overrides for target or all
+  - Target: Use `group:name` for groups, or `region` / `world:region` for regions
+- `/rrremove <region>` - Remove RegionRental setup from a region
+- `/rrrefundhistory <region>` - View refund history for a rental
+- `/rrverify` - Verify region configurations across all worlds
 - `/rrgroup create <name> [regions]` - Create a region group
 - `/rrgroup edit <name> add/remove [regions]` - Modify group membership
 - `/rrgroup delete <name>` - Delete a region group
 - `/rrgroup list` - List all region groups
 - `/rrgroup view <name>` - View details of a region group
 
+**World-Aware Commands:**
+Most commands accept both formats for the `<region>` argument:
+- Simple: `/rrinfo shop1` - Uses player's current world
+- Explicit: `/rrinfo world_nether:shop1` - Targets specific world
+
+Console users must always use explicit `world:region` format.
+
 ## ⚙️ Configuration
 
-The plugin creates five separate configuration files:
+The plugin creates six configuration files:
 
 ### `config.yml` - Main Configuration
 - General settings (prefix, debug mode)
@@ -299,7 +204,7 @@ groups:
 ### `rentals.yml` - Active Rentals (Runtime)
 Automatically created and managed at runtime:
 - Stores all active rental data with world information
-- Uses composite keys (`worldName:regionName`) for unique identification
+- Uses `worldName:regionName` format for unique identification
 - Includes rental start/end timestamps
 - Tracks extension count and total paid amount
 - Includes `initialPrice` field for tracking extension costs separately
@@ -354,11 +259,10 @@ plugins/RegionRental/
 - `regionrental.admin.remove` - Remove RegionRental setup from regions
 - `regionrental.admin.refundhistory` - View refund transaction history
 - `regionrental.admin.verify` - Verify region configurations
-- `regionrental.admin.bypass` - Bypass rental restrictions
+- `regionrental.admin.bypass` - Bypass rental restrictions (includes teleport cooldown)
 - `regionrental.admin.breaksign` - Break rental signs and support blocks
 - `regionrental.admin.list.others` - List other players' rentals
 - `regionrental.admin.group` - Manage region groups
-- `regionrental.admin.retime` - (Deprecated) Merged into duration command
 
 ## 🎯 Features in Detail
 
@@ -431,9 +335,9 @@ When a rental expires:
 ### Automated Tasks
 The plugin runs several automated background tasks:
 - **Expiration checker**: Every 1 minute (configurable) - Checks for expired rentals
-- **Sign updater**: Every 30 seconds (600 ticks) - Updates all rental signs with current status
-- **Auto-save**: Every 5 minutes (6000 ticks) - Saves data if dirty (dirty tracking optimization)
-- **Cooldown cleanup**: Every 10 minutes (12000 ticks) - Cleans expired teleport cooldowns
+- **Sign updater**: Every 30 seconds - Updates all rental signs with current status
+- **Auto-save**: Every 5 minutes - Saves data only when changes are detected
+- **Cooldown cleanup**: Every 10 minutes - Cleans expired teleport cooldowns
 - **Auto-verification**: On startup/reload (if enabled) - Verifies regions.yml integrity
 
 ### Economy Integration
@@ -464,13 +368,7 @@ RegionRental seamlessly integrates with the EzChestShop plugin to automatically 
 - **Conditional Restoration**: Only restores chest blocks if WorldEdit restoration is disabled
 
 **How It Works:**
-1. When a rental expires, RegionRental scans the region for chest-type containers
-2. For each chest, checks if it has an EzChestShop shop using reflection API
-3. If shop detected: Clears chest inventory (items already saved by StorageManager)
-4. Physically breaks the chest block, triggering EzChestShop's cleanup event
-5. EzChestShop automatically removes the shop data and holograms
-6. If WorldEdit is disabled: Waits 3 ticks and restores the chest block
-7. If WorldEdit is enabled: Leaves as AIR, WorldEdit restores from schematic
+When a rental expires, the plugin automatically detects and removes any EzChestShop shops in the region. Shop holograms are cleaned up and chest contents are preserved in item storage for retrieval.
 
 **Configuration:**
 ```yaml
@@ -481,10 +379,9 @@ integration:
     removal-message: '&eChest shops in &6{region}&e have been removed due to rental expiration.'
 ```
 
-**Technical Details:**
-- Uses reflection to access EzChestShop's internal API (compatible with version 1.9.2+)
-- No compile-time dependency - works even if EzChestShop is not installed
-- Block break/replace approach ensures reliable cleanup without API version issues
+**Compatibility:**
+- Works with EzChestShop 1.9.2+
+- Automatically detected at runtime (no configuration needed)
 - Supports chest, trapped chest, and barrel shop types
 
 ### Region Removal
@@ -562,7 +459,7 @@ RegionRental now fully supports rental regions across multiple worlds, enabling 
 - **Composite Keys**: Rentals stored using `worldName:regionName` format internally (e.g., "world:shop1")
 - **World-Aware Commands**: All commands operate in the player's current world automatically
 - **WorldEdit Integration**: Captures and restores blocks in the correct world for each rental
-- **WorldGuard Integration**: Manages region membership per-world with O(1) performance
+- **WorldGuard Integration**: Manages region membership per-world efficiently
 
 **Data Migration:**
 - Old rentals.yml data automatically migrated on first startup
@@ -603,356 +500,11 @@ rentals:
 - ✅ Backward compatible with existing installations
 - ✅ Fully automatic migration
 
-## 🆕 Recent Updates
+## 🆕 Changelog
 
-### Version 2.5.0 - Performance Optimization (Latest)
-Minor update with comprehensive performance optimizations to reduce disk I/O, memory usage, and CPU overhead:
-
-**Optimizations:**
-- **Dirty Tracking** - Saves only happen when data actually changes (80-90% disk I/O reduction)
-  - Applied to: RentalManager, SignsConfig, StorageConfig, RegionsConfig, GroupsConfig
-  - `markDirty()` replaces immediate `save()` calls
-  - `saveIfDirty()` called during auto-save task
-- **Lazy Schematic Loading** - Schematics loaded on-demand with LRU cache (major RAM reduction)
-  - Startup only indexes schematic files, doesn't load them
-  - LRU cache evicts least-recently-used schematics when full
-  - Configurable cache size: `restoration.schematic-cache-size: 20`
-- **O(1) Support Block Lookups** - HashMap index instead of O(n) scan on block breaks
-  - `supportBlockIndex` maps "world:x:y:z" → "world:region"
-  - Rebuilt on sign config load
-- **O(1) Player/Member Lookups** - Secondary indexes for rental queries
-  - `playerRentalIndex`: UUID → Set of composite keys
-  - `memberRentalIndex`: UUID → Set of composite keys
-  - `getPlayerRentals()` and `getRentalsWhereMember()` now O(1)
-- **Memory Leak Fixes** - GUI sessions cleaned on disconnect, cooldown cleanup task
-  - `PlayerQuitEvent` handler removes GUI sessions
-  - Periodic task cleans expired teleport cooldowns (every 10 minutes)
-- **EnumSet for Container Types** - O(1) contains() instead of O(n) ArrayList
-- **Tab Completion Caching** - 5-second TTL cache for group names in commands
-
-**New Configuration:**
-```yaml
-restoration:
-  schematic-cache-size: 20  # Max schematics in memory (LRU eviction)
-```
-
-**Technical Summary:**
-- Files modified: 10+ files across managers, configs, and commands
-- ~500 lines of optimization code
-- Backward compatible with existing data
-- Zero breaking changes
-
----
-
-### Version 2.4.1 - Teleportation Safe Location Bug Fix
-Patch release fixing critical teleportation bugs with enhanced 3D search algorithm:
-
-**Bug Fixes:**
-- **Wall Sign Teleportation** - Fixed "no safe location found" error for wall-mounted signs
-  - Original algorithm only searched upward from sign level
-  - New 3D search algorithm searches forward, down, and up
-- **Standing Sign Direction** - Fixed standing signs using player's facing instead of sign rotation
-
-**Enhanced 3D Search Algorithm:**
-- **Forward Search** - Searches 1-20 blocks in front of sign (configurable)
-- **Downward Floor Search** - Searches up to 20 blocks down for solid floor
-- **Upward Floor Search** - Searches up to 20 blocks up as fallback
-
-**New Configuration:**
-```yaml
-teleport:
-  forward-search-distance: 5   # How many blocks forward to search
-  floor-search-down: 20        # How many blocks down to search for floor
-  floor-search-up: 20          # How many blocks up to search for floor
-```
-
----
-
-### Version 2.4.0 - Teleportation System
-Minor update adding teleportation feature for rental owners and members:
-
-**New Features:**
-- **Teleport Command** - `/rrtp <region>` allows teleporting to rented regions
-  - Works for rental owners and members
-  - Cross-world teleportation support
-  - Safe location detection algorithm
-- **Cooldown System** - Prevents spam teleporting (configurable, default: 30s)
-- **Effects & Feedback** - Enderman teleport sound and portal particles (configurable)
-
-**Configuration:**
-```yaml
-teleport:
-  enabled: true
-  max-search-distance: 20
-  cooldown: 30
-  cross-world-warning: true
-  sound-enabled: true
-  particle-enabled: true
-```
-
----
-
-### Version 2.3.0 - Member Management System
-Minor update adding complete member management for rented regions:
-
-**New Features:**
-- **Member Management Commands**
-  - `/rrmember add <region> <username>` - Add member to rented region
-  - `/rrmember remove <region> <username>` - Remove member from rented region
-  - `/rrmembers <region>` - List all members of a region
-- **WorldGuard Integration** - Members added to WorldGuard region members
-- **Configurable Limits** - `members.max-members: 5` (-1 for unlimited)
-- **Access Control** - Only renter can add/remove members
-
-**Configuration:**
-```yaml
-members:
-  enabled: true
-  max-members: 5  # -1 for unlimited
-```
-
----
-
-### Version 2.2.1 - Sign Update Bug Fix
-Patch release fixing missing sign updates when regions are removed from groups:
-
-**Bug Fixes:**
-- **Sign Update Edge Cases** - Signs now update immediately when group membership changes
-  - Fixed: Signs not updating when regions are removed from groups (`/rrgroup edit <name> remove`)
-  - Fixed: Signs not updating when groups are deleted (`/rrgroup delete <name>`)
-  - Fixed: Signs not updating when regions are added to groups with existing overrides
-  - Added: `bulkMarkSignsDirty()` calls in 4 group command methods
-
-**Technical Details:**
-- Modified `GroupCommand.java` to mark signs as dirty after group membership changes
-- Signs now update within 30 seconds (next update cycle) instead of showing stale data
-- No performance impact (dirty tracking uses efficient HashSet operations)
-- Ensures override lookup priority works correctly: Group → Region → Default
-
----
-
-### Version 2.2.0 - Region Grouping System
-Minor update adding comprehensive region grouping and mass override management:
-
-**New Features:**
-- **Region Grouping System** - Group multiple regions together for unified configuration
-  - `/rrgroup create <name> [regions]` - Create region groups
-  - `/rrgroup edit <name> add/remove [regions]` - Modify group membership
-  - `/rrgroup delete <name>` - Delete groups with confirmation
-  - `/rrgroup list` and `/rrgroup view <name>` - Browse groups
-  - Multi-world support (regions from different worlds in same group)
-  - Hybrid command interface (inline arguments OR chat prompts with 60s timeout)
-
-- **Mass Override Operations** - Set overrides once for entire group
-  - `group:` prefix parser resolves naming conflicts (`/rroverride price group:shops 1000`)
-  - Override lookup priority: Group → Region → Default
-  - Bulk sign updates (all group signs update together)
-  - Automatic individual override cleanup when adding to groups
-
-- **Enhanced Tab Completion** - Smart suggestions for all commands
-  - `group:` prefix suggestions in override commands
-  - Region name completion from WorldGuard
-  - World prefix completion (`world:`, `world_nether:`)
-  - Context-aware suggestions (player's world vs explicit world)
-
-**Validation & Edge Cases:**
-- Exclusive group membership (regions can only be in one group)
-- Duplicate prevention (cannot add if already in another group)
-- Group name validation (2-30 chars, alphanumeric + underscore, reserved names blocked)
-- Region/world existence checks before adding
-- Automatic cleanup on group deletion (removes group overrides from regions.yml)
-
-**Technical Summary:**
-- **Files created:** 3 (GroupsConfig.java, GroupCommand.java, GroupChatListener.java)
-- **Files modified:** 5 (RegionRental.java, OverrideCommand.java, SignManager.java, RegionsConfig.java, CLAUDE.md)
-- **Lines added:** ~2000+ lines across 5 implementation phases
-- **Data files:** groups.yml (new), regions.yml (extended with group section)
-- **Documentation:** Comprehensive grouping system docs added to CLAUDE.md
-
----
-
-### Version 2.1.0 - Command Prefix Registration Cleanup
-Minor update cleaning up command prefix registration behavior:
-
-**Changes:**
-- **Command Prefix Fix** - Removed duplicate /rr command registration when custom prefix is configured
-  - Custom prefix users will only have their configured prefix registered (no more /rr fallback)
-  - Default prefix users (`prefix: 'rr'`) are unaffected
-  - Conflict resolution still works (falls back to 'rr' or auto-generated suffix)
-- **Console Message Cleanup** - Removed misleading log messages about fallback /rr registration
-  - Removed: "Fallback 'rr' prefix also registered for backward compatibility" (line 352)
-  - Removed: "Fallback 'rr' will be registered when conflicts resolve" (line 360)
-
-**Technical Summary:**
-- **Files modified:** 1 file (RegionRental.java)
-- **Lines removed:** 20 lines (18 from registration block + 2 misleading messages)
-- **Breaking change:** Users who configured custom prefix but used /rr commands must switch to custom prefix
-- **Benefits:** Cleaner command registration, less namespace pollution, more intuitive behavior
-
-### Version 2.0.1 - Critical Bug Fixes and Performance Optimizations
-
-#### Bug Fixes
-- **Fixed rental sign interaction error**: Resolved "region world:shop1 not found" bug
-  - Properly parses composite keys to extract region names
-  - Sign interactions now work correctly across all worlds
-- **Prevented IndexOutOfBoundsException crashes**: Added comprehensive bounds checking
-  - WorldRegionParser null and bounds validation
-  - Command argument validation (RRCommand, DurationCommand)
-  - Storage manager GUI pagination bounds checking
-- **Prevented NullPointerException errors**: Added null safety checks
-  - Sign format list validation before iteration
-  - Individual format line null checks
-
-#### Performance Improvements
-- **WorldGuard operations: 3x-10x faster**
-  - Removed 9 deprecated methods with multi-world iteration (133 lines)
-  - Direct world-specific lookups instead of scanning all worlds
-- **Rental lookups: 100x-1000x faster**
-  - Removed 8 deprecated O(n) search methods (82 lines)
-  - Direct hash map access using composite keys for O(1) performance
-- **Sign updates: 90%+ overhead reduction**
-  - Dirty tracking system updates only changed signs
-  - No longer updates all signs every 30 seconds
-- **Thread safety improvements**
-  - Synchronized storage manager GUI pagination
-  - Prevents concurrent modification exceptions
-
-#### Technical Details
-- Total: ~215+ lines of deprecated code removed
-- 15 potential crash/error scenarios eliminated
-- 7 commits with comprehensive testing
-- All optimizations maintain backward compatibility
-- Zero breaking changes to API or data formats
-
-### Version 2.0.0 - Multi-World Support
-
-#### Complete Multi-World System
-- **World-Aware Rentals**: Each rental now tracks and operates in its specific world
-- **Fixed Critical Bug**: WorldEdit operations now use correct world instead of hardcoded first world
-- **Composite Key System**: Rentals identified by `worldName:regionName` format for uniqueness
-- **Automatic Migration**: Existing rentals seamlessly upgraded to multi-world format on first load
-- **Performance Improvements**: Direct world-specific lookups eliminate inefficient world scanning
-- **Zero Breaking Changes**: Fully backward compatible with existing rental data
-
-#### Updated Components
-- **Rental Class**: Added `worldName` field and composite key support
-- **RentalManager**: All CRUD operations now world-aware with deprecated fallback methods
-- **WorldEditManager**: Fixed hardcoded world bug, now captures/restores in correct world
-- **WorldGuardManager**: Added direct world-specific methods for O(1) performance
-- **SignManager**: Sign updates now world-aware based on rental's world
-- **SignInteractListener**: Player interactions use player's current world automatically
-- **CreateSignCommand**: Validates regions in player's current world
-
-#### Data Migration
-- Existing `rentals.yml` automatically detected and migrated
-- Old rentals default to first world (usually "world")
-- Migration count logged on startup for transparency
-- Data immediately re-saved in new composite key format
-- No manual intervention or downtime required
-
-#### Example Use Cases
-- Set up identical rental shops in overworld and nether
-- Different rental regions per dimension (mining claims in end, shops in overworld)
-- WorldEdit captures/restores blocks in correct world
-- No more world collisions or unexpected behavior
-
-### Version 1.3.3 - EzChestShop Integration
-
-#### EzChestShop Plugin Support
-- **Automatic shop removal** on rental expiration for seamless cleanup
-- **Runtime detection** using reflection-based API (no compile-time dependency required)
-- **Smart cleanup approach** using block break/replace for reliable shop and hologram removal
-- **Conditional restoration** - Only restores chest blocks if WorldEdit restoration is disabled
-- **Configurable notifications** - Optional player notifications when shops are removed
-- **Perfect timing** - Shops removed after storage scan but before WorldEdit restoration
-- **Compatible with EzChestShop 1.9.2+** with automatic version detection
-
-#### Technical Implementation
-- **Reflection API** for accessing EzChestShop's internal ShopContainer class
-- **Block break/replace pattern** triggers EzChestShop's BlockBreakEvent for automatic cleanup
-- **No hologram glitches** - EzChestShop's event handler removes all holograms automatically
-- **Inventory protection** - Clears chest inventory before breaking (items already saved)
-- **3-tick delay** for chest restoration when WorldEdit is disabled
-- **Configuration options** in config.yml under `integration.ezchestshop`
-
-#### Configuration Options
-```yaml
-integration:
-  ezchestshop:
-    enabled: true                    # Enable/disable integration
-    notify-on-removal: true          # Notify player when shops removed
-    removal-message: '&eChest shops in &6{region}&e have been removed.'
-```
-
-### Version 1.1.0 - Command-Based Override System
-
-#### Region Override Command System
-- **New command** `/rroverride` for setting per-region custom rental settings
-- **8 subcommands**: price, duration, maxextensions, extensionprice, allowextensions, extensionduration, remove, list
-- **In-game configuration** - No manual file editing required
-- **Defaults-first approach** - Regions not in regions.yml use config.yml defaults
-- **Immediate updates** - Signs automatically update when overrides are changed
-- **Tab completion** - Full tab completion support for all subcommands and region names
-- **WorldGuard validation** - Prevents setting overrides for non-existent regions
-
-#### Updated Verification System
-- **Enhanced `/rrverify`** now shows breakdown of defaults vs custom overrides
-- **Reports orphaned configs** - Configs without signs (can be cleaned up)
-- **No longer auto-repairs** - Only reports status, admins manage via commands
-
-#### Removed Auto-Population
-- **Simplified workflow** - `/rrcreatesign` no longer auto-populates regions.yml
-- **Cleaner files** - regions.yml only contains intentional overrides
-- **Better clarity** - Clear which regions use defaults vs custom settings
-
-### Version 1.0.0 - Previous Features
-
-#### Per-Region Configuration System (regions.yml)
-- **Config file** `regions.yml` for managing per-region override settings
-- **Migration system** automatically moves old `regions:` data from config.yml
-- **Partial overrides** - Only specify settings you want to change
-
-#### Command Consolidation - Duration Management
-- **Removed** `RetimeCommand` - functionality merged into `DurationCommand`
-- **Enhanced** `/rrduration` command now supports:
-  - `add` - Add time to rental
-  - `remove` - Remove time from rental
-  - `set` - Set absolute duration
-  - `reset` - Reset to default duration with optional extension refund
-- **Extension refund system** - Optionally refunds extension costs when resetting duration
-- **Config option** `extension.refund-on-duration-reset` controls refund behavior
-- **Simplified interface** - No longer requires player name, only region name
-
-#### Refund History Tracking
-- **New command** `/rrrefundhistory <region>` to view complete refund transaction history
-- **Automatic tracking** of all refunds (resets, duration changes, removals)
-- **Detailed logging** with timestamps, amounts, and reasons
-- **Double-refund prevention** system tracks what has been refunded
-
-#### Enhanced Support Block Protection
-- **Auto-migration** of existing signs to include support block protection
-- **Improved data storage** for original block type and orientation
-- **Restoration system** properly restores support blocks when using `/rrremove`
+For version history and release notes, see [CHANGELOG.md](CHANGELOG.md).
 
 ## 🐛 Troubleshooting
-
-### Build Errors
-
-**"Permission denied" when running ./gradlew**
-```bash
-chmod +x gradlew
-```
-
-**"Java version mismatch"**
-- Ensure Java 21+ (OpenJDK) is installed
-- Check with: `java -version`
-
-**Compilation errors**
-- All classes are included and properly structured
-- Check that all files are in correct directories
-- Run `./gradlew clean build --stacktrace` for detailed error info
-
-### Runtime Issues
 
 **"Vault not found"**
 - Install Vault plugin
@@ -966,6 +518,8 @@ chmod +x gradlew
 **"No economy system"**
 - Install an economy plugin (EssentialsX, CMI, etc.)
 
+For build-related issues, see [BUILDING.md](BUILDING.md).
+
 ## ⚠️ Known Limitations
 
 - **Manual sign placement**: Signs must be manually placed before creating rental sign with `/rrcreatesign`
@@ -978,12 +532,11 @@ These limitations are noted for transparency and may be addressed in future upda
 
 This project includes comprehensive documentation:
 - **README.md** (this file) - User guide and feature overview
+- **CHANGELOG.md** - Version history and release notes
+- **BUILDING.md** - Build instructions and project structure
 - **CLAUDE.md** - Developer documentation and technical details
-- **BUILD_VERIFICATION.md** - Build and deployment verification
-- **REFUND_IMPLEMENTATION.md** - Details on refund system
-- **REGION_REMOVAL.md** - Complete guide to region removal feature
-- **FEATURE_SUMMARY.md** - Comprehensive feature overview
-- **IMPLEMENTATION_SUMMARY.md** - Latest implementation details
+- **FEATURES.md** - Comprehensive feature overview
+- **REFUND_SYSTEM_IMPLEMENTATION_PROGRESS.md** - Details on refund system implementation
 
 ## 📝 License
 
@@ -996,7 +549,6 @@ This plugin is provided for use on Minecraft servers.
 - Uses WorldEdit API for block restoration
 - Uses Vault API for economy integration
 - Compatible with LuckPerms permission system
-- Built with Gradle 9.2.0 build system
 
 ---
 
