@@ -55,6 +55,9 @@
 | `/rrreset <region>` | Reset rental with full refund | `regionrental.admin.reset` |
 | `/rrremove <region>` | Remove entire rental setup | `regionrental.admin.remove` |
 | `/rrduration add\|remove\|set\|reset <region> <time>` | Modify rental duration | `regionrental.admin.duration` |
+| `/rroverride <setting> <region\|group:name> <value>` | Set per-region/group overrides | `regionrental.admin.override` |
+| `/rrgroup create\|edit\|delete\|list\|view` | Manage region groups | `regionrental.admin.group` |
+| `/rrverify [region]` | Verify region configurations | `regionrental.admin.verify` |
 
 ### User Commands
 | Command | Description | Permission |
@@ -63,6 +66,9 @@
 | `/rrlist [player]` | List rentals | `regionrental.list` |
 | `/rrextend <region>` | Extend rental | `regionrental.extend` |
 | `/rrretrieve` | Retrieve stored items | `regionrental.retrieve` |
+| `/rrmember add\|remove <region> <player>` | Manage rental members | `regionrental.member` |
+| `/rrmembers <region>` | List rental members | `regionrental.members` |
+| `/rrtp <region>` | Teleport to rented region | `regionrental.tp` |
 
 ## Key Features Explained
 
@@ -167,6 +173,149 @@ extension:
 ```
 
 This refunds only extension payments, not the initial rental cost.
+
+### 5. Region Grouping System
+
+Group multiple regions together for mass configuration management.
+
+**Commands:**
+| Command | Description |
+|---------|-------------|
+| `/rrgroup create <name> [regions]` | Create a new group |
+| `/rrgroup edit <name> add [regions]` | Add regions to group |
+| `/rrgroup edit <name> remove [regions]` | Remove regions from group |
+| `/rrgroup delete <name> [confirm]` | Delete group (requires confirmation) |
+| `/rrgroup list` | List all groups |
+| `/rrgroup view <name>` | View group details |
+
+**Region Format:**
+- Same world as player: `shop1` or `world:shop1`
+- Different world: `world_nether:shop1` (explicit prefix required)
+- Console: Always requires `world:region` format
+- Multiple regions: `shop1,shop2,world_nether:shop3` (comma-separated)
+
+**Group Overrides:**
+Use the `group:` prefix to set overrides for an entire group:
+```bash
+/rroverride price group:shop_group 1000
+/rroverride duration group:stores 30
+```
+
+**Override Priority:**
+1. Group override (highest priority)
+2. Individual region override
+3. Default values (from config.yml)
+
+**Key Behaviors:**
+- Regions can only be in one group at a time
+- Adding regions to a group removes their individual overrides
+- Deleting a group removes all group overrides
+- All signs in a group update together when override is set
+
+**Configuration:**
+```yaml
+# groups.yml
+groups:
+  shop_group:
+    regions:
+      - "world:shop1"
+      - "world:shop2"
+
+# regions.yml (group overrides)
+groups:
+  shop_group:
+    price: 1000.0
+    duration: 30
+    max-extensions: 20
+```
+
+### 6. Multi-World Support
+
+Rental regions work across multiple worlds (overworld, nether, end, custom worlds).
+
+**Features:**
+- Each region stores its world name
+- Same region names can exist in different worlds
+- All operations are world-aware
+
+**Technical Details:**
+- Composite keys: `worldName:regionName` (e.g., "world:shop1")
+- Automatic migration from single-world format on first load
+- Commands accept both `region` and `world:region` formats
+
+**Example:**
+```yaml
+# rentals.yml
+rentals:
+  world:shop1:
+    region-name: shop1
+    world: world
+  world_nether:shop1:  # Same name, different world
+    region-name: shop1
+    world: world_nether
+```
+
+### 7. Member Management
+
+Rental owners can add other players as members to their rented regions.
+
+**Commands:**
+| Command | Description | Permission |
+|---------|-------------|------------|
+| `/rrmember add <region> <player>` | Add member to rental | `regionrental.member` |
+| `/rrmember remove <region> <player>` | Remove member from rental | `regionrental.member` |
+| `/rrmembers <region>` | List all members | `regionrental.members` |
+
+**Features:**
+- Members are added to WorldGuard region members
+- Members can build and interact within the region
+- Automatic cleanup when rental expires
+- Configurable member limit
+
+**Configuration:**
+```yaml
+members:
+  enabled: true
+  max-members: 5  # -1 for unlimited
+```
+
+**Restrictions:**
+- Only the renter can add/remove members
+- Members do NOT get item retrieval access
+- Cannot add yourself as a member
+
+### 8. Teleportation
+
+Rental owners and members can teleport directly to their rented regions.
+
+**Commands:**
+| Command | Description | Permission |
+|---------|-------------|------------|
+| `/rrtp <region>` | Teleport to rented region | `regionrental.tp` |
+
+**Features:**
+- 3D safe location detection (searches forward, down, up)
+- Configurable cooldown system
+- Cross-world teleportation support
+- Sound and particle effects
+
+**Safe Location Algorithm:**
+- Searches in front of sign based on sign facing direction
+- Finds solid floor with 2-block head clearance
+- Avoids dangerous blocks (lava, fire, cactus, etc.)
+
+**Configuration:**
+```yaml
+teleport:
+  enabled: true
+  cooldown: 30  # seconds, 0 to disable
+  forward-search-distance: 5
+  floor-search-down: 20
+  floor-search-up: 20
+  cross-world-warning: true
+  sound-enabled: true
+  particle-enabled: true
+```
 
 ## Configuration
 
@@ -309,6 +458,8 @@ All messages support these placeholders:
 ```
 plugins/RegionRental/
 ├── config.yml          # Main configuration
+├── regions.yml         # Per-region overrides
+├── groups.yml          # Region group definitions
 ├── signs.yml           # Sign locations and support blocks
 ├── storage.yml         # Stored items
 ├── rentals.yml         # Active rentals
@@ -332,7 +483,7 @@ plugins/RegionRental/
 
 **Output:**
 ```
-build/libs/RegionRental-1.0.0.jar
+build/libs/RegionRental-2.5.1.jar
 ```
 
 ## Dependencies
@@ -353,39 +504,19 @@ build/libs/RegionRental-1.0.0.jar
 
 ## Testing Checklist
 
-### Rental System
-- [ ] Create rental sign
-- [ ] Rent region (right-click)
-- [ ] Extend rental (shift-click)
-- [ ] Rental expiration
-- [ ] Multiple rentals per player
-- [ ] Rental limits enforced
-
-### Admin Commands
-- [ ] Reset rental with refund (`/rrreset`)
-- [ ] Remove region setup (`/rrremove`)
-- [ ] Reload configuration (`/rrreload`)
-- [ ] Modify rental duration (`/rrduration`)
-- [ ] View rental info (`/rrinfo`)
-
-### Block Restoration
-- [ ] Region captured on rent
-- [ ] Blocks restored on expiry
-- [ ] Schematic deletion works
-- [ ] Entity restoration (if enabled)
-
-### Economy
-- [ ] Payment on rental
-- [ ] Payment on extension
-- [ ] Refund on admin reset
-- [ ] Refund on region removal
-- [ ] Balance checking works
-
-### Item Storage
-- [ ] Items stored on expiry
-- [ ] Item retrieval GUI works
-- [ ] Multiple pages supported
-- [ ] Auto-cleanup works
+See [In_Game_Testing_Checklist.md](In_Game_Testing_Checklist.md) for comprehensive in-game testing checklist covering:
+- Core rental system
+- Sign and support block protection
+- Economy and refunds
+- Block restoration
+- Item storage
+- Member management
+- Teleportation
+- Region grouping
+- Override system
+- Multi-world support
+- Admin commands
+- Edge cases
 
 ## Known Limitations
 
@@ -396,14 +527,17 @@ build/libs/RegionRental-1.0.0.jar
 
 ## Version History
 
-**v1.0.0** - Current
+See [CHANGELOG.md](CHANGELOG.md) for detailed version history.
+
+**v2.5.1** - Current
+- Performance optimizations (dirty tracking, lazy loading, O(1) lookups)
+- Region grouping system for mass configuration
+- Multi-world support for rental regions
+- Member management for rented regions
+- Teleportation to rented regions
 - Full refund system
-- Region removal command
 - Support block protection
 - WorldEdit block restoration
-- Duration management commands
-- Extension refund on reset
-- Gradle build system migration
 
 ---
 
