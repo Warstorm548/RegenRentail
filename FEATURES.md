@@ -26,8 +26,9 @@
 - **Automatic capture** - Region state saved when rental starts
 - **Automatic restoration** - Blocks restored when rental expires
 - **Entity support** - Optional entity restoration
+- **Sponge Schematic format** - Industry-standard `.schem` files for reliable persistence
 - **Schematic management** - Auto-delete schematics (configurable)
-- **Storage location** - `plugins/RegionRental/schematics/`
+- **Storage location** - `plugins/RegionRental/schematics/*.schem`
 
 ### Item Storage System
 - **Container scanning** - Automatically scans expired rentals for items
