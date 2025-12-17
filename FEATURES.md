@@ -473,6 +473,7 @@ plugins/RegionRental/
 **Technology:**
 - Gradle 9.2.0 (Kotlin DSL)
 - Java 21
+- Kotlin 2.2.20
 - Paper API 1.21.3
 
 **Build commands:**
@@ -492,6 +493,7 @@ build/libs/RegionRental-2.5.1.jar
 | Dependency | Version | Purpose |
 |------------|---------|---------|
 | Paper API | 1.21.3 | Server platform |
+| Kotlin | 2.2.20 | JVM language support |
 | WorldGuard | 7.0.14+ | Region management |
 | WorldEdit | 7.3.16+ | Block restoration |
 | Vault | 1.7+ | Economy integration |

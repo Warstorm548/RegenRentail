@@ -8,6 +8,7 @@ RegionRental is a Minecraft Paper/Spigot plugin (1.21+) that implements a comple
 
 **Technology Stack:**
 - Java 21+ (OpenJDK 21)
+- Kotlin 2.2.20 (JVM)
 - Paper API 1.21.3
 - Gradle 9.2.0 (Kotlin DSL)
 - WorldGuard 7.0.14 (region management)
@@ -35,7 +36,8 @@ build/libs/RegionRental-2.5.1.jar
 ./gradlew clean
 
 # Compile only (no packaging)
-./gradlew compileJava
+./gradlew compileJava      # Java only
+./gradlew compileKotlin    # Kotlin only
 
 # Run shadowJar task
 ./gradlew shadowJar
@@ -251,6 +253,12 @@ Messages are retrieved via `ConfigManager.getMessage()` which handles color code
 3. Add to `RegionRental.registerCommands()` method using `registerCommandWithPrefix()`
 4. Add permission node to `plugin.yml` under `permissions:`
 
+### Adding a New Kotlin Class
+1. Create `.kt` file in `src/main/kotlin/com/regionrental/` (or appropriate subdirectory)
+2. Kotlin classes can extend Java classes and implement Java interfaces
+3. Java code can call Kotlin code seamlessly (full interoperability)
+4. Use Kotlin idioms: data classes, extension functions, null safety, coroutines
+
 ### Adding a New Config Option
 1. Add default value to `src/main/resources/config.yml`
 2. Add getter method to `ConfigManager.java`
@@ -292,13 +300,17 @@ See [In_Game_Testing_Checklist.md](In_Game_Testing_Checklist.md) for comprehensi
 - `schematics/` - WorldEdit region snapshots (*.dat files)
 
 ### Source Structure
-`src/main/java/com/regionrental/` organized into:
+**Java source:** `src/main/java/com/regionrental/`
 - `RegionRental.java` - Main plugin class
 - `commands/` - 17 command executors
 - `config/` - 5 configuration managers
 - `listeners/` - 2 event listeners
 - `managers/` - 9 business logic managers
 - `util/` - Utility classes
+
+**Kotlin source:** `src/main/kotlin/com/regionrental/`
+- New Kotlin classes can be added here
+- Full interoperability with existing Java code
 
 ## Version History
 

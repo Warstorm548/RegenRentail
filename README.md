@@ -4,6 +4,7 @@
 
 Version: 2.6.0
 Minecraft: Paper/Spigot 1.21+
+Languages: Java 21, Kotlin 2.2.20
 
 ## ✅ Features
 

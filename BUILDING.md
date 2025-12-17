@@ -5,7 +5,8 @@ This guide covers how to build the RegionRental plugin from source.
 ## Prerequisites
 
 1. **Java 21+** (OpenJDK recommended) - Required for compilation and runtime
-2. **Gradle 9.2.0** - Included via Gradle Wrapper (no installation needed)
+2. **Kotlin 2.2.20** - Included via Gradle plugin (no installation needed)
+3. **Gradle 9.2.0** - Included via Gradle Wrapper (no installation needed)
 
 ## Build the Plugin
 
@@ -39,7 +40,8 @@ build/libs/RegionRental-2.6.0.jar
 ./gradlew clean
 
 # Compile only (no packaging)
-./gradlew compileJava
+./gradlew compileJava      # Java only
+./gradlew compileKotlin    # Kotlin only
 
 # Run shadowJar task
 ./gradlew shadowJar
@@ -63,6 +65,7 @@ RegionRental/
 ├── README.md                        # This file
 ├── CLAUDE.md                        # Developer documentation
 └── src/main/
+    ├── kotlin/com/regionrental/    # Kotlin source (new code can go here)
     ├── java/com/regionrental/
     │   ├── RegionRental.java        # Main plugin class
     │   ├── commands/                # All command handlers (17 classes)
@@ -111,10 +114,13 @@ RegionRental/
 
 **Total: 35 Java classes + 2 resource files**
 
+**Note:** New code can be written in either Java or Kotlin. Both languages have full interoperability.
+
 ## Dependencies
 
 ### Compile-time Dependencies
 - Paper API 1.21.3-R0.1-SNAPSHOT
+- Kotlin Standard Library 2.2.20
 - Vault API 1.7
 - WorldGuard 7.0.14
 - WorldEdit 7.3.16 (Bukkit and Core)
