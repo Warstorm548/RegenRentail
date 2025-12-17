@@ -6,6 +6,11 @@ import com.sk89q.worldedit.WorldEdit;
 import com.sk89q.worldedit.bukkit.BukkitAdapter;
 import com.sk89q.worldedit.extent.clipboard.BlockArrayClipboard;
 import com.sk89q.worldedit.extent.clipboard.Clipboard;
+import com.sk89q.worldedit.extent.clipboard.io.BuiltInClipboardFormat;
+import com.sk89q.worldedit.extent.clipboard.io.ClipboardFormat;
+import com.sk89q.worldedit.extent.clipboard.io.ClipboardFormats;
+import com.sk89q.worldedit.extent.clipboard.io.ClipboardReader;
+import com.sk89q.worldedit.extent.clipboard.io.ClipboardWriter;
 import com.sk89q.worldedit.function.operation.ForwardExtentCopy;
 import com.sk89q.worldedit.function.operation.Operation;
 import com.sk89q.worldedit.function.operation.Operations;
@@ -30,6 +35,7 @@ import java.util.logging.Level;
 /**
  * Manages WorldEdit integration for block restoration
  * Captures region state when rental starts and restores it when rental expires
+ * Uses Sponge Schematic format (.schem) for reliable cross-session persistence
  */
 public class WorldEditManager {
 
@@ -44,6 +50,10 @@ public class WorldEditManager {
     // Track which schematics exist on disk (for hasCapture checks without loading)
     // Using thread-safe set for potential concurrent access
     private final Set<String> knownSchematics = ConcurrentHashMap.newKeySet();
+
+    // File extension constants for Sponge schematic format
+    private static final String SCHEMATIC_EXTENSION = ".schem";
+    private static final String OLD_EXTENSION = ".dat";
 
     public WorldEditManager(RegionRental plugin) {
         this.plugin = plugin;
@@ -297,17 +307,21 @@ public class WorldEditManager {
     }
 
     /**
-     * Saves a clipboard to disk as a serialized object
-     * Note: This uses Java serialization for simplicity
-     * Could be enhanced to use Sponge Schematic format in the future
+     * Saves a clipboard to disk using Sponge Schematic format
+     * This uses WorldEdit's native format for reliable persistence
+     *
+     * @param regionName The composite key (world:region)
+     * @param clipboard The clipboard to save
      */
     private void saveSchematic(String regionName, Clipboard clipboard) {
-        File file = new File(schematicsFolder, regionName + ".dat");
+        File file = new File(schematicsFolder, regionName + SCHEMATIC_EXTENSION);
 
-        try (ObjectOutputStream oos = new ObjectOutputStream(new FileOutputStream(file))) {
-            // Create a serializable wrapper
-            SerializableClipboard wrapper = new SerializableClipboard(clipboard);
-            oos.writeObject(wrapper);
+        try (FileOutputStream fos = new FileOutputStream(file);
+             ClipboardWriter writer = BuiltInClipboardFormat.SPONGE_SCHEMATIC.getWriter(fos)) {
+            writer.write(clipboard);
+            if (plugin.getConfigManager().isDebug()) {
+                plugin.getLogger().info("Saved schematic: " + regionName + SCHEMATIC_EXTENSION);
+            }
         } catch (Exception e) {
             plugin.getLogger().log(Level.WARNING, "Failed to save schematic for: " + regionName, e);
         }
@@ -316,73 +330,119 @@ public class WorldEditManager {
     /**
      * Indexes existing schematics without loading them into memory.
      * This allows hasCapture() to work without memory overhead.
+     * Also handles migration from legacy .dat files.
      */
     private void indexSchematics() {
         if (!schematicsFolder.exists()) {
             return;
         }
 
-        File[] files = schematicsFolder.listFiles((dir, name) -> name.endsWith(".dat"));
-        if (files == null) {
-            return;
+        // Index new .schem files
+        File[] schemFiles = schematicsFolder.listFiles((dir, name) -> name.endsWith(SCHEMATIC_EXTENSION));
+        if (schemFiles != null) {
+            for (File file : schemFiles) {
+                String regionName = file.getName().replace(SCHEMATIC_EXTENSION, "");
+                knownSchematics.add(regionName);
+            }
         }
 
-        for (File file : files) {
-            String regionName = file.getName().replace(".dat", "");
-            knownSchematics.add(regionName);
+        // Migration: Handle legacy .dat files
+        File[] datFiles = schematicsFolder.listFiles((dir, name) -> name.endsWith(OLD_EXTENSION));
+        if (datFiles != null && datFiles.length > 0) {
+            plugin.getLogger().warning("Found " + datFiles.length + " legacy .dat file(s) - these are EMPTY due to serialization bug in v2.5.1");
+            if (plugin.getConfigManager().isAutoDeleteSchematics()) {
+                int deleted = 0;
+                for (File datFile : datFiles) {
+                    if (datFile.delete()) {
+                        deleted++;
+                    }
+                }
+                plugin.getLogger().info("Deleted " + deleted + " empty legacy .dat file(s)");
+                if (deleted < datFiles.length) {
+                    plugin.getLogger().warning("Could not delete " + (datFiles.length - deleted) + " legacy file(s) - check file permissions");
+                }
+            } else {
+                plugin.getLogger().info("Set 'restoration.auto-delete-schematics: true' to auto-clean legacy files");
+            }
         }
 
         if (!knownSchematics.isEmpty()) {
-            plugin.getLogger().info("Indexed " + knownSchematics.size() + " region schematics (lazy loading enabled)");
+            plugin.getLogger().info("Indexed " + knownSchematics.size() + " region schematic(s) (lazy loading enabled)");
         }
     }
 
     /**
-     * Loads a single schematic from disk
-     * @param regionName The region name (composite key)
+     * Loads a schematic from disk using auto-detected format
+     * Supports both new .schem format and legacy .dat migration
+     *
+     * @param regionName The composite key (world:region)
      * @return The loaded clipboard, or null if failed
      */
     private Clipboard loadSchematic(String regionName) {
-        File file = new File(schematicsFolder, regionName + ".dat");
-        if (!file.exists()) {
-            return null;
+        // Try new .schem format first
+        File schemFile = new File(schematicsFolder, regionName + SCHEMATIC_EXTENSION);
+
+        if (schemFile.exists()) {
+            try {
+                ClipboardFormat format = ClipboardFormats.findByFile(schemFile);
+                if (format == null) {
+                    plugin.getLogger().warning("Unknown schematic format: " + schemFile.getName());
+                    return null;
+                }
+
+                try (FileInputStream fis = new FileInputStream(schemFile);
+                     ClipboardReader reader = format.getReader(fis)) {
+                    Clipboard clipboard = reader.read();
+                    if (plugin.getConfigManager().isDebug()) {
+                        plugin.getLogger().info("Loaded schematic: " + regionName + SCHEMATIC_EXTENSION);
+                    }
+                    return clipboard;
+                }
+            } catch (Exception e) {
+                plugin.getLogger().log(Level.WARNING, "Failed to load schematic: " + schemFile.getName(), e);
+                return null;
+            }
         }
 
-        try (ObjectInputStream ois = new ObjectInputStream(new FileInputStream(file))) {
-            SerializableClipboard wrapper = (SerializableClipboard) ois.readObject();
-            return wrapper.toClipboard();
-        } catch (Exception e) {
-            plugin.getLogger().log(Level.WARNING, "Failed to load schematic: " + file.getName(), e);
-            return null;
+        // Migration: Warn about legacy .dat files (they're empty due to bug)
+        File oldFile = new File(schematicsFolder, regionName + OLD_EXTENSION);
+        if (oldFile.exists()) {
+            plugin.getLogger().warning("Legacy .dat schematic for '" + regionName + "' is empty (serialization bug). Will be re-captured on next rental.");
+            if (plugin.getConfigManager().isAutoDeleteSchematics()) {
+                if (!oldFile.delete()) {
+                    plugin.getLogger().warning("Could not delete legacy schematic: " + oldFile.getName());
+                }
+            }
         }
+
+        return null;
     }
 
     /**
      * Deletes a schematic file from disk
+     * Handles both new .schem and legacy .dat formats
+     *
+     * @param regionName The composite key (world:region)
      */
     private void deleteSchematic(String regionName) {
-        File file = new File(schematicsFolder, regionName + ".dat");
-        if (file.exists()) {
-            file.delete();
-        }
-    }
-
-    /**
-     * Wrapper class for serializing WorldEdit clipboards
-     * This is a simplified implementation - in production, consider using
-     * WorldEdit's native Sponge Schematic format
-     */
-    private static class SerializableClipboard implements Serializable {
-        private static final long serialVersionUID = 1L;
-
-        private final transient Clipboard clipboard;
-
-        public SerializableClipboard(Clipboard clipboard) {
-            this.clipboard = clipboard;
+        // Delete new .schem file
+        File schemFile = new File(schematicsFolder, regionName + SCHEMATIC_EXTENSION);
+        if (schemFile.exists()) {
+            if (!schemFile.delete()) {
+                plugin.getLogger().warning("Could not delete schematic: " + schemFile.getName());
+            } else if (plugin.getConfigManager().isDebug()) {
+                plugin.getLogger().info("Deleted schematic: " + schemFile.getName());
+            }
         }
 
-        public Clipboard toClipboard() {
-            return clipboard;
+        // Also delete legacy .dat file if it exists (cleanup)
+        File oldFile = new File(schematicsFolder, regionName + OLD_EXTENSION);
+        if (oldFile.exists()) {
+            if (!oldFile.delete()) {
+                plugin.getLogger().warning("Could not delete legacy schematic: " + oldFile.getName());
+            } else if (plugin.getConfigManager().isDebug()) {
+                plugin.getLogger().info("Deleted legacy schematic: " + oldFile.getName());
+            }
         }
     }
 }

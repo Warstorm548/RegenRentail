@@ -1,6 +1,6 @@
 # In-Game Testing Checklist
 
-Comprehensive testing checklist for RegionRental plugin v2.5.1.
+Comprehensive testing checklist for RegionRental plugin v2.6.0.
 
 ## Prerequisites
 
@@ -113,7 +113,8 @@ Basic functionality verification:
 
 ### Capture
 - [ ] Region state captured when rental starts
-- [ ] Schematic file created in `schematics/` folder
+- [ ] `.schem` file created in `schematics/` folder (Sponge format)
+- [ ] Schematic file is not empty (> 1KB)
 - [ ] Entities captured (if enabled)
 
 ### Restoration

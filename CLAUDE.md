@@ -58,7 +58,7 @@ When updating the version, modify these files:
 - `README.md` - Version references
 - Output JAR: `build/libs/RegionRental-X.X.X.jar`
 
-**Current Version:** 2.5.1
+**Current Version:** 2.6.0
 
 ## Architecture Overview
 
@@ -99,7 +99,7 @@ The plugin uses a manager pattern where each manager handles a specific domain:
 
 4. **`WorldEditManager`** - WorldEdit API integration for block restoration
    - Captures region state (blocks and entities) when rental is created
-   - Stores region snapshots as serialized clipboards in `schematics/` folder
+   - Stores region snapshots as Sponge schematics in `schematics/` folder (.schem format)
    - Restores region to original state when rental expires
    - Automatic cleanup of schematic files (configurable)
    - **Key methods:** `captureRegion()`, `restoreRegion()`, `deleteCapture()`
