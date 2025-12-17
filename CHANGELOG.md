@@ -5,6 +5,47 @@ All notable changes to RegionRental will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.6.0] - Schematic Format Migration
+
+Major update fixing critical WorldEdit schematic serialization bug and migrating to industry-standard Sponge format.
+
+### Critical Bug Fix
+- **Fixed Schematic Serialization** - Replaced broken Java serialization with Sponge Schematic format
+  - **Previous Bug:** `SerializableClipboard` class had `transient` clipboard field, resulting in empty .dat files
+  - **Impact:** All .dat schematics from v2.5.1 and earlier contain NO block data
+  - Restoration only worked if clipboard remained in memory cache
+  - Server restarts caused silent data loss
+
+### Changes
+- **Sponge Schematic Format** - Now uses WorldEdit's official `.schem` format
+  - Industry-standard format used by WorldEdit, FastAsyncWorldEdit, and other tools
+  - Properly persists blocks, entities, and metadata across server restarts
+  - Files can be imported/exported to other WorldEdit-compatible tools
+  - Better compression and smaller file sizes
+
+### Migration
+- **Automatic Migration** - Handles legacy .dat files gracefully
+  - Detects and warns about empty .dat files at startup
+  - Auto-deletes legacy files if `restoration.auto-delete-schematics: true`
+  - Clear logging explains the bug and migration process
+  - Regions will be automatically re-captured on next rental
+
+### Technical Details
+- Added imports: `ClipboardFormat`, `ClipboardFormats`, `ClipboardReader`, `ClipboardWriter`, `BuiltInClipboardFormat`
+- Removed: Broken `SerializableClipboard` wrapper class
+- Updated methods: `saveSchematic()`, `loadSchematic()`, `indexSchematics()`, `deleteSchematic()`
+- File extension: `.dat` → `.schem`
+
+### Upgrade Notes
+- **Existing Installations:**
+  - All existing .dat files are empty and will be ignored
+  - Regions will be re-captured automatically when next rented
+  - Set `restoration.auto-delete-schematics: true` to clean up legacy .dat files
+- **No Config Changes Required:** Migration is automatic
+- **No Data Loss:** The .dat files were already empty, so nothing is lost
+
+---
+
 ## [2.5.1] - PR Review Fixes
 
 Patch release addressing code review feedback with bug fixes, thread safety improvements, and code quality enhancements.
