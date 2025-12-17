@@ -316,7 +316,8 @@ public class WorldEditManager {
     private void saveSchematic(String regionName, Clipboard clipboard) {
         File file = new File(schematicsFolder, regionName + SCHEMATIC_EXTENSION);
 
-        try (ClipboardWriter writer = BuiltInClipboardFormat.SPONGE_SCHEMATIC.getWriter(new FileOutputStream(file))) {
+        try (FileOutputStream fos = new FileOutputStream(file);
+             ClipboardWriter writer = BuiltInClipboardFormat.SPONGE_SCHEMATIC.getWriter(fos)) {
             writer.write(clipboard);
             if (plugin.getConfigManager().isDebug()) {
                 plugin.getLogger().info("Saved schematic: " + regionName + SCHEMATIC_EXTENSION);
@@ -357,6 +358,9 @@ public class WorldEditManager {
                     }
                 }
                 plugin.getLogger().info("Deleted " + deleted + " empty legacy .dat file(s)");
+                if (deleted < datFiles.length) {
+                    plugin.getLogger().warning("Could not delete " + (datFiles.length - deleted) + " legacy file(s) - check file permissions");
+                }
             } else {
                 plugin.getLogger().info("Set 'restoration.auto-delete-schematics: true' to auto-clean legacy files");
             }
@@ -386,7 +390,8 @@ public class WorldEditManager {
                     return null;
                 }
 
-                try (ClipboardReader reader = format.getReader(new FileInputStream(schemFile))) {
+                try (FileInputStream fis = new FileInputStream(schemFile);
+                     ClipboardReader reader = format.getReader(fis)) {
                     Clipboard clipboard = reader.read();
                     if (plugin.getConfigManager().isDebug()) {
                         plugin.getLogger().info("Loaded schematic: " + regionName + SCHEMATIC_EXTENSION);
@@ -404,7 +409,9 @@ public class WorldEditManager {
         if (oldFile.exists()) {
             plugin.getLogger().warning("Legacy .dat schematic for '" + regionName + "' is empty (serialization bug). Will be re-captured on next rental.");
             if (plugin.getConfigManager().isAutoDeleteSchematics()) {
-                oldFile.delete();
+                if (!oldFile.delete()) {
+                    plugin.getLogger().warning("Could not delete legacy schematic: " + oldFile.getName());
+                }
             }
         }
 
@@ -421,8 +428,9 @@ public class WorldEditManager {
         // Delete new .schem file
         File schemFile = new File(schematicsFolder, regionName + SCHEMATIC_EXTENSION);
         if (schemFile.exists()) {
-            schemFile.delete();
-            if (plugin.getConfigManager().isDebug()) {
+            if (!schemFile.delete()) {
+                plugin.getLogger().warning("Could not delete schematic: " + schemFile.getName());
+            } else if (plugin.getConfigManager().isDebug()) {
                 plugin.getLogger().info("Deleted schematic: " + schemFile.getName());
             }
         }
@@ -430,8 +438,9 @@ public class WorldEditManager {
         // Also delete legacy .dat file if it exists (cleanup)
         File oldFile = new File(schematicsFolder, regionName + OLD_EXTENSION);
         if (oldFile.exists()) {
-            oldFile.delete();
-            if (plugin.getConfigManager().isDebug()) {
+            if (!oldFile.delete()) {
+                plugin.getLogger().warning("Could not delete legacy schematic: " + oldFile.getName());
+            } else if (plugin.getConfigManager().isDebug()) {
                 plugin.getLogger().info("Deleted legacy schematic: " + oldFile.getName());
             }
         }
