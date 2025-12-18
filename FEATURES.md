@@ -485,7 +485,7 @@ plugins/RegionRental/
 
 **Output:**
 ```
-build/libs/RegionRental-2.5.1.jar
+build/libs/RegionRental-2.7.0.jar
 ```
 
 ## Dependencies
@@ -532,7 +532,10 @@ See [In_Game_Testing_Checklist.md](In_Game_Testing_Checklist.md) for comprehensi
 
 See [CHANGELOG.md](CHANGELOG.md) for detailed version history.
 
-**v2.5.1** - Current
+**v2.7.0** - Current
+- Kotlin migration for improved code quality and type safety
+- Sealed classes for type-safe command handling
+- Extension functions for cleaner APIs
 - Performance optimizations (dirty tracking, lazy loading, O(1) lookups)
 - Region grouping system for mass configuration
 - Multi-world support for rental regions

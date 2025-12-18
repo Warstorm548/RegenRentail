@@ -30,7 +30,7 @@ Or build directly with Gradle:
 
 4. **Find your JAR file:**
 ```
-build/libs/RegionRental-2.6.0.jar
+build/libs/RegionRental-2.7.0.jar
 ```
 
 ## Development Commands
@@ -65,10 +65,31 @@ RegionRental/
 ├── README.md                        # This file
 ├── CLAUDE.md                        # Developer documentation
 └── src/main/
-    ├── kotlin/com/regionrental/    # Kotlin source (new code can go here)
+    ├── kotlin/com/regionrental/    # Kotlin source
+    │   ├── extensions/              # Extension functions (4 files)
+    │   │   ├── StringExtensions.kt      # color(), withPlaceholders()
+    │   │   ├── LocationExtensions.kt    # Location.toKey(), String.toLocation()
+    │   │   ├── PlayerExtensions.kt      # asPlayerOrNull(), requirePermission()
+    │   │   └── CollectionExtensions.kt  # Filtering and mapping helpers
+    │   ├── util/
+    │   │   └── TimeUtils.kt             # Duration formatting, Int.days extensions
+    │   ├── models/                  # Data models (4 files)
+    │   │   ├── RefundRecord.kt          # Refund transaction audit trail
+    │   │   ├── ParsedRegion.kt          # World:region parsing
+    │   │   ├── StorageGUISession.kt     # Paginated GUI session
+    │   │   └── SupportBlockData.kt      # Sign support block data
+    │   ├── config/                  # Configuration classes (2 files)
+    │   │   ├── RegionOverride.kt        # Type-safe override container
+    │   │   └── MessageFormatter.kt      # DSL for message formatting
+    │   ├── commands/                # Command classes (2 files)
+    │   │   ├── OverrideCommand.kt       # Per-region overrides (sealed classes)
+    │   │   └── DurationAction.kt        # Duration command actions
+    │   └── managers/                # Manager extensions (2 files)
+    │       ├── Rental.kt                # Rental data class
+    │       └── ManagerExtensions.kt     # Collection extensions for rentals
     ├── java/com/regionrental/
     │   ├── RegionRental.java        # Main plugin class
-    │   ├── commands/                # All command handlers (17 classes)
+    │   ├── commands/                # Command handlers (16 Java classes)
     │   │   ├── RRCommand.java
     │   │   ├── ReloadCommand.java
     │   │   ├── CreateSignCommand.java
@@ -79,42 +100,40 @@ RegionRental/
     │   │   ├── ListCommand.java
     │   │   ├── ExtendCommand.java
     │   │   ├── DurationCommand.java
-    │   │   ├── RefundHistoryCommand.java  # View refund transaction history
-    │   │   ├── VerifyCommand.java         # Verify region configurations
-    │   │   ├── OverrideCommand.java       # Set per-region custom overrides
-    │   │   ├── GroupCommand.java          # Manage region groups
-    │   │   ├── MemberCommand.java         # Add/remove rental members
-    │   │   ├── MembersCommand.java        # List rental members
-    │   │   └── TpCommand.java             # Teleport to rented regions
+    │   │   ├── RefundHistoryCommand.java
+    │   │   ├── VerifyCommand.java
+    │   │   ├── GroupCommand.java
+    │   │   ├── MemberCommand.java
+    │   │   ├── MembersCommand.java
+    │   │   └── TpCommand.java
     │   ├── config/                  # Configuration managers (5 classes)
     │   │   ├── ConfigManager.java
-    │   │   ├── RegionsConfig.java   # Per-region settings manager
+    │   │   ├── RegionsConfig.java
     │   │   ├── SignsConfig.java
     │   │   ├── StorageConfig.java
-    │   │   └── GroupsConfig.java    # Region groups manager
+    │   │   └── GroupsConfig.java
     │   ├── listeners/               # Event listeners (2 classes)
     │   │   ├── SignInteractListener.java
-    │   │   └── GroupChatListener.java  # Chat prompts for group commands
-    │   ├── managers/                # Core managers (9 classes)
-    │   │   ├── Rental.java          # Data model
+    │   │   └── GroupChatListener.java
+    │   ├── managers/                # Core managers (8 Java classes)
     │   │   ├── RentalManager.java
     │   │   ├── SignManager.java
     │   │   ├── StorageManager.java
     │   │   ├── ExpirationManager.java
-    │   │   ├── EzChestShopManager.java  # EzChestShop integration
-    │   │   ├── TeleportCooldownManager.java  # Teleport cooldown tracking
+    │   │   ├── EzChestShopManager.java
+    │   │   ├── TeleportCooldownManager.java
     │   │   ├── WorldGuardManager.java
     │   │   └── WorldEditManager.java
-    │   └── util/                    # Utility classes (1 class)
-    │       └── WorldRegionParser.java   # Composite key parsing (world:region)
+    │   └── util/
+    │       └── WorldRegionParser.java
     └── resources/
         ├── plugin.yml               # Plugin metadata
         └── config.yml               # Default configuration
 ```
 
-**Total: 35 Java classes + 2 resource files**
+**Total: 32 Java classes + 15 Kotlin files + 2 resource files**
 
-**Note:** New code can be written in either Java or Kotlin. Both languages have full interoperability.
+**Note:** The codebase uses both Java and Kotlin with full interoperability. New features should be written in Kotlin.
 
 ## Dependencies
 
