@@ -206,31 +206,6 @@ class Rental private constructor(
 
     override fun toString(): String = "Rental($compositeKey, player=$playerName, expires=$formattedEndDate)"
 
-    // ============ Java Compatibility Getters ============
-    // These maintain the same method signatures as the Java version
-
-    fun getRegionName(): String = regionName
-    fun getWorldName(): String = worldName
-    fun getPlayerUUID(): UUID = playerUUID
-    fun getPlayerName(): String = playerName
-    fun getStartDate(): Long = startDate
-    fun getEndDate(): Long = endDate
-    fun getExtensionCount(): Int = extensionCount
-    fun getTotalPaid(): Double = totalPaid
-    fun getInitialPrice(): Double = initialPrice
-    fun getTotalRefunded(): Double = totalRefunded
-    fun getCompositeKey(): String = compositeKey
-    fun getMemberCount(): Int = memberCount
-
-    // Computed getters for Java
-    fun isExpired(): Boolean = isExpired
-    fun getTimeRemaining(): Long = timeRemaining
-    fun getDaysRemaining(): Int = daysRemaining
-    fun getHoursRemaining(): Int = hoursRemaining
-    fun getFormattedEndDate(): String = formattedEndDate
-    fun getExtensionCost(): Double = extensionCost
-    fun getNetRefundableAmount(): Double = netRefundableAmount
-
     // ============ Nested Classes ============
 
     /**
@@ -245,13 +220,6 @@ class Rental private constructor(
     ) {
         val formattedTimestamp: String
             get() = TimeUtils.formatTimestamp(timestamp)
-
-        // Java compatibility getters
-        fun getAmount(): Double = amount
-        fun getTimestamp(): Long = timestamp
-        fun getReason(): String = reason
-        fun getAdminName(): String = adminName
-        fun getFormattedTimestamp(): String = formattedTimestamp
     }
 
     // ============ Factory Methods (Replace Java Constructors) ============
