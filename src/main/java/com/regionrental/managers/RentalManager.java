@@ -121,7 +121,7 @@ public class RentalManager {
                     }
                 }
 
-                Rental rental = new Rental(regionName, worldName, playerUUID, playerName, startDate, endDate,
+                Rental rental = Rental.fromStorage(regionName, worldName, playerUUID, playerName, startDate, endDate,
                         extensionCount, totalPaid, initialPrice, totalRefunded, refundHistory, members);
 
                 // Use composite key (world:region) for storage
@@ -307,7 +307,7 @@ public class RentalManager {
 
         // Create the rental
         long endDate = System.currentTimeMillis() + (days * 24L * 60L * 60L * 1000L);
-        Rental rental = new Rental(regionName, world.getName(), player.getUniqueId(), player.getName(), endDate, price);
+        Rental rental = Rental.create(regionName, world.getName(), player.getUniqueId(), player.getName(), endDate, price);
 
         rentals.put(compositeKey, rental);
 
