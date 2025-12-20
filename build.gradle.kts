@@ -5,7 +5,7 @@ plugins {
 }
 
 group = "com.regionrental"
-version = "2.8.0"
+version = "2.8.1"
 
 repositories {
     mavenCentral()
@@ -120,6 +120,9 @@ tasks.processResources {
 tasks.shadowJar {
     archiveClassifier.set("")
     archiveFileName.set("${project.name}-${project.version}.jar")
+
+    // Relocate Kotlin stdlib to avoid conflicts with other plugins and ensure it's bundled
+    relocate("kotlin", "com.regionrental.shaded.kotlin")
 
     // Minimize JAR by removing unused classes (optional)
     // Uncomment if smaller JAR size is needed:

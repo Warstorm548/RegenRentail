@@ -2,7 +2,7 @@
 
 **Complete WorldGuard Region Rental System with Clickable Signs**
 
-Version: 2.8.0
+Version: 2.8.1
 Minecraft: Paper/Spigot 1.21+
 Languages: Java 21, Kotlin 2.2.20
 

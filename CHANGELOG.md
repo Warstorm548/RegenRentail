@@ -5,6 +5,14 @@ All notable changes to RegionRental will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.8.1] - Kotlin Runtime Fix
+
+### Fixed
+
+- **Kotlin stdlib not bundled in JAR** - Added `relocate` configuration to shadowJar to ensure the Kotlin standard library is properly shaded into the plugin JAR. This fixes `NoClassDefFoundError: kotlin/jvm/internal/Intrinsics` at runtime.
+
+---
+
 ## [2.8.0] - Tier 1 Kotlin Migration
 
 Continues the Kotlin migration by converting all configuration managers and the teleport cooldown manager.
