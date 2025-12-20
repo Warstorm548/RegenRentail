@@ -366,7 +366,7 @@ class RegionsConfig(private val plugin: RegionRental) {
             return
         }
 
-        val configuredRegions = getAllRegions()
+        val configuredRegions = allRegions
         val orphanedConfigs = configuredRegions.filter { it !in allSigns.keys }
 
         if (orphanedConfigs.isNotEmpty()) {
@@ -387,7 +387,7 @@ class RegionsConfig(private val plugin: RegionRental) {
     fun getVerificationReport(): Map<String, Any> {
         val allSigns = plugin.signsConfig.getAllSigns()
         val regionsWithSigns = allSigns.keys
-        val configuredRegions = getAllRegions()
+        val configuredRegions = allRegions
 
         val missingConfigs = regionsWithSigns.filter { it !in configuredRegions }
         val orphanedConfigs = configuredRegions.filter { it !in regionsWithSigns }
