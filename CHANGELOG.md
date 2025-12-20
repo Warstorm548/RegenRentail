@@ -5,11 +5,19 @@ All notable changes to RegionRental will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [2.8.1] - Kotlin Runtime Fix
+## [2.8.2] - Kotlin Runtime Fix (Complete)
 
 ### Fixed
 
-- **Kotlin stdlib not bundled in JAR** - Added `relocate` configuration to shadowJar to ensure the Kotlin standard library is properly shaded into the plugin JAR. This fixes `NoClassDefFoundError: kotlin/jvm/internal/Intrinsics` at runtime.
+- **Kotlin stdlib not bundled in JAR** - Fixed shadowJar configuration to explicitly include runtime dependencies. Added `configurations = listOf(project.configurations.runtimeClasspath.get())` to ensure Kotlin stdlib is properly shaded. Also disabled the default jar task to prevent conflicts.
+
+---
+
+## [2.8.1] - Kotlin Runtime Fix (Incomplete)
+
+### Fixed
+
+- Attempted fix for Kotlin stdlib bundling with `relocate` - insufficient on its own.
 
 ---
 

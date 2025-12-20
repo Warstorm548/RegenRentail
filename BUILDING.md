@@ -30,7 +30,7 @@ Or build directly with Gradle:
 
 4. **Find your JAR file:**
 ```
-build/libs/RegionRental-2.8.1.jar
+build/libs/RegionRental-2.8.2.jar
 ```
 
 ## Development Commands

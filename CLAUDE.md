@@ -27,7 +27,7 @@ RegionRental is a Minecraft Paper/Spigot plugin (1.21+) that implements a comple
 ./gradlew clean build
 
 # Output location
-build/libs/RegionRental-2.8.1.jar
+build/libs/RegionRental-2.8.2.jar
 ```
 
 ### Development Commands
@@ -60,7 +60,7 @@ When updating the version, modify these files:
 - `README.md` - Version references
 - Output JAR: `build/libs/RegionRental-X.X.X.jar`
 
-**Current Version:** 2.8.1
+**Current Version:** 2.8.2
 
 ## Architecture Overview
 

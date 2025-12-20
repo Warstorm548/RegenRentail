@@ -5,7 +5,7 @@ plugins {
 }
 
 group = "com.regionrental"
-version = "2.8.1"
+version = "2.8.2"
 
 repositories {
     mavenCentral()
@@ -121,12 +121,23 @@ tasks.shadowJar {
     archiveClassifier.set("")
     archiveFileName.set("${project.name}-${project.version}.jar")
 
-    // Relocate Kotlin stdlib to avoid conflicts with other plugins and ensure it's bundled
+    // Explicitly include runtime dependencies (ensures Kotlin stdlib is bundled)
+    configurations = listOf(project.configurations.runtimeClasspath.get())
+
+    // Relocate Kotlin stdlib to avoid conflicts with other plugins
     relocate("kotlin", "com.regionrental.shaded.kotlin")
+
+    // Merge service files for proper ServiceLoader support
+    mergeServiceFiles()
 
     // Minimize JAR by removing unused classes (optional)
     // Uncomment if smaller JAR size is needed:
     // minimize()
+}
+
+// Replace the default jar with shadowJar
+tasks.jar {
+    enabled = false
 }
 
 tasks.build {
