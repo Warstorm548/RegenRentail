@@ -473,6 +473,7 @@ plugins/RegionRental/
 **Technology:**
 - Gradle 9.2.0 (Kotlin DSL)
 - Java 21
+- Kotlin 2.2.20
 - Paper API 1.21.3
 
 **Build commands:**
@@ -484,7 +485,7 @@ plugins/RegionRental/
 
 **Output:**
 ```
-build/libs/RegionRental-2.5.1.jar
+build/libs/RegionRental-2.7.0.jar
 ```
 
 ## Dependencies
@@ -492,6 +493,7 @@ build/libs/RegionRental-2.5.1.jar
 | Dependency | Version | Purpose |
 |------------|---------|---------|
 | Paper API | 1.21.3 | Server platform |
+| Kotlin | 2.2.20 | JVM language support |
 | WorldGuard | 7.0.14+ | Region management |
 | WorldEdit | 7.3.16+ | Block restoration |
 | Vault | 1.7+ | Economy integration |
@@ -530,7 +532,10 @@ See [In_Game_Testing_Checklist.md](In_Game_Testing_Checklist.md) for comprehensi
 
 See [CHANGELOG.md](CHANGELOG.md) for detailed version history.
 
-**v2.5.1** - Current
+**v2.7.0** - Current
+- Kotlin migration for improved code quality and type safety
+- Sealed classes for type-safe command handling
+- Extension functions for cleaner APIs
 - Performance optimizations (dirty tracking, lazy loading, O(1) lookups)
 - Region grouping system for mass configuration
 - Multi-world support for rental regions

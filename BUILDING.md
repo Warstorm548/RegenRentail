@@ -5,7 +5,8 @@ This guide covers how to build the RegionRental plugin from source.
 ## Prerequisites
 
 1. **Java 21+** (OpenJDK recommended) - Required for compilation and runtime
-2. **Gradle 9.2.0** - Included via Gradle Wrapper (no installation needed)
+2. **Kotlin 2.2.20** - Included via Gradle plugin (no installation needed)
+3. **Gradle 9.2.0** - Included via Gradle Wrapper (no installation needed)
 
 ## Build the Plugin
 
@@ -29,7 +30,7 @@ Or build directly with Gradle:
 
 4. **Find your JAR file:**
 ```
-build/libs/RegionRental-2.6.0.jar
+build/libs/RegionRental-2.8.0.jar
 ```
 
 ## Development Commands
@@ -39,7 +40,8 @@ build/libs/RegionRental-2.6.0.jar
 ./gradlew clean
 
 # Compile only (no packaging)
-./gradlew compileJava
+./gradlew compileJava      # Java only
+./gradlew compileKotlin    # Kotlin only
 
 # Run shadowJar task
 ./gradlew shadowJar
@@ -63,9 +65,37 @@ RegionRental/
 ├── README.md                        # This file
 ├── CLAUDE.md                        # Developer documentation
 └── src/main/
+    ├── kotlin/com/regionrental/    # Kotlin source
+    │   ├── extensions/              # Extension functions (4 files)
+    │   │   ├── StringExtensions.kt      # color(), withPlaceholders()
+    │   │   ├── LocationExtensions.kt    # Location.toKey(), String.toLocation()
+    │   │   ├── PlayerExtensions.kt      # asPlayerOrNull(), requirePermission()
+    │   │   └── CollectionExtensions.kt  # Filtering and mapping helpers
+    │   ├── util/
+    │   │   └── TimeUtils.kt             # Duration formatting, Int.days extensions
+    │   ├── models/                  # Data models (4 files)
+    │   │   ├── RefundRecord.kt          # Refund transaction audit trail
+    │   │   ├── ParsedRegion.kt          # World:region parsing
+    │   │   ├── StorageGUISession.kt     # Paginated GUI session
+    │   │   └── SupportBlockData.kt      # Sign support block data
+    │   ├── config/                  # Configuration classes (7 files)
+    │   │   ├── ConfigManager.kt         # Main configuration manager
+    │   │   ├── RegionsConfig.kt         # Per-region overrides
+    │   │   ├── SignsConfig.kt           # Sign locations and support blocks
+    │   │   ├── GroupsConfig.kt          # Region groups
+    │   │   ├── StorageConfig.kt         # Item storage for expired rentals
+    │   │   ├── RegionOverride.kt        # Type-safe override container
+    │   │   └── MessageFormatter.kt      # DSL for message formatting
+    │   ├── commands/                # Command classes (2 files)
+    │   │   ├── OverrideCommand.kt       # Per-region overrides (sealed classes)
+    │   │   └── DurationAction.kt        # Duration command actions
+    │   └── managers/                # Manager classes (3 files)
+    │       ├── Rental.kt                    # Rental data class
+    │       ├── TeleportCooldownManager.kt   # Teleport cooldown tracking
+    │       └── ManagerExtensions.kt         # Collection extensions for rentals
     ├── java/com/regionrental/
     │   ├── RegionRental.java        # Main plugin class
-    │   ├── commands/                # All command handlers (17 classes)
+    │   ├── commands/                # Command handlers (16 Java classes)
     │   │   ├── RRCommand.java
     │   │   ├── ReloadCommand.java
     │   │   ├── CreateSignCommand.java
@@ -76,45 +106,40 @@ RegionRental/
     │   │   ├── ListCommand.java
     │   │   ├── ExtendCommand.java
     │   │   ├── DurationCommand.java
-    │   │   ├── RefundHistoryCommand.java  # View refund transaction history
-    │   │   ├── VerifyCommand.java         # Verify region configurations
-    │   │   ├── OverrideCommand.java       # Set per-region custom overrides
-    │   │   ├── GroupCommand.java          # Manage region groups
-    │   │   ├── MemberCommand.java         # Add/remove rental members
-    │   │   ├── MembersCommand.java        # List rental members
-    │   │   └── TpCommand.java             # Teleport to rented regions
-    │   ├── config/                  # Configuration managers (5 classes)
-    │   │   ├── ConfigManager.java
-    │   │   ├── RegionsConfig.java   # Per-region settings manager
-    │   │   ├── SignsConfig.java
-    │   │   ├── StorageConfig.java
-    │   │   └── GroupsConfig.java    # Region groups manager
+    │   │   ├── RefundHistoryCommand.java
+    │   │   ├── VerifyCommand.java
+    │   │   ├── GroupCommand.java
+    │   │   ├── MemberCommand.java
+    │   │   ├── MembersCommand.java
+    │   │   └── TpCommand.java
+    │   ├── config/                  # Configuration managers (0 Java - migrated to Kotlin)
     │   ├── listeners/               # Event listeners (2 classes)
     │   │   ├── SignInteractListener.java
-    │   │   └── GroupChatListener.java  # Chat prompts for group commands
-    │   ├── managers/                # Core managers (9 classes)
-    │   │   ├── Rental.java          # Data model
+    │   │   └── GroupChatListener.java
+    │   ├── managers/                # Core managers (7 Java classes)
     │   │   ├── RentalManager.java
     │   │   ├── SignManager.java
     │   │   ├── StorageManager.java
     │   │   ├── ExpirationManager.java
-    │   │   ├── EzChestShopManager.java  # EzChestShop integration
-    │   │   ├── TeleportCooldownManager.java  # Teleport cooldown tracking
+    │   │   ├── EzChestShopManager.java
     │   │   ├── WorldGuardManager.java
     │   │   └── WorldEditManager.java
-    │   └── util/                    # Utility classes (1 class)
-    │       └── WorldRegionParser.java   # Composite key parsing (world:region)
+    │   └── util/
+    │       └── WorldRegionParser.java
     └── resources/
         ├── plugin.yml               # Plugin metadata
         └── config.yml               # Default configuration
 ```
 
-**Total: 35 Java classes + 2 resource files**
+**Total: 26 Java classes + 21 Kotlin files + 2 resource files**
+
+**Note:** The codebase uses both Java and Kotlin with full interoperability. New features should be written in Kotlin.
 
 ## Dependencies
 
 ### Compile-time Dependencies
 - Paper API 1.21.3-R0.1-SNAPSHOT
+- Kotlin Standard Library 2.2.20
 - Vault API 1.7
 - WorldGuard 7.0.14
 - WorldEdit 7.3.16 (Bukkit and Core)

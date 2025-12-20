@@ -5,6 +5,112 @@ All notable changes to RegionRental will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.8.0] - Tier 1 Kotlin Migration
+
+Continues the Kotlin migration by converting all configuration managers and the teleport cooldown manager.
+
+### Kotlin Conversions (Tier 1)
+
+- **ConfigManager.kt** - Migrated from Java (394 lines → 387 lines)
+  - Properties with private setters replacing getter methods
+  - Kotlin string templates for config paths
+
+- **TeleportCooldownManager.kt** - Migrated from Java (129 lines → 81 lines, 37% reduction)
+  - `mutableMapOf<UUID, Long>()` for cooldowns
+  - Simplified with Elvis operator and safe calls
+
+- **SignsConfig.kt** - Migrated from Java (367 lines → 301 lines, 18% reduction)
+  - String templates for YAML paths
+  - Safe operators for null handling
+
+- **RegionsConfig.kt** - Migrated from Java (818 lines → 509 lines, 38% reduction)
+  - Properties for query methods (`allRegions`, `allGroupsWithOverrides`)
+  - Functional operations (`filter`, `associateWith`)
+
+- **GroupsConfig.kt** - Migrated from Java (442 lines → 276 lines, 38% reduction)
+  - Companion object for constants
+  - Kotlin `Regex` instead of `Pattern`
+  - `when` expression for validation
+
+- **StorageConfig.kt** - Migrated from Java (208 lines → 169 lines, 19% reduction)
+  - Safe cast with `@Suppress` for generic lists
+  - `emptyList()` instead of `ArrayList()`
+
+### Summary
+
+- **6 files migrated** from Java to Kotlin
+- **Total reduction:** 2,358 lines → 1,723 lines (27% reduction)
+- Full Java interoperability maintained via generated getters
+
+---
+
+## [2.7.0] - Kotlin Migration
+
+Major update introducing Kotlin for improved code quality, type safety, and reduced boilerplate.
+
+### Kotlin Conversions
+
+- **Rental.kt** - Full conversion from Java (300 lines → ~170 lines)
+  - Data class with computed properties replacing 10+ getter methods
+  - Factory methods (`Rental.create()`, `Rental.fromStorage()`) replacing 5 Java constructors
+  - `@JvmStatic` and `@JvmOverloads` annotations for full Java interoperability
+  - Nested `RefundRecord` data class for audit trail
+
+- **OverrideCommand.kt** - Full rewrite with sealed classes (863 lines → ~350 lines, 60% reduction)
+  - `OverrideSetting<T>` sealed class with 6 type-safe setting variants
+  - Single generic handler replaces 6 nearly identical Java methods
+  - `ParseResult<T>` sealed class for type-safe parsing results
+
+### New Kotlin Files
+
+**Extensions (5 files):**
+- `StringExtensions.kt` - `color()`, `withPlaceholders()`, `parseCompositeKey()`
+- `LocationExtensions.kt` - `Location.toKey()`, `String.toLocation()`, `String.toWorld()`
+- `PlayerExtensions.kt` - `asPlayerOrNull()`, `requirePlayer()`, `requirePermission()`
+- `CollectionExtensions.kt` - Filtering and mapping helpers
+
+**Utilities:**
+- `TimeUtils.kt` - Duration formatting, time parsing, `Int.days`/`Int.hours` extensions
+
+**Data Models (4 files):**
+- `RefundRecord.kt` - Standalone refund transaction model
+- `ParsedRegion.kt` - World:region parsing with composite key support
+- `StorageGUISession.kt` - Paginated GUI session for item retrieval
+- `SupportBlockData.kt` - Sign support block capture/restore
+
+**Configuration (2 files):**
+- `RegionOverride.kt` - Type-safe override container with `merge()` and `withDefaults()`
+- `MessageFormatter.kt` - DSL for message formatting with fluent API
+
+**Commands:**
+- `DurationAction.kt` - Sealed class for duration command actions
+
+**Manager Extensions:**
+- `ManagerExtensions.kt` - Collection extensions for rental operations
+
+### Deleted Java Files
+
+- `src/main/java/com/regionrental/managers/Rental.java` (replaced by Kotlin)
+- `src/main/java/com/regionrental/commands/OverrideCommand.java` (replaced by Kotlin)
+
+### Technical Details
+
+- **15 Kotlin files created** across extensions, models, config, commands, and managers
+- **2 Java files replaced** (Rental.java, OverrideCommand.java)
+- **~1,100 lines of Java removed**, ~800 lines of Kotlin added (net reduction)
+- **Full Java interoperability** maintained via `@JvmStatic`, `@JvmOverloads`, `@JvmField`
+- **Zero breaking changes** to API or data formats
+- **Build verified** on GitHub Actions
+
+### Migration Notes
+
+- Java code calling `new Rental(...)` should use `Rental.create()` or `Rental.fromStorage()`
+- `rental.getExtensionCost()` → `rental.extensionCost` (Kotlin property)
+- `rental.isExpired()` → `rental.isExpired` (Kotlin property)
+- All existing data files (rentals.yml, etc.) remain compatible
+
+---
+
 ## [2.6.0] - Schematic Format Migration
 
 Major update fixing critical WorldEdit schematic serialization bug and migrating to industry-standard Sponge format.
