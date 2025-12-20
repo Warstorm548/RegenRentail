@@ -30,7 +30,7 @@ Or build directly with Gradle:
 
 4. **Find your JAR file:**
 ```
-build/libs/RegionRental-2.7.0.jar
+build/libs/RegionRental-2.8.0.jar
 ```
 
 ## Development Commands
@@ -78,15 +78,21 @@ RegionRental/
     │   │   ├── ParsedRegion.kt          # World:region parsing
     │   │   ├── StorageGUISession.kt     # Paginated GUI session
     │   │   └── SupportBlockData.kt      # Sign support block data
-    │   ├── config/                  # Configuration classes (2 files)
+    │   ├── config/                  # Configuration classes (7 files)
+    │   │   ├── ConfigManager.kt         # Main configuration manager
+    │   │   ├── RegionsConfig.kt         # Per-region overrides
+    │   │   ├── SignsConfig.kt           # Sign locations and support blocks
+    │   │   ├── GroupsConfig.kt          # Region groups
+    │   │   ├── StorageConfig.kt         # Item storage for expired rentals
     │   │   ├── RegionOverride.kt        # Type-safe override container
     │   │   └── MessageFormatter.kt      # DSL for message formatting
     │   ├── commands/                # Command classes (2 files)
     │   │   ├── OverrideCommand.kt       # Per-region overrides (sealed classes)
     │   │   └── DurationAction.kt        # Duration command actions
-    │   └── managers/                # Manager extensions (2 files)
-    │       ├── Rental.kt                # Rental data class
-    │       └── ManagerExtensions.kt     # Collection extensions for rentals
+    │   └── managers/                # Manager classes (3 files)
+    │       ├── Rental.kt                    # Rental data class
+    │       ├── TeleportCooldownManager.kt   # Teleport cooldown tracking
+    │       └── ManagerExtensions.kt         # Collection extensions for rentals
     ├── java/com/regionrental/
     │   ├── RegionRental.java        # Main plugin class
     │   ├── commands/                # Command handlers (16 Java classes)
@@ -106,22 +112,16 @@ RegionRental/
     │   │   ├── MemberCommand.java
     │   │   ├── MembersCommand.java
     │   │   └── TpCommand.java
-    │   ├── config/                  # Configuration managers (5 classes)
-    │   │   ├── ConfigManager.java
-    │   │   ├── RegionsConfig.java
-    │   │   ├── SignsConfig.java
-    │   │   ├── StorageConfig.java
-    │   │   └── GroupsConfig.java
+    │   ├── config/                  # Configuration managers (0 Java - migrated to Kotlin)
     │   ├── listeners/               # Event listeners (2 classes)
     │   │   ├── SignInteractListener.java
     │   │   └── GroupChatListener.java
-    │   ├── managers/                # Core managers (8 Java classes)
+    │   ├── managers/                # Core managers (7 Java classes)
     │   │   ├── RentalManager.java
     │   │   ├── SignManager.java
     │   │   ├── StorageManager.java
     │   │   ├── ExpirationManager.java
     │   │   ├── EzChestShopManager.java
-    │   │   ├── TeleportCooldownManager.java
     │   │   ├── WorldGuardManager.java
     │   │   └── WorldEditManager.java
     │   └── util/
@@ -131,7 +131,7 @@ RegionRental/
         └── config.yml               # Default configuration
 ```
 
-**Total: 32 Java classes + 15 Kotlin files + 2 resource files**
+**Total: 26 Java classes + 21 Kotlin files + 2 resource files**
 
 **Note:** The codebase uses both Java and Kotlin with full interoperability. New features should be written in Kotlin.
 

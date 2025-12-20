@@ -5,6 +5,45 @@ All notable changes to RegionRental will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.8.0] - Tier 1 Kotlin Migration
+
+Continues the Kotlin migration by converting all configuration managers and the teleport cooldown manager.
+
+### Kotlin Conversions (Tier 1)
+
+- **ConfigManager.kt** - Migrated from Java (394 lines → 387 lines)
+  - Properties with private setters replacing getter methods
+  - Kotlin string templates for config paths
+
+- **TeleportCooldownManager.kt** - Migrated from Java (129 lines → 81 lines, 37% reduction)
+  - `mutableMapOf<UUID, Long>()` for cooldowns
+  - Simplified with Elvis operator and safe calls
+
+- **SignsConfig.kt** - Migrated from Java (367 lines → 301 lines, 18% reduction)
+  - String templates for YAML paths
+  - Safe operators for null handling
+
+- **RegionsConfig.kt** - Migrated from Java (818 lines → 509 lines, 38% reduction)
+  - Properties for query methods (`allRegions`, `allGroupsWithOverrides`)
+  - Functional operations (`filter`, `associateWith`)
+
+- **GroupsConfig.kt** - Migrated from Java (442 lines → 276 lines, 38% reduction)
+  - Companion object for constants
+  - Kotlin `Regex` instead of `Pattern`
+  - `when` expression for validation
+
+- **StorageConfig.kt** - Migrated from Java (208 lines → 169 lines, 19% reduction)
+  - Safe cast with `@Suppress` for generic lists
+  - `emptyList()` instead of `ArrayList()`
+
+### Summary
+
+- **6 files migrated** from Java to Kotlin
+- **Total reduction:** 2,358 lines → 1,723 lines (27% reduction)
+- Full Java interoperability maintained via generated getters
+
+---
+
 ## [2.7.0] - Kotlin Migration
 
 Major update introducing Kotlin for improved code quality, type safety, and reduced boilerplate.
