@@ -308,8 +308,8 @@ class RegionsConfig(private val plugin: RegionRental) {
         return section.getKeys(false).associateWith { section.get(it)!! }
     }
 
-    fun getAllRegions(): Set<String> =
-        config.getConfigurationSection("regions")?.getKeys(false) ?: emptySet()
+    val allRegions: Set<String>
+        get() = config.getConfigurationSection("regions")?.getKeys(false) ?: emptySet()
 
     fun migrateFromMainConfig(mainConfig: FileConfiguration) {
         val regionsSection = mainConfig.getConfigurationSection("regions") ?: return
@@ -488,8 +488,8 @@ class RegionsConfig(private val plugin: RegionRental) {
         }
     }
 
-    fun getAllGroupsWithOverrides(): Set<String> =
-        config.getConfigurationSection("groups")?.getKeys(false) ?: emptySet()
+    val allGroupsWithOverrides: Set<String>
+        get() = config.getConfigurationSection("groups")?.getKeys(false) ?: emptySet()
 
     fun hasRegionOverrides(compositeKey: String): Boolean {
         val path = "regions.$compositeKey"
