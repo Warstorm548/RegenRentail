@@ -37,6 +37,25 @@ jobs:
       run: ./gradlew test
       continue-on-error: true
 
+    - name: Verify JAR contains Kotlin runtime
+      run: |
+        JAR_FILE=$(ls build/libs/RegionRental-*.jar | head -1)
+        echo "Checking JAR: $JAR_FILE"
+
+        # Check JAR size (should be >1MB with Kotlin shaded)
+        JAR_SIZE=$(stat -f%z "$JAR_FILE" 2>/dev/null || stat -c%s "$JAR_FILE")
+        echo "JAR size: $JAR_SIZE bytes"
+
+        # Verify Kotlin classes are present (shaded location)
+        if unzip -l "$JAR_FILE" | grep -q "com/regionrental/shaded/kotlin"; then
+          echo "✓ Kotlin stdlib is properly shaded"
+        else
+          echo "✗ ERROR: Kotlin stdlib not found in JAR!"
+          echo "Listing JAR contents for debugging:"
+          unzip -l "$JAR_FILE" | head -50
+          exit 1
+        fi
+
     - name: Upload build artifacts
       uses: actions/upload-artifact@v4
       if: success()
@@ -53,6 +72,11 @@ jobs:
         echo "- **Java Version:** OpenJDK 21" >> $GITHUB_STEP_SUMMARY
         echo "- **Gradle Version:** 9.2.0" >> $GITHUB_STEP_SUMMARY
         echo "- **Build Status:** ${{ job.status }}" >> $GITHUB_STEP_SUMMARY
-        if [ -f build/libs/*.jar ]; then
+
+        JAR_FILE=$(ls build/libs/RegionRental-*.jar 2>/dev/null | head -1)
+        if [ -n "$JAR_FILE" ]; then
+          JAR_SIZE=$(stat -c%s "$JAR_FILE" 2>/dev/null || stat -f%z "$JAR_FILE")
+          JAR_SIZE_MB=$(echo "scale=2; $JAR_SIZE / 1048576" | bc)
+          echo "- **JAR Size:** ${JAR_SIZE_MB} MB" >> $GITHUB_STEP_SUMMARY
           echo "- **Artifacts:** Built successfully" >> $GITHUB_STEP_SUMMARY
         fi

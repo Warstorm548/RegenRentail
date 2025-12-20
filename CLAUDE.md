@@ -8,6 +8,7 @@ RegionRental is a Minecraft Paper/Spigot plugin (1.21+) that implements a comple
 
 **Technology Stack:**
 - Java 21+ (OpenJDK 21)
+- Kotlin 2.2.20 (JVM)
 - Paper API 1.21.3
 - Gradle 9.2.0 (Kotlin DSL)
 - WorldGuard 7.0.14 (region management)
@@ -26,7 +27,7 @@ RegionRental is a Minecraft Paper/Spigot plugin (1.21+) that implements a comple
 ./gradlew clean build
 
 # Output location
-build/libs/RegionRental-2.5.1.jar
+build/libs/RegionRental-2.8.2.jar
 ```
 
 ### Development Commands
@@ -35,7 +36,8 @@ build/libs/RegionRental-2.5.1.jar
 ./gradlew clean
 
 # Compile only (no packaging)
-./gradlew compileJava
+./gradlew compileJava      # Java only
+./gradlew compileKotlin    # Kotlin only
 
 # Run shadowJar task
 ./gradlew shadowJar
@@ -58,7 +60,7 @@ When updating the version, modify these files:
 - `README.md` - Version references
 - Output JAR: `build/libs/RegionRental-X.X.X.jar`
 
-**Current Version:** 2.6.0
+**Current Version:** 2.8.2
 
 ## Architecture Overview
 
@@ -228,7 +230,7 @@ When admins reset rentals, always use the refund method:
 Map<String, Object> refundDetails = rentalManager.resetRentalWithRefund(regionName);
 
 // Extension-only refund for duration reset (via /rrduration reset)
-double extensionCost = rental.getExtensionCost(); // Returns totalPaid - initialPrice
+double extensionCost = rental.getExtensionCost(); // Kotlin property: totalPaid - initialPrice
 ```
 
 ### Message Formatting
@@ -250,6 +252,57 @@ Messages are retrieved via `ConfigManager.getMessage()` which handles color code
 2. Register in `plugin.yml` under `commands:` section
 3. Add to `RegionRental.registerCommands()` method using `registerCommandWithPrefix()`
 4. Add permission node to `plugin.yml` under `permissions:`
+
+### Adding a New Kotlin Class
+1. Create `.kt` file in `src/main/kotlin/com/regionrental/` (or appropriate subdirectory)
+2. Kotlin classes can extend Java classes and implement Java interfaces
+3. Java code can call Kotlin code seamlessly (full interoperability)
+4. Use Kotlin idioms: data classes, extension functions, null safety, coroutines
+
+### Kotlin Patterns in Use
+
+**Rental Creation (Java calling Kotlin):**
+```java
+// Use factory methods instead of constructors
+Rental rental = Rental.create(regionName, worldName, playerUUID, playerName, endDate, price);
+
+// Loading from storage
+Rental rental = Rental.fromStorage(regionName, worldName, playerUUID, playerName,
+    startDate, endDate, extensionCount, totalPaid, initialPrice, totalRefunded,
+    refundHistory, members);
+```
+
+**Kotlin Properties (accessed from Java as getters):**
+```java
+rental.getCompositeKey()     // Kotlin: rental.compositeKey
+rental.isExpired()           // Kotlin: rental.isExpired
+rental.getTimeRemaining()    // Kotlin: rental.timeRemaining
+rental.getExtensionCost()    // Kotlin: rental.extensionCost
+```
+
+**Extension Functions:**
+```kotlin
+// StringExtensions.kt
+"&aHello".color()  // Translates color codes
+"Hello {name}!".withPlaceholders("name" to "Steve")
+
+// PlayerExtensions.kt
+val player = sender.asPlayerOrNull() ?: return
+sender.requirePermission("admin.reset", "No permission!")
+
+// TimeUtils.kt
+val millis = 7.days + 3.hours  // Duration extensions
+TimeUtils.formatDuration(millis)  // "7d 3h"
+```
+
+**Sealed Classes (OverrideCommand):**
+```kotlin
+sealed class OverrideSetting<T> {
+    data object Price : OverrideSetting<Double>()
+    data object Duration : OverrideSetting<Int>()
+    // ... type-safe command handling
+}
+```
 
 ### Adding a New Config Option
 1. Add default value to `src/main/resources/config.yml`
@@ -292,13 +345,24 @@ See [In_Game_Testing_Checklist.md](In_Game_Testing_Checklist.md) for comprehensi
 - `schematics/` - WorldEdit region snapshots (*.dat files)
 
 ### Source Structure
-`src/main/java/com/regionrental/` organized into:
+
+**Java source:** `src/main/java/com/regionrental/`
 - `RegionRental.java` - Main plugin class
-- `commands/` - 17 command executors
+- `commands/` - 16 command executors (Java)
 - `config/` - 5 configuration managers
 - `listeners/` - 2 event listeners
-- `managers/` - 9 business logic managers
+- `managers/` - 8 business logic managers (Java)
 - `util/` - Utility classes
+
+**Kotlin source:** `src/main/kotlin/com/regionrental/`
+- `extensions/` - String, Location, Player, Collection extensions (4 files)
+- `util/TimeUtils.kt` - Duration formatting, time parsing
+- `models/` - RefundRecord, ParsedRegion, StorageGUISession, SupportBlockData (4 files)
+- `config/` - RegionOverride, MessageFormatter (2 files)
+- `commands/` - OverrideCommand.kt, DurationAction.kt (2 files)
+- `managers/` - Rental.kt, ManagerExtensions.kt (2 files)
+
+**Total: 32 Java classes + 15 Kotlin files**
 
 ## Version History
 

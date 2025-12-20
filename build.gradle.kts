@@ -1,10 +1,11 @@
 plugins {
     java
+    kotlin("jvm") version "2.2.20"
     id("com.gradleup.shadow") version "9.2.2"
 }
 
 group = "com.regionrental"
-version = "2.6.0"
+version = "2.8.2"
 
 repositories {
     mavenCentral()
@@ -83,6 +84,9 @@ dependencies {
 
     // EzChestShop - Optional integration (runtime detection only, no compile dependency)
     // The plugin will detect and integrate with EzChestShop at runtime if installed
+
+    // Kotlin Standard Library
+    implementation(kotlin("stdlib"))
 }
 
 java {
@@ -94,6 +98,12 @@ java {
 tasks.withType<JavaCompile> {
     options.encoding = "UTF-8"
     options.release.set(21)
+}
+
+tasks.withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompile> {
+    compilerOptions {
+        jvmTarget.set(org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_21)
+    }
 }
 
 tasks.processResources {
@@ -111,9 +121,23 @@ tasks.shadowJar {
     archiveClassifier.set("")
     archiveFileName.set("${project.name}-${project.version}.jar")
 
+    // Explicitly include runtime dependencies (ensures Kotlin stdlib is bundled)
+    configurations = listOf(project.configurations.runtimeClasspath.get())
+
+    // Relocate Kotlin stdlib to avoid conflicts with other plugins
+    relocate("kotlin", "com.regionrental.shaded.kotlin")
+
+    // Merge service files for proper ServiceLoader support
+    mergeServiceFiles()
+
     // Minimize JAR by removing unused classes (optional)
     // Uncomment if smaller JAR size is needed:
     // minimize()
+}
+
+// Replace the default jar with shadowJar
+tasks.jar {
+    enabled = false
 }
 
 tasks.build {
