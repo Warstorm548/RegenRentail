@@ -60,7 +60,7 @@ When updating the version, modify these files:
 - `README.md` - Version references
 - Output JAR: `build/libs/RegionRental-X.X.X.jar`
 
-**Current Version:** 2.8.2
+**Current Version:** 2.9.0
 
 ## Architecture Overview
 
@@ -348,21 +348,19 @@ See [In_Game_Testing_Checklist.md](In_Game_Testing_Checklist.md) for comprehensi
 
 **Java source:** `src/main/java/com/regionrental/`
 - `RegionRental.java` - Main plugin class
-- `commands/` - 16 command executors (Java)
+- `commands/` - 16 command executors
 - `config/` - 5 configuration managers
 - `listeners/` - 2 event listeners
-- `managers/` - 8 business logic managers (Java)
-- `util/` - Utility classes
 
 **Kotlin source:** `src/main/kotlin/com/regionrental/`
 - `extensions/` - String, Location, Player, Collection extensions (4 files)
-- `util/TimeUtils.kt` - Duration formatting, time parsing
+- `util/` - TimeUtils.kt, WorldRegionParser.kt (2 files)
 - `models/` - RefundRecord, ParsedRegion, StorageGUISession, SupportBlockData (4 files)
 - `config/` - RegionOverride, MessageFormatter (2 files)
 - `commands/` - OverrideCommand.kt, DurationAction.kt (2 files)
-- `managers/` - Rental.kt, ManagerExtensions.kt (2 files)
+- `managers/` - All 10 manager classes including Rental, RentalManager, SignManager, etc.
 
-**Total: 32 Java classes + 15 Kotlin files**
+**Total: 19 Java classes + 29 Kotlin files**
 
 ## Version History
 
