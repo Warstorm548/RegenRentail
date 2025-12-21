@@ -2,7 +2,7 @@
 
 **Complete WorldGuard Region Rental System with Clickable Signs**
 
-Version: 2.8.2
+Version: 2.9.1
 Minecraft: Paper/Spigot 1.21+
 Languages: Java 21, Kotlin 2.2.20
 
@@ -42,7 +42,7 @@ For build instructions and project structure, see [BUILDING.md](BUILDING.md).
 
 1. **Copy the JAR to your server:**
 ```bash
-cp build/libs/RegionRental-2.8.0.jar /path/to/server/plugins/
+cp build/libs/RegionRental-2.9.1.jar /path/to/server/plugins/
 ```
 
 2. **Install required dependencies:**
@@ -225,9 +225,9 @@ plugins/RegionRental/
 ├── signs.yml           # Sign locations and support block data
 ├── storage.yml         # Stored items from expired rentals
 ├── rentals.yml         # Active rental data (runtime)
-└── schematics/         # WorldEdit region snapshots (*.dat files)
-    ├── region1.dat
-    ├── region2.dat
+└── schematics/         # WorldEdit region snapshots (*.schem files)
+    ├── region1.schem
+    ├── region2.schem
     └── ...
 ```
 

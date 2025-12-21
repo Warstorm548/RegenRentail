@@ -5,6 +5,71 @@ All notable changes to RegionRental will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.9.1] - Schematic Deletion Bug Fix
+
+### Fixed
+
+- **Schematic deletion bug in /rrremove command** - Fixed issue where schematic files were not being deleted when removing rental setup from a region. The `deleteCapture()` method now correctly uses the composite key format for schematic file lookup.
+
+---
+
+## [2.9.0] - Tier 2 Kotlin Migration
+
+Major update completing the Kotlin migration by converting all remaining manager classes and utilities to Kotlin.
+
+### Kotlin Conversions (Tier 2)
+
+**Phase 1 - Utilities:**
+- **WorldRegionParser.kt** - Migrated from Java
+  - Idiomatic Kotlin with data classes and sealed results
+  - Pattern matching for region parsing
+- **ExpirationManager.kt** - Migrated from Java
+  - Kotlin coroutine-style task scheduling
+  - Safe operators for null handling
+- **WorldGuardManager.kt** - Migrated from Java
+  - Properties for region queries
+  - Extension functions for WorldGuard API
+
+**Phase 2 - Plugin Managers:**
+- **EzChestShopManager.kt** - Migrated from Java
+  - Reflection API wrapped with Kotlin safe calls
+  - Cleaner API with extension functions
+- **SignManager.kt** - Migrated from Java
+  - Functional operations for sign updates
+  - Support block handling with sealed classes
+
+**Phase 3 - Storage Managers:**
+- **WorldEditManager.kt** - Migrated from Java
+  - Schematic operations with safe file handling
+  - LRU cache implementation in Kotlin
+- **StorageManager.kt** - Migrated from Java
+  - Container scanning with functional operations
+  - GUI session management with data classes
+
+**Phase 4 - Core Manager:**
+- **RentalManager.kt** - Migrated from Java
+  - Central rental lifecycle in idiomatic Kotlin
+  - ConcurrentHashMap with Kotlin extensions
+  - Computed properties for rental queries
+
+### Bug Fixes
+
+- **Fixed nullable World in chargeDurationAdd method** - Proper null handling for world parameter
+- **Fixed StorageGUIHolder getInventory return type** - Corrected interface implementation
+- **Fixed SignManager Kotlin compilation errors** - Resolved type mismatches
+- **Fixed ParsedRegion Java field access** - Added `@JvmField` annotations for Java interop
+- **Fixed JVM signature clash in WorldGuardManager** - Resolved overload conflicts
+- **Fixed WorldGuardManager property access** - Added proper Kotlin accessors
+
+### Technical Details
+
+- **10 manager classes migrated** from Java to Kotlin
+- **Full Java interoperability** maintained via JVM annotations
+- **Zero breaking changes** to API or data formats
+- **Build verified** with Kotlin stdlib verification in CI
+
+---
+
 ## [2.8.2] - Kotlin Runtime Fix (Complete)
 
 ### Fixed
