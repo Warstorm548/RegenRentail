@@ -91,17 +91,21 @@ class WorldGuardManager(private val plugin: RegionRental) {
     /**
      * Get all region names across all worlds for tab completion.
      */
-    fun getAllRegionNames(): Set<String> {
-        val regionNames = mutableSetOf<String>()
+    val allRegionNames: Set<String>
+        get() {
+            val regionNames = mutableSetOf<String>()
 
-        for (world in Bukkit.getWorlds()) {
-            val regionManager = WorldGuard.getInstance().platform
-                .regionContainer.get(BukkitAdapter.adapt(world))
-                ?: continue
+            for (world in Bukkit.getWorlds()) {
+                val regionManager = WorldGuard.getInstance().platform
+                    .regionContainer.get(BukkitAdapter.adapt(world))
+                    ?: continue
 
-            regionNames.addAll(regionManager.regions.keys)
+                regionNames.addAll(regionManager.regions.keys)
+            }
+
+            return regionNames
         }
 
-        return regionNames
-    }
+    // Java compatibility method
+    fun getAllRegionNames(): Set<String> = allRegionNames
 }
