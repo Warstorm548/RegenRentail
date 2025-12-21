@@ -399,7 +399,7 @@ class RentalManager(private val plugin: RegionRental) {
             return false
         }
 
-        val world = plugin.server.getWorld(rental.worldName)
+        val world = plugin.server.getWorld(rental.worldName) ?: return false
         val extensionPrice = plugin.configManager.getExtensionPrice(rental.regionName, world)
         val totalCost = extensionPrice * days
 
