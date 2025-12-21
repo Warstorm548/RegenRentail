@@ -13,29 +13,21 @@ object WorldRegionParser {
 
     /**
      * Parsed region with world context.
+     * Uses @JvmField for Java compatibility (direct field access).
      */
-    data class ParsedRegion(
-        val worldName: String,
-        val regionName: String
+    class ParsedRegion(
+        @JvmField val worldName: String,
+        @JvmField val regionName: String
     ) {
         /**
          * Get composite key in format "world:region".
          */
-        val compositeKey: String
-            get() = "$worldName:$regionName"
+        fun getCompositeKey(): String = "$worldName:$regionName"
 
         /**
          * Get the World object (may be null if world is unloaded).
          */
-        val world: World?
-            get() = Bukkit.getWorld(worldName)
-
-        // Java compatibility methods
-        @JvmName("getCompositeKeyJava")
-        fun getCompositeKey(): String = compositeKey
-
-        @JvmName("getWorldJava")
-        fun getWorld(): World? = world
+        fun getWorld(): World? = Bukkit.getWorld(worldName)
     }
 
     /**
