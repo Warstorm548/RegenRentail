@@ -34,7 +34,7 @@ class SignManager(private val plugin: RegionRental) {
      * Marks all signs as dirty for initial update or full refresh.
      */
     private fun markAllSignsDirty() {
-        val signs = plugin.signsConfig.allSigns
+        val signs = plugin.signsConfig.getAllSigns()
         dirtySigns.addAll(signs.keys)
     }
 
@@ -43,15 +43,15 @@ class SignManager(private val plugin: RegionRental) {
      * This is for backward compatibility with signs created before this feature.
      */
     private fun migrateSupportBlocks() {
-        val signs = plugin.signsConfig.allSigns
+        val signs = plugin.signsConfig.getAllSigns()
         var migratedCount = 0
 
-        for (compositeKey in signs.keys) {
+        for ((compositeKey, signLoc) in signs) {
             // Parse composite key "world:region"
             val worldName = WorldRegionParser.extractWorldName(compositeKey)
             val regionName = WorldRegionParser.extractRegionName(compositeKey)
 
-            if (worldName == null) {
+            if (worldName == null || regionName == null) {
                 plugin.logger.warning("Invalid composite key format: $compositeKey")
                 continue
             }
@@ -67,8 +67,7 @@ class SignManager(private val plugin: RegionRental) {
                 continue
             }
 
-            val signLoc = signs[compositeKey] ?: continue
-            val signBlock = signLoc.block
+            val signBlock = signLoc.getBlock()
 
             if (signBlock.state !is Sign) {
                 plugin.logger.warning("Sign for region $compositeKey no longer exists at location")
@@ -102,7 +101,7 @@ class SignManager(private val plugin: RegionRental) {
         plugin.signsConfig.addSign(regionName, location)
 
         // Detect and store support block
-        val signBlock = location.block
+        val signBlock = location.getBlock()
         val supportBlock = getSupportBlock(signBlock)
 
         if (supportBlock != null) {
@@ -168,7 +167,7 @@ class SignManager(private val plugin: RegionRental) {
 
             if (supportLoc != null && supportData != null) {
                 try {
-                    val supportBlock = supportLoc.block
+                    val supportBlock = supportLoc.getBlock()
                     val originalType = Material.valueOf(supportData["type"] ?: "")
                     val originalData = supportData["data"]
 
@@ -197,7 +196,7 @@ class SignManager(private val plugin: RegionRental) {
             }
         } else {
             // No support block data - manually break the sign
-            val block = location.block
+            val block = location.getBlock()
             if (block.state is Sign) {
                 block.type = Material.AIR
             }
@@ -213,7 +212,7 @@ class SignManager(private val plugin: RegionRental) {
     fun updateSign(regionName: String, world: World) {
         val location = plugin.signsConfig.getSignLocation(regionName, world) ?: return
 
-        val block = location.block
+        val block = location.getBlock()
 
         // Check if block is a sign
         val sign = block.state as? Sign
@@ -324,19 +323,17 @@ class SignManager(private val plugin: RegionRental) {
             return // Nothing to update
         }
 
-        val allSigns = plugin.signsConfig.allSigns
+        val allSigns = plugin.signsConfig.getAllSigns()
 
         // Update only dirty signs
         for (compositeKey in dirtySigns) {
             val location = allSigns[compositeKey] ?: continue // Sign was removed
 
             // Parse composite key "world:region"
-            val regionName = WorldRegionParser.extractRegionName(compositeKey)
-            val world = location.world
+            val regionName = WorldRegionParser.extractRegionName(compositeKey) ?: continue
+            val world = location.world ?: continue
 
-            if (world != null && regionName != null) {
-                updateSign(regionName, world)
-            }
+            updateSign(regionName, world)
         }
 
         // Clear dirty set after updating
