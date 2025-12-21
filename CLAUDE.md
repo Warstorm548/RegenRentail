@@ -60,7 +60,7 @@ When updating the version, modify these files:
 - `README.md` - Version references
 - Output JAR: `build/libs/RegionRental-X.X.X.jar`
 
-**Current Version:** 2.9.0
+**Current Version:** 2.9.1
 
 ## Architecture Overview
 

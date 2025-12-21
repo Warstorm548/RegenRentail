@@ -564,7 +564,18 @@ class StorageManager(private val plugin: RegionRental) : Listener {
             get() = maxOf(1, (items.size - 1) / ITEMS_PER_PAGE + 1)
     }
 
-    // Custom InventoryHolder for identification
+    /**
+     * Custom InventoryHolder used only as a marker/identifier for StorageManager GUI inventories.
+     *
+     * This holder is not a functional InventoryHolder implementation and its [getInventory] method
+     * must never be called directly. The Bukkit API requires an InventoryHolder implementation to
+     * provide this method with a non-null Inventory return type, but for this marker holder
+     * we intentionally do not maintain a backing inventory instance.
+     *
+     * The WRONG_NULLABILITY_FOR_JAVA_OVERRIDE suppression is used because the Java
+     * InventoryHolder interface requires this method, but this implementation deliberately
+     * never returns an Inventory and always throws instead.
+     */
     private class StorageGUIHolder(private val playerUUID: UUID) : InventoryHolder {
         @Suppress("WRONG_NULLABILITY_FOR_JAVA_OVERRIDE")
         override fun getInventory(): Inventory = throw UnsupportedOperationException("Not used")

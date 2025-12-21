@@ -172,7 +172,18 @@ class WorldEditManager(private val plugin: RegionRental) {
 
     /**
      * Checks if a region state has been captured (checks index, doesn't load from disk).
+     * World-aware version using composite key format.
      */
+    fun hasCapture(regionName: String, world: World): Boolean {
+        val compositeKey = "${world.name}:$regionName"
+        return compositeKey in knownSchematics
+    }
+
+    /**
+     * Checks if a region state has been captured (checks index, doesn't load from disk).
+     * @deprecated Use world-aware version hasCapture(regionName, world) instead.
+     */
+    @Deprecated("Use world-aware version", ReplaceWith("hasCapture(regionName, world)"))
     fun hasCapture(regionName: String): Boolean = regionName in knownSchematics
 
     /**
@@ -182,7 +193,20 @@ class WorldEditManager(private val plugin: RegionRental) {
 
     /**
      * Deletes a captured region state from cache, index, and disk.
+     * World-aware version using composite key format.
      */
+    fun deleteCapture(regionName: String, world: World) {
+        val compositeKey = "${world.name}:$regionName"
+        clipboardCache.remove(compositeKey)
+        knownSchematics.remove(compositeKey)
+        deleteSchematic(compositeKey)
+    }
+
+    /**
+     * Deletes a captured region state from cache, index, and disk.
+     * @deprecated Use world-aware version deleteCapture(regionName, world) instead.
+     */
+    @Deprecated("Use world-aware version", ReplaceWith("deleteCapture(regionName, world)"))
     fun deleteCapture(regionName: String) {
         clipboardCache.remove(regionName)
         knownSchematics.remove(regionName)
