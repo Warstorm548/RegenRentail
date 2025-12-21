@@ -105,7 +105,4 @@ class WorldGuardManager(private val plugin: RegionRental) {
 
             return regionNames
         }
-
-    // Java compatibility method
-    fun getAllRegionNames(): Set<String> = allRegionNames
 }
