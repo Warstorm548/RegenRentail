@@ -566,7 +566,8 @@ class StorageManager(private val plugin: RegionRental) : Listener {
 
     // Custom InventoryHolder for identification
     private class StorageGUIHolder(private val playerUUID: UUID) : InventoryHolder {
-        override fun getInventory(): Inventory? = null
+        @Suppress("WRONG_NULLABILITY_FOR_JAVA_OVERRIDE")
+        override fun getInventory(): Inventory = throw UnsupportedOperationException("Not used")
 
         fun getPlayerUUID(): UUID = playerUUID
     }
