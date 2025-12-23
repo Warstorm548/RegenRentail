@@ -5,6 +5,35 @@ All notable changes to RegionRental will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.9.2] - Tier 1 Command Kotlin Migration
+
+Internal refactoring: Migrated the three largest command classes from Java to Kotlin.
+
+### Kotlin Conversions
+
+- **DurationCommand.kt** - Migrated from Java (439 → 329 lines, 25% reduction)
+  - Leverages existing DurationAction/DurationResult sealed classes
+  - When expressions for action handling
+  - TimeUtils integration for duration parsing
+
+- **GroupCommand.kt** - Migrated from Java (777 → 599 lines, 23% reduction)
+  - Data classes for PendingGroupAction and ParseResult
+  - Collection functions for region parsing
+  - Simplified tab completion with caching
+
+- **TpCommand.kt** - Migrated from Java (463 → 310 lines, 33% reduction)
+  - Smart casts for block data types
+  - Companion object with material sets for block checks
+  - Streamlined 3D safe location algorithm
+
+### Technical Notes
+
+- No user-facing changes - all commands work identically
+- Total line reduction: ~26% across migrated commands
+- Improved type safety and null handling
+
+---
+
 ## [2.9.1] - Schematic Deletion Bug Fix
 
 ### Fixed
