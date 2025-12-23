@@ -8,20 +8,10 @@ on:
       - 'docs/**'
       - '.gitignore'
       - 'LICENSE'
-  pull_request:
-    branches: [ "main" ]
-    types: [ closed ]
-    paths-ignore:
-      - '**.md'
-      - 'docs/**'
-      - '.gitignore'
-      - 'LICENSE'
 
 jobs:
   publish:
     runs-on: ubuntu-latest
-    # Run on push OR on merged PR (not just closed)
-    if: github.event_name == 'push' || (github.event_name == 'pull_request' && github.event.pull_request.merged == true)
 
     steps:
     - name: Checkout repository
@@ -71,8 +61,6 @@ jobs:
           purpur
 
         game-versions: |
-          1.21
-          1.21.1
-          1.21.3
+          1.21.x
 
         changelog-file: CHANGELOG.md
