@@ -202,7 +202,7 @@ class GroupCommand(private val plugin: RegionRental) : CommandExecutor, TabCompl
             sender.sendMessage("${ChatColor.GREEN}  $groupName${ChatColor.GRAY} ($size regions)")
         }
 
-        val stats = plugin.groupsConfig.statistics
+        val stats = plugin.groupsConfig.getStatistics()
         val totalGroups = stats["group_count"] as Int
         val totalRegions = stats["total_regions"] as Int
 
