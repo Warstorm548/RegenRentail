@@ -43,12 +43,15 @@ class DurationCommand(private val plugin: RegionRental) : CommandExecutor, TabCo
             return true
         }
 
-        val world = parsed.world
+        val world = parsed.getWorld() ?: run {
+            sender.sendMessage("${ChatColor.RED}World '${parsed.worldName}' is not loaded!")
+            return true
+        }
         val regionName = parsed.regionName
 
         // Check if region is rented
         val rental = plugin.rentalManager.getRental(regionName, world) ?: run {
-            sender.sendMessage("${ChatColor.RED}Region ${parsed.compositeKey} is not currently rented!")
+            sender.sendMessage("${ChatColor.RED}Region ${parsed.getCompositeKey()} is not currently rented!")
             return true
         }
 
