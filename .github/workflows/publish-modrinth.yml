@@ -42,6 +42,20 @@ jobs:
         echo "version=$VERSION" >> $GITHUB_OUTPUT
         echo "Extracted version: $VERSION"
 
+    - name: Extract changelog for current version
+      id: changelog
+      run: |
+        VERSION="${{ steps.version.outputs.version }}"
+        echo "Extracting changelog for version $VERSION"
+
+        # Extract section between ## [VERSION] and next ---
+        CHANGELOG=$(sed -n "/^## \[$VERSION\]/,/^---$/p" CHANGELOG.md | sed '1d;$d')
+
+        # Write to file for mc-publish
+        echo "$CHANGELOG" > RELEASE_NOTES.md
+        echo "Extracted changelog:"
+        cat RELEASE_NOTES.md
+
     - name: Publish to Modrinth
       uses: Kir-Antipov/mc-publish@v3.3
       with:
@@ -63,4 +77,4 @@ jobs:
         game-versions: |
           1.21.x
 
-        changelog-file: CHANGELOG.md
+        changelog-file: RELEASE_NOTES.md
