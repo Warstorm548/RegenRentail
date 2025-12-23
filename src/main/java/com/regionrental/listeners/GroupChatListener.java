@@ -2,6 +2,7 @@ package com.regionrental.listeners;
 
 import com.regionrental.RegionRental;
 import com.regionrental.commands.GroupCommand;
+import com.regionrental.commands.PendingGroupAction;
 import org.bukkit.ChatColor;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
@@ -31,14 +32,14 @@ public class GroupChatListener implements Listener {
         UUID playerUUID = player.getUniqueId();
 
         // Check if player has a pending group action
-        GroupCommand.PendingGroupAction pendingAction = groupCommand.getPendingAction(playerUUID);
+        PendingGroupAction pendingAction = groupCommand.getPendingAction(playerUUID);
         if (pendingAction == null) {
             return;  // No pending action, let chat proceed normally
         }
 
         // Check if action has expired (60 second timeout)
         long currentTime = System.currentTimeMillis();
-        if (currentTime - pendingAction.timestamp > GroupCommand.PENDING_TIMEOUT) {
+        if (currentTime - pendingAction.getTimestamp() > GroupCommand.PENDING_TIMEOUT) {
             groupCommand.cancelPendingAction(playerUUID);
             player.sendMessage(ChatColor.RED + "Group action timed out. Please try again.");
             event.setCancelled(true);
@@ -67,8 +68,8 @@ public class GroupChatListener implements Listener {
         }
 
         // Process the action based on type
-        String action = pendingAction.action;
-        String groupName = pendingAction.groupName;
+        String action = pendingAction.getAction();
+        String groupName = pendingAction.getGroupName();
 
         // Remove pending action before processing (prevents duplicate processing)
         groupCommand.cancelPendingAction(playerUUID);
