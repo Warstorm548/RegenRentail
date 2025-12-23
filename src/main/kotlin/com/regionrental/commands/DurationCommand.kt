@@ -270,7 +270,6 @@ class DurationCommand(private val plugin: RegionRental) : CommandExecutor, TabCo
             .replace(Regex("(\\d+)d\\b"), "$1 days")
             .replace(Regex("(\\d+)h\\b"), "$1 hours")
             .replace(Regex("(\\d+)m\\b"), "$1 minutes")
-            .replace(Regex("(\\d+)s\\b"), "$1 seconds")
 
         val matcher = TIME_PATTERN.matcher(normalized)
 
@@ -282,7 +281,6 @@ class DurationCommand(private val plugin: RegionRental) : CommandExecutor, TabCo
                 unit.startsWith("day") -> amount * TimeUtils.DAY_MS
                 unit.startsWith("hour") || unit.startsWith("hr") -> amount * TimeUtils.HOUR_MS
                 unit.startsWith("minute") || unit.startsWith("min") -> amount * TimeUtils.MINUTE_MS
-                unit.startsWith("second") || unit.startsWith("sec") -> amount * TimeUtils.SECOND_MS
                 else -> 0L
             }
         }

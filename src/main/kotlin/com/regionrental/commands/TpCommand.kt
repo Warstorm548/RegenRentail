@@ -25,7 +25,7 @@ class TpCommand(private val plugin: RegionRental) : CommandExecutor, TabComplete
             Material.SWEET_BERRY_BUSH, Material.POWDER_SNOW
         )
 
-        private val PASSABLE_MATERIALS = setOf(Material.WATER, Material.LAVA, Material.SNOW)
+        private val PASSABLE_MATERIALS = setOf(Material.WATER, Material.SNOW)
 
         private val PASSABLE_PATTERNS = listOf(
             "SIGN", "TORCH", "FLOWER", "GRASS", "TALL_GRASS", "SEAGRASS",

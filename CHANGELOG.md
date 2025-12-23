@@ -11,12 +11,12 @@ Internal refactoring: Migrated the three largest command classes from Java to Ko
 
 ### Kotlin Conversions
 
-- **DurationCommand.kt** - Migrated from Java (439 → ~270 lines, 39% reduction)
+- **DurationCommand.kt** - Migrated from Java (439 → 329 lines, 25% reduction)
   - Leverages existing DurationAction/DurationResult sealed classes
   - When expressions for action handling
   - TimeUtils integration for duration parsing
 
-- **GroupCommand.kt** - Migrated from Java (777 → ~480 lines, 38% reduction)
+- **GroupCommand.kt** - Migrated from Java (777 → 599 lines, 23% reduction)
   - Data classes for PendingGroupAction and ParseResult
   - Collection functions for region parsing
   - Simplified tab completion with caching
@@ -29,7 +29,7 @@ Internal refactoring: Migrated the three largest command classes from Java to Ko
 ### Technical Notes
 
 - No user-facing changes - all commands work identically
-- Total line reduction: ~37% across migrated commands
+- Total line reduction: ~26% across migrated commands
 - Improved type safety and null handling
 
 ---

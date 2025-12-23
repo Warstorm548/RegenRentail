@@ -593,7 +593,7 @@ data class PendingGroupAction(
     val timestamp: Long = System.currentTimeMillis()
 )
 
-data class ParseResult(
+internal data class ParseResult(
     val validRegions: List<String>,
     val errors: List<String>
 )
