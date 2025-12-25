@@ -1,9 +1,9 @@
 #!/bin/bash
 
-# RegionRental Build Script
+# ZoneRental Build Script
 
 echo "========================================="
-echo "Building RegionRental Plugin v1.0.0"
+echo "Building ZoneRental Plugin v3.0.0"
 echo "========================================="
 
 # Clean previous builds
@@ -15,12 +15,12 @@ echo "Building plugin..."
 ./gradlew build
 
 # Check if build was successful
-if [ -f "build/libs/RegionRental-1.0.0.jar" ]; then
+if [ -f "build/libs/ZoneRental-3.0.0.jar" ]; then
     echo "========================================="
     echo "Build SUCCESS!"
-    echo "Plugin JAR: build/libs/RegionRental-1.0.0.jar"
+    echo "Plugin JAR: build/libs/ZoneRental-3.0.0.jar"
     echo "========================================="
-    ls -lh build/libs/RegionRental-1.0.0.jar
+    ls -lh build/libs/ZoneRental-3.0.0.jar
 else
     echo "========================================="
     echo "Build FAILED!"

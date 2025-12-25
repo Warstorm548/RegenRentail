@@ -1,0 +1,132 @@
+package com.zonerental.commands;
+
+import com.zonerental.ZoneRental;
+import com.zonerental.managers.Rental;
+import com.zonerental.util.WorldRegionParser;
+import org.bukkit.ChatColor;
+import org.bukkit.World;
+import org.bukkit.command.Command;
+import org.bukkit.command.CommandExecutor;
+import org.bukkit.command.CommandSender;
+
+import java.util.Map;
+
+/**
+ * Command to completely remove ZoneRental setup from a region
+ * This removes signs, schematics, and configuration data
+ * Useful when a region needs to be repurposed or is no longer needed for rentals
+ */
+public class RemoveCommand implements CommandExecutor {
+
+    private final ZoneRental plugin;
+
+    public RemoveCommand(ZoneRental plugin) {
+        this.plugin = plugin;
+    }
+
+    @Override
+    public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
+        if (!sender.hasPermission("zonerental.admin.remove")) {
+            sender.sendMessage(plugin.getConfigManager().getMessage("no-permission"));
+            return true;
+        }
+
+        if (args.length < 1) {
+            sender.sendMessage(ChatColor.RED + "Usage: /zrremove <world:region>");
+            sender.sendMessage(ChatColor.YELLOW + "Example: /zrremove world:shop1");
+            sender.sendMessage(ChatColor.YELLOW + "This will completely remove ZoneRental setup from the region.");
+            sender.sendMessage(ChatColor.YELLOW + "If the region is currently rented, the rental will be reset with full refund.");
+            return true;
+        }
+
+        // Parse region argument with world inference
+        WorldRegionParser.ParsedRegion parsed = WorldRegionParser.parse(args[0], sender);
+        if (parsed == null) {
+            sender.sendMessage(ChatColor.RED + "Invalid format! Console must use world:region format (e.g., world:shop1)");
+            return true;
+        }
+
+        World world = parsed.getWorld();
+        String regionName = parsed.regionName;
+
+        // Check if WorldGuard region exists
+        if (!plugin.getWorldGuardManager().regionExists(regionName, world)) {
+            sender.sendMessage(plugin.getConfigManager().getMessage("region-not-found",
+                "{region}", parsed.getCompositeKey()));
+            return true;
+        }
+
+        // Check if region has an active rental
+        Rental rental = plugin.getRentalManager().getRental(regionName, world);
+        if (rental != null) {
+            // Reset the rental with net refund first (prevents double-refunds)
+            Map<String, Object> refundDetails = plugin.getRentalManager().resetRentalWithRefund(regionName, world);
+
+            if (refundDetails != null) {
+                String playerName = (String) refundDetails.get("playerName");
+                double refundAmount = (double) refundDetails.get("refundAmount");
+                double totalPaid = (double) refundDetails.get("totalPaid");
+                double alreadyRefunded = (double) refundDetails.get("alreadyRefunded");
+
+                String formattedAmount = String.format(plugin.getConfigManager().getCurrencyFormat(), refundAmount);
+                String formattedTotal = String.format(plugin.getConfigManager().getCurrencyFormat(), totalPaid);
+                String formattedAlready = String.format(plugin.getConfigManager().getCurrencyFormat(), alreadyRefunded);
+
+                sender.sendMessage(ChatColor.YELLOW + "Active rental found. Player " + playerName +
+                        " has been refunded " + formattedAmount);
+
+                // Show refund breakdown if any previous refunds exist
+                if (alreadyRefunded > 0) {
+                    sender.sendMessage(ChatColor.GRAY + "  Total paid: " + ChatColor.YELLOW + formattedTotal);
+                    sender.sendMessage(ChatColor.GRAY + "  Already refunded: " + ChatColor.YELLOW + formattedAlready);
+                    sender.sendMessage(ChatColor.GRAY + "  Net refund: " + ChatColor.GREEN + formattedAmount);
+                }
+            }
+        }
+
+        // Remove rental sign
+        boolean signRemoved = plugin.getSignManager().removeRegionSetup(regionName, world);
+
+        // Delete WorldEdit schematic if it exists
+        boolean schematicDeleted = false;
+        if (plugin.getWorldEditManager().hasCapture(regionName, world)) {
+            plugin.getWorldEditManager().deleteCapture(regionName, world);
+            schematicDeleted = true;
+        }
+
+        // Remove region from regions.yml
+        boolean regionConfigRemoved = false;
+        if (plugin.getRegionsConfig().hasRegion(regionName, world)) {
+            plugin.getRegionsConfig().removeRegion(regionName, world);
+            regionConfigRemoved = true;
+        }
+
+        // Send comprehensive success message
+        StringBuilder message = new StringBuilder();
+        message.append(plugin.getConfigManager().getMessage("region-removed",
+            "{region}", parsed.getCompositeKey()));
+
+        if (signRemoved) {
+            message.append("\n").append(ChatColor.GREEN).append("  ✓ Rental sign removed");
+        }
+
+        if (schematicDeleted) {
+            message.append("\n").append(ChatColor.GREEN).append("  ✓ WorldEdit schematic deleted");
+        }
+
+        if (regionConfigRemoved) {
+            message.append("\n").append(ChatColor.GREEN).append("  ✓ Region configuration removed from regions.yml");
+        }
+
+        if (rental != null) {
+            message.append("\n").append(ChatColor.GREEN).append("  ✓ Active rental reset with refund");
+        }
+
+        sender.sendMessage(message.toString());
+
+        // Log the action
+        plugin.getLogger().info("Admin " + sender.getName() + " removed RegionRental setup from region: " + parsed.getCompositeKey());
+
+        return true;
+    }
+}

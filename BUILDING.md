@@ -1,6 +1,6 @@
-# Building RegionRental
+# Building ZoneRental
 
-This guide covers how to build the RegionRental plugin from source.
+This guide covers how to build the ZoneRental plugin from source.
 
 ## Prerequisites
 
@@ -14,7 +14,7 @@ This guide covers how to build the RegionRental plugin from source.
 
 2. **Navigate to the project directory:**
 ```bash
-cd RegionRental
+cd ZoneRental
 ```
 
 3. **Run the build script:**
@@ -30,7 +30,7 @@ Or build directly with Gradle:
 
 4. **Find your JAR file:**
 ```
-build/libs/RegionRental-2.8.2.jar
+build/libs/ZoneRental-2.8.2.jar
 ```
 
 ## Development Commands
@@ -57,7 +57,7 @@ build/libs/RegionRental-2.8.2.jar
 ## Project Structure
 
 ```
-RegionRental/
+ZoneRental/
 ├── build.gradle.kts                 # Gradle build configuration (Kotlin DSL)
 ├── settings.gradle.kts              # Gradle settings (Kotlin DSL)
 ├── gradle.properties                # Gradle properties
@@ -65,7 +65,7 @@ RegionRental/
 ├── README.md                        # This file
 ├── CLAUDE.md                        # Developer documentation
 └── src/main/
-    ├── kotlin/com/regionrental/    # Kotlin source
+    ├── kotlin/com/zonerental/    # Kotlin source
     │   ├── extensions/              # Extension functions (4 files)
     │   │   ├── StringExtensions.kt      # color(), withPlaceholders()
     │   │   ├── LocationExtensions.kt    # Location.toKey(), String.toLocation()
@@ -93,8 +93,8 @@ RegionRental/
     │       ├── Rental.kt                    # Rental data class
     │       ├── TeleportCooldownManager.kt   # Teleport cooldown tracking
     │       └── ManagerExtensions.kt         # Collection extensions for rentals
-    ├── java/com/regionrental/
-    │   ├── RegionRental.java        # Main plugin class
+    ├── java/com/zonerental/
+    │   ├── ZoneRental.java        # Main plugin class
     │   ├── commands/                # Command handlers (16 Java classes)
     │   │   ├── RRCommand.java
     │   │   ├── ReloadCommand.java
@@ -158,7 +158,7 @@ RegionRental/
 ## Technical Verification
 
 ### Additional Requirements Met
-- ✅ **All commands begin with `/rr`** - No conflicts with other plugins
+- ✅ **All commands begin with `/zr`** - No conflicts with other plugins
 - ✅ **Comprehensive config** - 100+ configuration options
 - ✅ **Separate config files** - 5 config files (config.yml, regions.yml, signs.yml, storage.yml, groups.yml)
 - ✅ **Sign allows time extension** - Shift-click to extend

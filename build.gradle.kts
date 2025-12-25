@@ -4,8 +4,8 @@ plugins {
     id("com.gradleup.shadow") version "9.2.2"
 }
 
-group = "com.regionrental"
-version = "2.9.3"
+group = "com.zonerental"
+version = "3.0.0"
 
 repositories {
     mavenCentral()
@@ -125,7 +125,7 @@ tasks.shadowJar {
     configurations = listOf(project.configurations.runtimeClasspath.get())
 
     // Relocate Kotlin stdlib to avoid conflicts with other plugins
-    relocate("kotlin", "com.regionrental.shaded.kotlin")
+    relocate("kotlin", "com.zonerental.shaded.kotlin")
 
     // Merge service files for proper ServiceLoader support
     mergeServiceFiles()

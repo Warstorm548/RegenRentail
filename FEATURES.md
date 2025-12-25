@@ -1,4 +1,4 @@
-# RegionRental - Features & Implementation Guide
+# ZoneRental - Features & Implementation Guide
 
 ## Core Features
 
@@ -28,11 +28,11 @@
 - **Entity support** - Optional entity restoration
 - **Sponge Schematic format** - Industry-standard `.schem` files for reliable persistence
 - **Schematic management** - Auto-delete schematics (configurable)
-- **Storage location** - `plugins/RegionRental/schematics/*.schem`
+- **Storage location** - `plugins/ZoneRental/schematics/*.schem`
 
 ### Item Storage System
 - **Container scanning** - Automatically scans expired rentals for items
-- **GUI retrieval** - Players can retrieve items via `/rrretrieve`
+- **GUI retrieval** - Players can retrieve items via `/zrretrieve`
 - **Multi-page support** - Handles large item collections
 - **Auto-cleanup** - Configurable item storage expiration
 - **Supported containers** - Chests, barrels, shulkers, hoppers, furnaces, etc.
@@ -50,37 +50,37 @@
 ### Admin Commands
 | Command | Description | Permission |
 |---------|-------------|------------|
-| `/rr help` | Show help menu | `regionrental.admin` |
-| `/rrreload` | Reload configuration | `regionrental.admin.reload` |
-| `/rrcreatesign <region>` | Create rental sign | `regionrental.admin.createsign` |
-| `/rrreset <region>` | Reset rental with full refund | `regionrental.admin.reset` |
-| `/rrremove <region>` | Remove entire rental setup | `regionrental.admin.remove` |
-| `/rrduration add\|remove\|set\|reset <region> <time>` | Modify rental duration | `regionrental.admin.duration` |
-| `/rroverride <setting> <region\|group:name> <value>` | Set per-region/group overrides | `regionrental.admin.override` |
-| `/rrgroup create\|edit\|delete\|list\|view` | Manage region groups | `regionrental.admin.group` |
-| `/rrverify [region]` | Verify region configurations | `regionrental.admin.verify` |
+| `/zr help` | Show help menu | `zonerental.admin` |
+| `/zrreload` | Reload configuration | `zonerental.admin.reload` |
+| `/zrcreatesign <region>` | Create rental sign | `zonerental.admin.createsign` |
+| `/zrreset <region>` | Reset rental with full refund | `zonerental.admin.reset` |
+| `/zrremove <region>` | Remove entire rental setup | `zonerental.admin.remove` |
+| `/zrduration add\|remove\|set\|reset <region> <time>` | Modify rental duration | `zonerental.admin.duration` |
+| `/zroverride <setting> <region\|group:name> <value>` | Set per-region/group overrides | `zonerental.admin.override` |
+| `/zrgroup create\|edit\|delete\|list\|view` | Manage region groups | `zonerental.admin.group` |
+| `/zrverify [region]` | Verify region configurations | `zonerental.admin.verify` |
 
 ### User Commands
 | Command | Description | Permission |
 |---------|-------------|------------|
-| `/rrinfo <region>` | View rental information | `regionrental.info` |
-| `/rrlist [player]` | List rentals | `regionrental.list` |
-| `/rrextend <region>` | Extend rental | `regionrental.extend` |
-| `/rrretrieve` | Retrieve stored items | `regionrental.retrieve` |
-| `/rrmember add\|remove <region> <player>` | Manage rental members | `regionrental.member` |
-| `/rrmembers <region>` | List rental members | `regionrental.members` |
-| `/rrtp <region>` | Teleport to rented region | `regionrental.tp` |
+| `/zrinfo <region>` | View rental information | `zonerental.info` |
+| `/zrlist [player]` | List rentals | `zonerental.list` |
+| `/zrextend <region>` | Extend rental | `zonerental.extend` |
+| `/zrretrieve` | Retrieve stored items | `zonerental.retrieve` |
+| `/zrmember add\|remove <region> <player>` | Manage rental members | `zonerental.member` |
+| `/zrmembers <region>` | List rental members | `zonerental.members` |
+| `/zrtp <region>` | Teleport to rented region | `zonerental.tp` |
 
 ## Key Features Explained
 
 ### 1. Full Refund System
 
-When admins reset rentals using `/rrreset`, players receive 100% refund of all payments:
+When admins reset rentals using `/zrreset`, players receive 100% refund of all payments:
 - Initial rental payment
 - All extension payments
 
 **Process:**
-1. Admin uses `/rrreset <region>`
+1. Admin uses `/zrreset <region>`
 2. System calculates total paid (initial + extensions)
 3. Full refund issued via Vault economy
 4. Player notified (if online)
@@ -96,7 +96,7 @@ messages:
 
 ### 2. Region Removal System
 
-The `/rrremove` command completely removes rental setup from regions:
+The `/zrremove` command completely removes rental setup from regions:
 
 **What it removes:**
 - Active rental (with full refund)
@@ -115,9 +115,9 @@ The `/rrremove` command completely removes rental setup from regions:
 - Server restructuring
 - Removing test regions
 
-**Comparison with `/rrreset`:**
+**Comparison with `/zrreset`:**
 
-| Feature | `/rrreset` | `/rrremove` |
+| Feature | `/zrreset` | `/zrremove` |
 |---------|-----------|-------------|
 | Purpose | Reset active rental | Remove entire setup |
 | Refunds player | ✅ Yes | ✅ Yes (if rented) |
@@ -137,8 +137,8 @@ Signs and their support blocks are protected from breaking:
 **Features:**
 - Original block type and data saved
 - Automatic migration of existing signs
-- Restoration on `/rrremove`
-- Admin bypass permission: `regionrental.admin.breaksign`
+- Restoration on `/zrremove`
+- Admin bypass permission: `zonerental.admin.breaksign`
 
 **Data storage:**
 ```yaml
@@ -158,7 +158,7 @@ signs:
 
 ### 4. Duration Management
 
-The `/rrduration` command provides flexible rental time management:
+The `/zrduration` command provides flexible rental time management:
 
 **Subcommands:**
 - `add <region> <time>` - Add time to rental
@@ -182,12 +182,12 @@ Group multiple regions together for mass configuration management.
 **Commands:**
 | Command | Description |
 |---------|-------------|
-| `/rrgroup create <name> [regions]` | Create a new group |
-| `/rrgroup edit <name> add [regions]` | Add regions to group |
-| `/rrgroup edit <name> remove [regions]` | Remove regions from group |
-| `/rrgroup delete <name> [confirm]` | Delete group (requires confirmation) |
-| `/rrgroup list` | List all groups |
-| `/rrgroup view <name>` | View group details |
+| `/zrgroup create <name> [regions]` | Create a new group |
+| `/zrgroup edit <name> add [regions]` | Add regions to group |
+| `/zrgroup edit <name> remove [regions]` | Remove regions from group |
+| `/zrgroup delete <name> [confirm]` | Delete group (requires confirmation) |
+| `/zrgroup list` | List all groups |
+| `/zrgroup view <name>` | View group details |
 
 **Region Format:**
 - Same world as player: `shop1` or `world:shop1`
@@ -198,8 +198,8 @@ Group multiple regions together for mass configuration management.
 **Group Overrides:**
 Use the `group:` prefix to set overrides for an entire group:
 ```bash
-/rroverride price group:shop_group 1000
-/rroverride duration group:stores 30
+/zroverride price group:shop_group 1000
+/zroverride duration group:stores 30
 ```
 
 **Override Priority:**
@@ -263,9 +263,9 @@ Rental owners can add other players as members to their rented regions.
 **Commands:**
 | Command | Description | Permission |
 |---------|-------------|------------|
-| `/rrmember add <region> <player>` | Add member to rental | `regionrental.member` |
-| `/rrmember remove <region> <player>` | Remove member from rental | `regionrental.member` |
-| `/rrmembers <region>` | List all members | `regionrental.members` |
+| `/zrmember add <region> <player>` | Add member to rental | `zonerental.member` |
+| `/zrmember remove <region> <player>` | Remove member from rental | `zonerental.member` |
+| `/zrmembers <region>` | List all members | `zonerental.members` |
 
 **Features:**
 - Members are added to WorldGuard region members
@@ -292,7 +292,7 @@ Rental owners and members can teleport directly to their rented regions.
 **Commands:**
 | Command | Description | Permission |
 |---------|-------------|------------|
-| `/rrtp <region>` | Teleport to rented region | `regionrental.tp` |
+| `/zrtp <region>` | Teleport to rented region | `zonerental.tp` |
 
 **Features:**
 - 3D safe location detection (searches forward, down, up)
@@ -370,8 +370,8 @@ regions:
 
 ```yaml
 permission-prices:
-  'regionrental.vip': 50.0      # 50% off
-  'regionrental.premium': 75.0   # 25% off
+  'zonerental.vip': 50.0      # 50% off
+  'zonerental.premium': 75.0   # 25% off
 ```
 
 ### Sign Formats
@@ -457,7 +457,7 @@ All messages support these placeholders:
 ### File Structure
 
 ```
-plugins/RegionRental/
+plugins/ZoneRental/
 ├── config.yml          # Main configuration
 ├── regions.yml         # Per-region overrides
 ├── groups.yml          # Region group definitions
@@ -485,7 +485,7 @@ plugins/RegionRental/
 
 **Output:**
 ```
-build/libs/RegionRental-2.7.0.jar
+build/libs/ZoneRental-2.7.0.jar
 ```
 
 ## Dependencies
@@ -523,7 +523,7 @@ See [In_Game_Testing_Checklist.md](In_Game_Testing_Checklist.md) for comprehensi
 
 ## Known Limitations
 
-- Support block detection requires sign to be properly attached during `/rrcreatesign`
+- Support block detection requires sign to be properly attached during `/zrcreatesign`
 - Container scanning is synchronous (may cause lag on very large regions)
 - Extension limit is global (not per-region configurable)
 - Schematic serialization uses Java serialization
