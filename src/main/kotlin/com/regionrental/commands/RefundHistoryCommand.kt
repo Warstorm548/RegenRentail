@@ -32,7 +32,10 @@ class RefundHistoryCommand(private val plugin: RegionRental) : CommandExecutor {
             return true
         }
 
-        val world = parsed.getWorld()
+        val world = parsed.getWorld() ?: run {
+            sender.sendMessage("${ChatColor.RED}World '${parsed.worldName}' is not loaded!")
+            return true
+        }
         val regionName = parsed.regionName
 
         // Get rental
