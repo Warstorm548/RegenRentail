@@ -32,18 +32,18 @@ class RefundHistoryCommand(private val plugin: RegionRental) : CommandExecutor {
             return true
         }
 
-        val world = parsed.world
+        val world = parsed.getWorld()
         val regionName = parsed.regionName
 
         // Get rental
         val rental = plugin.rentalManager.getRental(regionName, world) ?: run {
-            sender.sendMessage("${ChatColor.RED}Region ${parsed.compositeKey} is not currently rented!")
+            sender.sendMessage("${ChatColor.RED}Region ${parsed.getCompositeKey()} is not currently rented!")
             sender.sendMessage("${ChatColor.YELLOW}Refund history is only available for active rentals.")
             return true
         }
 
         // Get refund data
-        val refundHistory = rental.refundHistory
+        val refundHistory = rental.getRefundHistory()
         val currencyFormat = plugin.configManager.currencyFormat
         val formattedTotal = String.format(currencyFormat, rental.totalPaid)
         val formattedRefunded = String.format(currencyFormat, rental.totalRefunded)
@@ -53,7 +53,7 @@ class RefundHistoryCommand(private val plugin: RegionRental) : CommandExecutor {
         val divider = "${ChatColor.GOLD}${ChatColor.BOLD}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
         sender.sendMessage("")
         sender.sendMessage(divider)
-        sender.sendMessage(plugin.configManager.getMessage("refund-history-header", "{region}", parsed.compositeKey))
+        sender.sendMessage(plugin.configManager.getMessage("refund-history-header", "{region}", parsed.getCompositeKey()))
         sender.sendMessage(divider)
         sender.sendMessage("")
 
