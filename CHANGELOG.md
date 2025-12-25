@@ -1,9 +1,70 @@
 # Changelog
 
-All notable changes to RegionRental will be documented in this file.
+All notable changes to ZoneRental will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
+
+---
+
+## IMPORTANT: Project Rename Notice
+
+**As of version 3.0.0, this project has been renamed from RegionRental to ZoneRental.**
+
+All historical entries below refer to the project under its previous name "RegionRental".
+Going forward, all references use the new name "ZoneRental".
+
+**Key changes in the rename:**
+- Plugin name: RegionRental -> ZoneRental
+- Commands: /rr* -> /zr* (e.g., /rrcreatesign -> /zrcreatesign)
+- Permissions: regionrental.* -> zonerental.* (e.g., regionrental.admin -> zonerental.admin)
+- Data folder: plugins/RegionRental/ -> plugins/ZoneRental/
+- JAR file: RegionRental-X.X.X.jar -> ZoneRental-X.X.X.jar
+- Package: com.regionrental -> com.zonerental
+
+---
+
+## [3.0.0] - Project Rename to ZoneRental
+
+Major version bump marking the complete rename of the project from RegionRental to ZoneRental.
+
+### Breaking Changes
+
+- **Plugin Renamed** - RegionRental is now ZoneRental
+- **Commands Renamed** - All commands now use `/zr` prefix instead of `/rr`
+  - `/rrcreatesign` -> `/zrcreatesign`
+  - `/rrreset` -> `/zrreset`
+  - `/rrremove` -> `/zrremove`
+  - `/rrinfo` -> `/zrinfo`
+  - `/rrlist` -> `/zrlist`
+  - `/rrextend` -> `/zrextend`
+  - `/rrretrieve` -> `/zrretrieve`
+  - `/rrmember` -> `/zrmember`
+  - `/rrmembers` -> `/zrmembers`
+  - `/rrtp` -> `/zrtp`
+  - `/rrduration` -> `/zrduration`
+  - `/rroverride` -> `/zroverride`
+  - `/rrgroup` -> `/zrgroup`
+  - `/rrverify` -> `/zrverify`
+  - `/rrreload` -> `/zrreload`
+  - `/rrrefundhistory` -> `/zrrefundhistory`
+- **Permissions Renamed** - All permissions now use `zonerental.` prefix instead of `regionrental.`
+  - `regionrental.rent` -> `zonerental.rent`
+  - `regionrental.extend` -> `zonerental.extend`
+  - `regionrental.admin.*` -> `zonerental.admin.*`
+  - (and all other permissions)
+- **Data Folder Renamed** - Plugin data folder changed from `plugins/RegionRental/` to `plugins/ZoneRental/`
+- **JAR File Renamed** - Output JAR is now `ZoneRental-3.0.0.jar`
+- **Package Renamed** - Java/Kotlin package changed from `com.regionrental` to `com.zonerental`
+
+### Migration Notes
+
+- **Manual Migration Required** - Move your data folder from `plugins/RegionRental/` to `plugins/ZoneRental/`
+- **Permission Updates Required** - Update all permissions in your permissions plugin from `regionrental.*` to `zonerental.*`
+- **Command Aliases** - Update any command aliases or scripts that reference `/rr*` commands to use `/zr*`
+- **Configuration Files** - Configuration files (config.yml, regions.yml, etc.) are compatible and do not need modification
+
+---
 
 ## [2.9.3] - Tier 2 Command Kotlin Migration
 
