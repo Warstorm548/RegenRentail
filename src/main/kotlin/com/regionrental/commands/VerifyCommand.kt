@@ -28,7 +28,7 @@ class VerifyCommand(private val plugin: RegionRental) : CommandExecutor {
         sender.sendMessage("")
 
         // Get verification report with safe casts
-        val report = plugin.regionsConfig.verificationReport
+        val report = plugin.regionsConfig.getVerificationReport()
         val totalSigns = report["totalSigns"] as? Int ?: 0
         val missingConfigs = (report["missingConfigs"] as? List<*>)?.filterIsInstance<String>() ?: emptyList()
         val orphanedConfigs = (report["orphanedConfigs"] as? List<*>)?.filterIsInstance<String>() ?: emptyList()
