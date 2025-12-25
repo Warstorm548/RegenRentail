@@ -5,7 +5,7 @@ plugins {
 }
 
 group = "com.zonerental"
-version = "2.9.3"
+version = "3.0.0"
 
 repositories {
     mavenCentral()
