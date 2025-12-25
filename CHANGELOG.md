@@ -5,6 +5,35 @@ All notable changes to RegionRental will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.9.3] - Tier 2 Command Kotlin Migration
+
+Internal refactoring: Migrated three additional command classes from Java to Kotlin.
+
+### Kotlin Conversions
+
+- **RefundHistoryCommand.kt** - Migrated from Java (130 → 109 lines, 16% reduction)
+  - Switch statement → Kotlin when expression
+  - Loop with index → forEachIndexed
+  - String templates for cleaner formatting
+
+- **ListCommand.kt** - Migrated from Java (79 → 76 lines, 4% reduction)
+  - Complex if/else chain → when expression with destructuring
+  - Smart cast for Player type checking
+  - Nullable handling with Pair returns
+
+- **VerifyCommand.kt** - Migrated from Java (94 → 83 lines, 12% reduction)
+  - Unchecked casts → safe casts with filterIsInstance
+  - For loops → forEach
+  - Type-safe map access with null defaults
+
+### Technical Notes
+
+- No user-facing changes - all commands work identically
+- Total line reduction: ~12% across migrated commands
+- Improved null safety and type handling
+
+---
+
 ## [2.9.2] - Tier 1 Command Kotlin Migration
 
 Internal refactoring: Migrated the three largest command classes from Java to Kotlin.
