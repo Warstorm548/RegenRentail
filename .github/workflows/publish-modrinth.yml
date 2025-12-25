@@ -78,3 +78,9 @@ jobs:
           1.21.x
 
         changelog-file: RELEASE_NOTES.md
+
+        dependencies: |
+          worldguard@7.0.14(required)
+          worldedit@7.3.16(required)
+          essentialsx(optional)
+          luckperms(optional)

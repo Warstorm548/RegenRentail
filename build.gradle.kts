@@ -5,7 +5,7 @@ plugins {
 }
 
 group = "com.regionrental"
-version = "2.9.2"
+version = "2.9.3"
 
 repositories {
     mavenCentral()
