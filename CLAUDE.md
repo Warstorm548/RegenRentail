@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-RegionRental is a Minecraft Paper/Spigot plugin (1.21+) that implements a complete WorldGuard region rental system with clickable signs, Vault economy integration, time-based rentals with automatic expiration, and WorldEdit-powered block restoration.
+ZoneRental is a Minecraft Paper/Spigot plugin (1.21+) that implements a complete WorldGuard region rental system with clickable signs, Vault economy integration, time-based rentals with automatic expiration, and WorldEdit-powered block restoration.
 
 **Technology Stack:**
 - Java 21+ (OpenJDK 21)
@@ -27,7 +27,7 @@ RegionRental is a Minecraft Paper/Spigot plugin (1.21+) that implements a comple
 ./gradlew clean build
 
 # Output location
-build/libs/RegionRental-2.8.2.jar
+build/libs/ZoneRental-2.8.2.jar
 ```
 
 ### Development Commands
@@ -58,17 +58,17 @@ When updating the version, modify these files:
 - `build.gradle.kts` - Line 7: `version = "X.X.X"`
 - `src/main/resources/plugin.yml` - Line 2: `version: X.X.X`
 - `README.md` - Version references
-- Output JAR: `build/libs/RegionRental-X.X.X.jar`
+- Output JAR: `build/libs/ZoneRental-X.X.X.jar`
 
 **Current Version:** 2.9.3
 
 ## Architecture Overview
 
 ### Main Plugin Class
-**`RegionRental.java`** - Main plugin entry point extending JavaPlugin. Handles:
+**`ZoneRental.java`** - Main plugin entry point extending JavaPlugin. Handles:
 - Plugin lifecycle (onEnable/onDisable)
 - Manager initialization and coordination
-- Dynamic command registration with configurable prefix (defaults to `/rr`)
+- Dynamic command registration with configurable prefix (defaults to `/zr`)
 - Scheduled tasks (expiration checking, sign updates, auto-save)
 - Dependencies checking (Vault, WorldGuard, WorldEdit, Economy)
 
@@ -109,7 +109,7 @@ The plugin uses a manager pattern where each manager handles a specific domain:
 5. **`StorageManager`** - Item storage from expired rentals
    - Scans region for containers (chests, barrels, shulker boxes, etc.)
    - Stores items to `storage.yml` when rental expires
-   - GUI-based retrieval system via `/rrretrieve`
+   - GUI-based retrieval system via `/zrretrieve`
 
 6. **`ExpirationManager`** - Rental expiration handling
    - Runs every minute (configurable)
@@ -118,10 +118,10 @@ The plugin uses a manager pattern where each manager handles a specific domain:
 
 ### Configuration System
 
-Six configuration files in `plugins/RegionRental/`:
+Six configuration files in `plugins/ZoneRental/`:
 - `config.yml` - Main settings (economy, durations, extensions, messages)
-- `regions.yml` - Per-region overrides (via `/rroverride`)
-- `groups.yml` - Region group definitions (via `/rrgroup`)
+- `regions.yml` - Per-region overrides (via `/zroverride`)
+- `groups.yml` - Region group definitions (via `/zrgroup`)
 - `signs.yml` - Sign locations and support blocks
 - `storage.yml` - Stored items from expired rentals
 - `rentals.yml` - Active rental data
@@ -130,7 +130,7 @@ Config managers: `ConfigManager`, `RegionsConfig`, `SignsConfig`, `StorageConfig
 
 ### Command Structure
 
-Commands use a configurable prefix (default: `/rr`), dynamically registered at startup.
+Commands use a configurable prefix (default: `/zr`), dynamically registered at startup.
 17 command classes in `commands/` package. See [FEATURES.md](FEATURES.md#commands) for full command list.
 
 ## Key Implementation Details
@@ -139,7 +139,7 @@ Commands use a configurable prefix (default: `/rr`), dynamically registered at s
 Located in `SignInteractListener.java`:
 - **Right-click**: Rent if available, show info if rented
 - **Shift-click**: Extend rental (if owned and extension limit not reached)
-- **Sign protection**: Signs cannot be broken unless player has `regionrental.admin.breaksign`
+- **Sign protection**: Signs cannot be broken unless player has `zonerental.admin.breaksign`
 - **Support block protection**: Blocks that signs are attached to/placed on are also protected
   - Wall signs: The block the sign is attached to is protected
   - Standing signs: The block below the sign is protected
@@ -152,12 +152,12 @@ Located in `SignInteractListener.java`:
 3. **Expiration**: Expiration manager runs → player removed from region → items stored → **WorldEdit restores blocks** → rental deleted → sign updated to "AVAILABLE"
 
 ### Admin Reset vs Remove
-- **`/rrreset <region>`** - Resets active rental with full refund, but keeps rental setup (sign, support block protection, schematic)
-- **`/rrremove <region>`** - Completely removes rental setup (resets rental if active, restores support block, removes sign, deletes schematic)
+- **`/zrreset <region>`** - Resets active rental with full refund, but keeps rental setup (sign, support block protection, schematic)
+- **`/zrremove <region>`** - Completely removes rental setup (resets rental if active, restores support block, removes sign, deletes schematic)
 
 ### Region Grouping System
-Regions can be grouped for mass configuration via `/rrgroup` commands.
-Groups share overrides set via `/rroverride group:<name> ...`.
+Regions can be grouped for mass configuration via `/zrgroup` commands.
+Groups share overrides set via `/zroverride group:<name> ...`.
 Override priority: Group → Individual Region → Default.
 See [FEATURES.md](FEATURES.md#5-region-grouping-system) for detailed documentation.
 
@@ -187,7 +187,7 @@ See [FEATURES.md](FEATURES.md#6-multi-world-support) for usage examples.
 ### Accessing Managers
 Always use the singleton instance:
 ```java
-RegionRental plugin = RegionRental.getInstance();
+ZoneRental plugin = ZoneRental.getInstance();
 RentalManager rentalManager = plugin.getRentalManager();
 WorldEditManager worldEditManager = plugin.getWorldEditManager();
 ```
@@ -229,7 +229,7 @@ When admins reset rentals, always use the refund method:
 // Full refund for complete rental reset
 Map<String, Object> refundDetails = rentalManager.resetRentalWithRefund(regionName);
 
-// Extension-only refund for duration reset (via /rrduration reset)
+// Extension-only refund for duration reset (via /zrduration reset)
 double extensionCost = rental.getExtensionCost(); // Kotlin property: totalPaid - initialPrice
 ```
 
@@ -250,11 +250,11 @@ Messages are retrieved via `ConfigManager.getMessage()` which handles color code
 ### Adding a New Command
 1. Create command class in `commands/` implementing `CommandExecutor`
 2. Register in `plugin.yml` under `commands:` section
-3. Add to `RegionRental.registerCommands()` method using `registerCommandWithPrefix()`
+3. Add to `ZoneRental.registerCommands()` method using `registerCommandWithPrefix()`
 4. Add permission node to `plugin.yml` under `permissions:`
 
 ### Adding a New Kotlin Class
-1. Create `.kt` file in `src/main/kotlin/com/regionrental/` (or appropriate subdirectory)
+1. Create `.kt` file in `src/main/kotlin/com/zonerental/` (or appropriate subdirectory)
 2. Kotlin classes can extend Java classes and implement Java interfaces
 3. Java code can call Kotlin code seamlessly (full interoperability)
 4. Use Kotlin idioms: data classes, extension functions, null safety, coroutines
@@ -327,15 +327,15 @@ Add to `StorageManager.CONTAINER_TYPES` set (currently supports: chest, barrel, 
 1. Build: `./gradlew build`
 2. Copy JAR to `plugins/`
 3. Create region: `/rg define testregion`
-4. Create sign: `/rrcreatesign testregion`
-5. Test: Right-click (rent), Shift-click (extend), `/rrreset` (refund)
+4. Create sign: `/zrcreatesign testregion`
+5. Test: Right-click (rent), Shift-click (extend), `/zrreset` (refund)
 
 See [In_Game_Testing_Checklist.md](In_Game_Testing_Checklist.md) for comprehensive testing checklist.
 
 ## File Locations
 
 ### Plugin Data Directory
-`plugins/RegionRental/`
+`plugins/ZoneRental/`
 - `config.yml` - Main configuration
 - `regions.yml` - Per-region override settings (auto-populated)
 - `groups.yml` - Region group definitions
@@ -346,13 +346,13 @@ See [In_Game_Testing_Checklist.md](In_Game_Testing_Checklist.md) for comprehensi
 
 ### Source Structure
 
-**Java source:** `src/main/java/com/regionrental/`
-- `RegionRental.java` - Main plugin class
+**Java source:** `src/main/java/com/zonerental/`
+- `ZoneRental.java` - Main plugin class
 - `commands/` - 16 command executors
 - `config/` - 5 configuration managers
 - `listeners/` - 2 event listeners
 
-**Kotlin source:** `src/main/kotlin/com/regionrental/`
+**Kotlin source:** `src/main/kotlin/com/zonerental/`
 - `extensions/` - String, Location, Player, Collection extensions (4 files)
 - `util/` - TimeUtils.kt, WorldRegionParser.kt (2 files)
 - `models/` - RefundRecord, ParsedRegion, StorageGUISession, SupportBlockData (4 files)

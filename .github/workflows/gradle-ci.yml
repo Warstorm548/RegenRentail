@@ -39,7 +39,7 @@ jobs:
 
     - name: Verify JAR contains Kotlin runtime
       run: |
-        JAR_FILE=$(ls build/libs/RegionRental-*.jar | head -1)
+        JAR_FILE=$(ls build/libs/ZoneRental-*.jar | head -1)
         echo "Checking JAR: $JAR_FILE"
 
         # Check JAR size (should be >1MB with Kotlin shaded)
@@ -47,7 +47,7 @@ jobs:
         echo "JAR size: $JAR_SIZE bytes"
 
         # Verify Kotlin classes are present (shaded location)
-        if unzip -l "$JAR_FILE" | grep -q "com/regionrental/shaded/kotlin"; then
+        if unzip -l "$JAR_FILE" | grep -q "com/zonerental/shaded/kotlin"; then
           echo "✓ Kotlin stdlib is properly shaded"
         else
           echo "✗ ERROR: Kotlin stdlib not found in JAR!"
@@ -60,7 +60,7 @@ jobs:
       uses: actions/upload-artifact@v4
       if: success()
       with:
-        name: RegionRental-JAR
+        name: ZoneRental-JAR
         path: build/libs/*.jar
         retention-days: 30
 
@@ -73,7 +73,7 @@ jobs:
         echo "- **Gradle Version:** 9.2.0" >> $GITHUB_STEP_SUMMARY
         echo "- **Build Status:** ${{ job.status }}" >> $GITHUB_STEP_SUMMARY
 
-        JAR_FILE=$(ls build/libs/RegionRental-*.jar 2>/dev/null | head -1)
+        JAR_FILE=$(ls build/libs/ZoneRental-*.jar 2>/dev/null | head -1)
         if [ -n "$JAR_FILE" ]; then
           JAR_SIZE=$(stat -c%s "$JAR_FILE" 2>/dev/null || stat -f%z "$JAR_FILE")
           JAR_SIZE_MB=$(echo "scale=2; $JAR_SIZE / 1048576" | bc)

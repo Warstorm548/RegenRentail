@@ -1,6 +1,6 @@
-name: RegionRental
+name: ZoneRental
 version: 2.9.3
-main: com.regionrental.RegionRental
+main: com.zonerental.ZoneRental
 api-version: '1.21'
 author: Jean-Luc
 description: WorldGuard Region Rental System with Clickable Signs
@@ -16,138 +16,138 @@ softdepend:
   - EzChestShopReborn
 
 commands:
-  rr:
-    description: RegionRental - Rent WorldGuard regions. Type /rr for help
-    usage: /rr
-    permission: regionrental.user
+  zr:
+    description: ZoneRental - Rent WorldGuard regions. Type /zr for help
+    usage: /zr
+    permission: zonerental.user
 
 # Commands are registered dynamically at runtime with configurable prefix
-# Default prefix: 'rr' (can be changed in config.yml)
+# Default prefix: 'zr' (can be changed in config.yml)
 # Commands will be registered as: /{prefix}info, /{prefix}extend, etc.
-# The 'rr' prefix is always kept as a fallback for backward compatibility
+# The 'zr' prefix is always kept as a fallback for backward compatibility
 
 permissions:
-  regionrental.*:
-    description: All RegionRental permissions
+  zonerental.*:
+    description: All ZoneRental permissions
     default: op
     children:
-      regionrental.admin.*: true
-      regionrental.user.*: true
-      
-  regionrental.admin.*:
+      zonerental.admin.*: true
+      zonerental.user.*: true
+
+  zonerental.admin.*:
     description: All admin permissions
     default: op
     children:
-      regionrental.admin.reload: true
-      regionrental.admin.createsign: true
-      regionrental.admin.reset: true
-      regionrental.admin.duration: true
-      regionrental.admin.remove: true
-      regionrental.admin.refundhistory: true
-      regionrental.admin.verify: true
-      regionrental.admin.override: true
-      regionrental.admin.group: true
-      regionrental.admin.bypass: true
-      regionrental.admin.breaksign: true
-      regionrental.admin.list.others: true
-      
-  regionrental.user.*:
+      zonerental.admin.reload: true
+      zonerental.admin.createsign: true
+      zonerental.admin.reset: true
+      zonerental.admin.duration: true
+      zonerental.admin.remove: true
+      zonerental.admin.refundhistory: true
+      zonerental.admin.verify: true
+      zonerental.admin.override: true
+      zonerental.admin.group: true
+      zonerental.admin.bypass: true
+      zonerental.admin.breaksign: true
+      zonerental.admin.list.others: true
+
+  zonerental.user.*:
     description: All user permissions
     default: true
     children:
-      regionrental.rent: true
-      regionrental.extend: true
-      regionrental.retrieve: true
-      regionrental.info: true
-      regionrental.list: true
-      regionrental.member: true
-      regionrental.members: true
-      regionrental.tp: true
+      zonerental.rent: true
+      zonerental.extend: true
+      zonerental.retrieve: true
+      zonerental.info: true
+      zonerental.list: true
+      zonerental.member: true
+      zonerental.members: true
+      zonerental.tp: true
 
-  regionrental.rent:
+  zonerental.rent:
     description: Rent regions
     default: true
-    
-  regionrental.extend:
+
+  zonerental.extend:
     description: Extend rentals
     default: true
-    
-  regionrental.retrieve:
+
+  zonerental.retrieve:
     description: Retrieve stored items
     default: true
-    
-  regionrental.info:
+
+  zonerental.info:
     description: View rental information
     default: true
-    
-  regionrental.list:
+
+  zonerental.list:
     description: List your rentals
     default: true
 
-  regionrental.member:
+  zonerental.member:
     description: Manage members in rented regions
     default: true
 
-  regionrental.members:
+  zonerental.members:
     description: View members of rented regions
     default: true
 
-  regionrental.tp:
+  zonerental.tp:
     description: Teleport to rented regions
     default: true
 
-  regionrental.admin.reload:
+  zonerental.admin.reload:
     description: Reload the plugin
     default: op
-    
-  regionrental.admin.createsign:
+
+  zonerental.admin.createsign:
     description: Create rental signs
     default: op
-    
-  regionrental.admin.reset:
+
+  zonerental.admin.reset:
     description: Reset rentals
     default: op
 
-  regionrental.admin.retime:
-    description: (DEPRECATED - use regionrental.admin.duration) Reset rental time
+  zonerental.admin.retime:
+    description: (DEPRECATED - use zonerental.admin.duration) Reset rental time
     default: op
 
-  regionrental.admin.duration:
+  zonerental.admin.duration:
     description: Modify rental duration
     default: op
 
-  regionrental.admin.remove:
-    description: Remove RegionRental setup from a region
+  zonerental.admin.remove:
+    description: Remove ZoneRental setup from a region
     default: op
 
-  regionrental.admin.verify:
+  zonerental.admin.verify:
     description: Verify and repair region configurations
     default: op
 
-  regionrental.admin.override:
+  zonerental.admin.override:
     description: Set per-region custom rental settings
     default: op
 
-  regionrental.admin.group:
+  zonerental.admin.group:
     description: Manage region groups for bulk overrides
     default: op
 
-  regionrental.admin.refundhistory:
+  zonerental.admin.refundhistory:
     description: View refund history for rentals
     default: op
 
-  regionrental.user:
+  zonerental.user:
     description: Basic user permission for help commands
     default: true
 
-  regionrental.admin.bypass:
+  zonerental.admin.bypass:
     description: Bypass rental restrictions
     default: op
-    
-  regionrental.admin.breaksign:
+
+  zonerental.admin.breaksign:
     description: Break rental signs
     default: op
-    
-  regionrental.admin.list.others:
+
+  zonerental.admin.list.others:
     description: List other players' rentals
     default: op

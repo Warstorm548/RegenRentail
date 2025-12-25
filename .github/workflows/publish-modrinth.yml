@@ -62,9 +62,9 @@ jobs:
         modrinth-id: iNHRLu42
         modrinth-token: ${{ secrets.MODRINTHAPI }}
 
-        files: build/libs/RegionRental-*.jar
+        files: build/libs/ZoneRental-*.jar
 
-        name: RegionRental v${{ steps.version.outputs.version }}
+        name: ZoneRental v${{ steps.version.outputs.version }}
         version: ${{ steps.version.outputs.version }}
         version-type: alpha
 

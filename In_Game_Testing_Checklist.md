@@ -1,6 +1,6 @@
 # In-Game Testing Checklist
 
-Comprehensive testing checklist for RegionRental plugin v2.6.0.
+Comprehensive testing checklist for ZoneRental plugin v2.6.0.
 
 ## Prerequisites
 
@@ -10,7 +10,7 @@ Before testing, ensure you have:
 - [ ] WorldGuard 7.0.14+ installed
 - [ ] WorldEdit 7.3.16+ installed
 - [ ] Economy plugin installed (EssentialsX, CMI, etc.)
-- [ ] RegionRental JAR in `plugins/` folder
+- [ ] ZoneRental JAR in `plugins/` folder
 - [ ] Server restarted after installation
 - [ ] Test player account with funds
 
@@ -19,18 +19,18 @@ Before testing, ensure you have:
 Basic functionality verification:
 1. [ ] Create WorldGuard region: `/rg define testshop`
 2. [ ] Place a sign and look at it
-3. [ ] Create rental sign: `/rrcreatesign testshop`
+3. [ ] Create rental sign: `/zrcreatesign testshop`
 4. [ ] Right-click sign to rent
 5. [ ] Verify player added to region members
 6. [ ] Shift-click sign to extend
-7. [ ] Run `/rrreset testshop` to reset with refund
+7. [ ] Run `/zrreset testshop` to reset with refund
 
 ---
 
 ## Core Rental System
 
 ### Sign Creation
-- [ ] `/rrcreatesign <region>` creates a rental sign
+- [ ] `/zrcreatesign <region>` creates a rental sign
 - [ ] Sign displays correct format (AVAILABLE, price, region name)
 - [ ] Sign updates automatically every 30 seconds
 - [ ] Invalid region name shows error message
@@ -69,14 +69,14 @@ Basic functionality verification:
 
 ### Sign Protection
 - [ ] Rental signs cannot be broken by regular players
-- [ ] Admin with `regionrental.admin.breaksign` can break signs
+- [ ] Admin with `zonerental.admin.breaksign` can break signs
 - [ ] Breaking sign shows permission denied message
 
 ### Support Block Protection
 - [ ] Wall sign: Block behind sign is protected
 - [ ] Standing sign: Block below sign is protected
 - [ ] Support block cannot be broken by players
-- [ ] Support block restored on `/rrremove`
+- [ ] Support block restored on `/zrremove`
 
 ### Sign Updates
 - [ ] Sign updates when rental status changes
@@ -95,8 +95,8 @@ Basic functionality verification:
 - [ ] Currency format displays correctly
 
 ### Refunds
-- [ ] `/rrreset` refunds full amount (initial + extensions)
-- [ ] `/rrremove` refunds if region was rented
+- [ ] `/zrreset` refunds full amount (initial + extensions)
+- [ ] `/zrremove` refunds if region was rented
 - [ ] Refund message shows correct amount
 - [ ] Player balance updated correctly
 - [ ] Offline player refund stored for later
@@ -119,8 +119,8 @@ Basic functionality verification:
 
 ### Restoration
 - [ ] Blocks restored on rental expiration
-- [ ] Blocks restored on `/rrreset`
-- [ ] Blocks restored on `/rrremove`
+- [ ] Blocks restored on `/zrreset`
+- [ ] Blocks restored on `/zrremove`
 - [ ] Entities restored (if enabled)
 - [ ] Schematic deleted after restoration (if configured)
 
@@ -142,7 +142,7 @@ Basic functionality verification:
 - [ ] Items collected from brewing stands
 
 ### Item Retrieval
-- [ ] `/rrretrieve` opens GUI
+- [ ] `/zrretrieve` opens GUI
 - [ ] Stored items displayed in GUI
 - [ ] Clicking item returns it to player inventory
 - [ ] Multiple pages work for large collections
@@ -153,7 +153,7 @@ Basic functionality verification:
 ## Member Management
 
 ### Adding Members
-- [ ] `/rrmember add <region> <player>` adds member
+- [ ] `/zrmember add <region> <player>` adds member
 - [ ] Member added to WorldGuard region
 - [ ] Member can build in rented region
 - [ ] Member limit enforced (`members.max-members`)
@@ -162,12 +162,12 @@ Basic functionality verification:
 - [ ] Only renter can add members
 
 ### Removing Members
-- [ ] `/rrmember remove <region> <player>` removes member
+- [ ] `/zrmember remove <region> <player>` removes member
 - [ ] Member removed from WorldGuard region
 - [ ] Only renter can remove members
 
 ### Listing Members
-- [ ] `/rrmembers <region>` shows member list
+- [ ] `/zrmembers <region>` shows member list
 - [ ] Shows correct member count
 
 ### Member Cleanup
@@ -180,7 +180,7 @@ Basic functionality verification:
 ## Teleportation
 
 ### Basic Teleportation
-- [ ] `/rrtp <region>` teleports to rented region
+- [ ] `/zrtp <region>` teleports to rented region
 - [ ] Works for rental owner
 - [ ] Works for members
 - [ ] Cannot teleport to non-owned regions
@@ -213,29 +213,29 @@ Basic functionality verification:
 ## Region Grouping
 
 ### Creating Groups
-- [ ] `/rrgroup create <name>` creates group
-- [ ] `/rrgroup create <name> <regions>` with inline regions
+- [ ] `/zrgroup create <name>` creates group
+- [ ] `/zrgroup create <name> <regions>` with inline regions
 - [ ] Chat prompt for regions works
 - [ ] Group names validated (2-30 chars, alphanumeric + underscore)
 - [ ] Reserved names blocked ("all", "none", "default")
 
 ### Managing Groups
-- [ ] `/rrgroup edit <name> add <regions>` adds regions
-- [ ] `/rrgroup edit <name> remove <regions>` removes regions
+- [ ] `/zrgroup edit <name> add <regions>` adds regions
+- [ ] `/zrgroup edit <name> remove <regions>` removes regions
 - [ ] Regions can only be in one group
 - [ ] Region existence validated
 
 ### Viewing Groups
-- [ ] `/rrgroup list` shows all groups
-- [ ] `/rrgroup view <name>` shows group details
+- [ ] `/zrgroup list` shows all groups
+- [ ] `/zrgroup view <name>` shows group details
 
 ### Deleting Groups
-- [ ] `/rrgroup delete <name>` requires confirmation
-- [ ] `/rrgroup delete <name> confirm` deletes group
+- [ ] `/zrgroup delete <name>` requires confirmation
+- [ ] `/zrgroup delete <name> confirm` deletes group
 - [ ] Group overrides removed on deletion
 
 ### Group Overrides
-- [ ] `/rroverride price group:<name> <value>` sets group price
+- [ ] `/zroverride price group:<name> <value>` sets group price
 - [ ] All regions in group use group override
 - [ ] Signs update when group override set
 - [ ] Individual overrides cleared when added to group
@@ -245,12 +245,12 @@ Basic functionality verification:
 ## Override System
 
 ### Region Overrides
-- [ ] `/rroverride price <region> <value>` works
-- [ ] `/rroverride duration <region> <value>` works
-- [ ] `/rroverride max-extensions <region> <value>` works
-- [ ] `/rroverride extension-price <region> <value>` works
-- [ ] `/rroverride allow-extensions <region> <value>` works
-- [ ] `/rroverride list <region>` shows overrides
+- [ ] `/zroverride price <region> <value>` works
+- [ ] `/zroverride duration <region> <value>` works
+- [ ] `/zroverride max-extensions <region> <value>` works
+- [ ] `/zroverride extension-price <region> <value>` works
+- [ ] `/zroverride allow-extensions <region> <value>` works
+- [ ] `/zroverride list <region>` shows overrides
 
 ### Override Priority
 - [ ] Group override takes precedence over individual
@@ -258,8 +258,8 @@ Basic functionality verification:
 - [ ] Default used when no overrides
 
 ### Verification
-- [ ] `/rrverify` reports orphaned configs
-- [ ] `/rrverify <region>` shows region config status
+- [ ] `/zrverify` reports orphaned configs
+- [ ] `/zrverify <region>` shows region config status
 
 ---
 
@@ -285,36 +285,36 @@ Basic functionality verification:
 ## Admin Commands
 
 ### Reset Command
-- [ ] `/rrreset <region>` resets rental
+- [ ] `/zrreset <region>` resets rental
 - [ ] Full refund issued
 - [ ] Player removed from region
 - [ ] Sign updated to AVAILABLE
 - [ ] Rental setup preserved (sign, schematic)
 
 ### Remove Command
-- [ ] `/rrremove <region>` removes setup
+- [ ] `/zrremove <region>` removes setup
 - [ ] Refund issued (if rented)
 - [ ] Sign config removed
 - [ ] Support block restored
 - [ ] Schematic deleted
 
 ### Duration Command
-- [ ] `/rrduration add <region> <time>` adds time
-- [ ] `/rrduration remove <region> <time>` removes time
-- [ ] `/rrduration set <region> <time>` sets exact time
-- [ ] `/rrduration reset <region>` resets to default
+- [ ] `/zrduration add <region> <time>` adds time
+- [ ] `/zrduration remove <region> <time>` removes time
+- [ ] `/zrduration set <region> <time>` sets exact time
+- [ ] `/zrduration reset <region>` resets to default
 - [ ] Extension refund on reset (if configured)
 
 ### Info Command
-- [ ] `/rrinfo <region>` shows rental details
+- [ ] `/zrinfo <region>` shows rental details
 - [ ] Shows renter, time remaining, extensions
 
 ### List Command
-- [ ] `/rrlist` shows all rentals
-- [ ] `/rrlist <player>` shows player's rentals
+- [ ] `/zrlist` shows all rentals
+- [ ] `/zrlist <player>` shows player's rentals
 
 ### Reload Command
-- [ ] `/rrreload` reloads configuration
+- [ ] `/zrreload` reloads configuration
 - [ ] Changes take effect immediately
 - [ ] No data loss on reload
 

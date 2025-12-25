@@ -35,9 +35,9 @@ nbdist/
 Thumbs.db
 
 # Plugin runtime data
-plugins/RegionRental/rentals.yml
-plugins/RegionRental/storage.yml
-plugins/RegionRental/schematics/
+plugins/ZoneRental/rentals.yml
+plugins/ZoneRental/storage.yml
+plugins/ZoneRental/schematics/
 
 # Logs
 *.log

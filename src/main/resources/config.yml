@@ -1,4 +1,4 @@
-# RegionRental Configuration
+# ZoneRental Configuration
 # Complete configuration file for all features
 
 # ============================================
@@ -6,7 +6,7 @@
 # ============================================
 general:
   # Plugin prefix for all messages
-  prefix: '&8[&6RegionRental&8]&r '
+  prefix: '&8[&6ZoneRental&8]&r '
   
   # Enable debug mode for troubleshooting
   debug: false
@@ -24,21 +24,21 @@ general:
 # COMMAND SETTINGS
 # ============================================
 commands:
-  # Custom command prefix (default: "rr")
+  # Custom command prefix (default: "zr")
   # All commands will use this prefix: /{prefix}info, /{prefix}extend, etc.
-  # Examples: "rr" → /rrinfo, "rental" → /rentalinfo, "rent" → /rentinfo
+  # Examples: "zr" → /zrinfo, "rental" → /rentalinfo, "rent" → /rentinfo
   #
   # Validation rules:
   #   - Lowercase letters and numbers only (a-z, 0-9)
   #   - Length: 2-10 characters
-  #   - Invalid prefixes will default to "rr"
+  #   - Invalid prefixes will default to "zr"
   #
   # Conflict handling:
-  #   - If custom prefix conflicts: automatically falls back to "rr"
-  #   - If "rr" also conflicts: uses "rr1", "rr2", etc.
+  #   - If custom prefix conflicts: automatically falls back to "zr"
+  #   - If "zr" also conflicts: uses "zr1", "zr2", etc.
   #
   # NOTE: Changing prefix requires server restart
-  prefix: 'rr'
+  prefix: 'zr'
 
 # ============================================
 # ECONOMY SETTINGS
@@ -145,9 +145,9 @@ limits:
   # Override limits by permission
   # Format: permission: limit
   permission-limits:
-    'regionrental.vip': 5
-    'regionrental.premium': 10
-    'regionrental.unlimited': -1
+    'zonerental.vip': 5
+    'zonerental.premium': 10
+    'zonerental.unlimited': -1
   
   # Cooldown between rentals (seconds)
   rental-cooldown: 0
@@ -461,11 +461,11 @@ messages:
   rental-reset: '&aRental for &e{region}&a has been reset!'
   admin-reset-success: '&aSuccessfully reset rental for &e{region}&a. Player &e{player}&a has been refunded &e{amount}&a.'
   rental-reset-refund: '&aYour rental of &e{region}&a has been reset by an admin. You have been refunded &e{amount}&a.'
-  region-removed: '&aRegionRental setup completely removed from &e{region}&a:'
+  region-removed: '&aZoneRental setup completely removed from &e{region}&a:'
   rental-info: '&6=== Rental Info for {region} ==='
   config-reloaded: '&aConfiguration reloaded!'
   aliases-enabled: '&aShort command aliases have been enabled!'
-  aliases-disabled: '&eShort aliases disabled due to conflicts. Use /rr prefix.'
+  aliases-disabled: '&eShort aliases disabled due to conflicts. Use /zr prefix.'
 
   # Member management messages
   member-added: '&aAdded &e{member}&a as a member of &6{region}&a!'
@@ -492,7 +492,7 @@ messages:
   not-rental-owner: '&cYou do not own this rental!'
 
   # Help messages
-  help-header: '&6=== RegionRental Help ==='
+  help-header: '&6=== ZoneRental Help ==='
   help-footer: '&6======================='
 
 # ============================================
@@ -549,9 +549,9 @@ integration:
 # ============================================
 # Give discounts based on permissions
 permission-prices:
-  # 'regionrental.vip': 50.0      # 50% of normal price
-  # 'regionrental.premium': 75.0   # 75% of normal price
-  # 'regionrental.special': 25.0   # 25% of normal price
+  # 'zonerental.vip': 50.0      # 50% of normal price
+  # 'zonerental.premium': 75.0   # 75% of normal price
+  # 'zonerental.special': 25.0   # 25% of normal price
 
 # ============================================
 # DEBUG OPTIONS
@@ -597,7 +597,7 @@ advanced:
     type: SQLITE  # SQLITE, MYSQL, POSTGRESQL
     host: localhost
     port: 3306
-    database: regionrental
+    database: zonerental
     username: root
     password: password
     
