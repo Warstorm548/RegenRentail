@@ -79,9 +79,30 @@ jobs:
 
         changelog-file: RELEASE_NOTES.md
 
-        # Use modrinth-dependencies with version IDs for proper version constraints
-        modrinth-dependencies: |
-          worldguard@PO4MKx7e(required)
-          worldedit@Jk1z2u7n(required)
-          essentialsx(optional)
-          luckperms(optional)
+    - name: Update dependencies via Modrinth API
+      run: |
+        # Wait a moment for Modrinth to process the upload
+        sleep 5
+
+        # Get the version ID that was just created
+        VERSION_ID=$(curl -s -H "Authorization: ${{ secrets.MODRINTHAPI }}" \
+          "https://api.modrinth.com/v2/project/iNHRLu42/version" | \
+          jq -r '.[0].id')
+
+        echo "Patching version: $VERSION_ID"
+
+        # Patch with correct dependencies including version IDs
+        curl -X PATCH \
+          -H "Authorization: ${{ secrets.MODRINTHAPI }}" \
+          -H "Content-Type: application/json" \
+          -d '{
+            "dependencies": [
+              {"project_id": "DKY9btbd", "version_id": "PO4MKx7e", "dependency_type": "required"},
+              {"project_id": "1u6JkXh5", "version_id": "Jk1z2u7n", "dependency_type": "required"},
+              {"project_id": "hXiIvTyT", "dependency_type": "optional"},
+              {"project_id": "Vebnzrzj", "dependency_type": "optional"}
+            ]
+          }' \
+          "https://api.modrinth.com/v2/version/$VERSION_ID"
+
+        echo "Dependencies updated successfully"
