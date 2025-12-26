@@ -24,6 +24,34 @@ Going forward, all references use the new name "ZoneRental".
 
 ---
 
+## [3.0.1] - Tier 3 Command Kotlin Migration
+
+Internal refactoring: Migrated four command classes from Java to Kotlin.
+
+### Kotlin Conversions
+
+- **CreateSignCommand.kt** - Migrated from Java (65 → 53 lines, 18% reduction)
+  - Player validation using `asPlayerOrNull()` extension
+  - String templates for messages
+  - Property access for plugin managers
+
+- **InfoCommand.kt** - Migrated from Java (76 → 70 lines, 8% reduction)
+  - String templates for cleaner output formatting
+  - Property access for Rental fields
+  - Elvis operator for null handling
+
+- **ResetCommand.kt** - Migrated from Java (87 → 77 lines, 11% reduction)
+  - Map indexing with type casting for refund details
+  - String templates for messages and logging
+  - Conditional logging with string interpolation
+
+- **ExtendCommand.kt** - Migrated from Java (107 → 98 lines, 8% reduction)
+  - Player validation using `asPlayerOrNull()` extension
+  - Property access for Rental fields and config values
+  - Vault economy integration preserved with null safety
+
+---
+
 ## [3.0.0] - Project Rename to ZoneRental
 
 Major version bump marking the complete rename of the project from RegionRental to ZoneRental.
