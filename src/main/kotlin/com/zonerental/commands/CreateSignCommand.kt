@@ -37,7 +37,7 @@ class CreateSignCommand(private val plugin: ZoneRental) : CommandExecutor {
         // Get the block the player is looking at
         val targetBlock = player.getTargetBlock(null, 5)
 
-        if (targetBlock.state !is Sign) {
+        if (targetBlock == null || targetBlock.state !is Sign) {
             player.sendMessage("${ChatColor.RED}You must be looking at a sign!")
             return true
         }
