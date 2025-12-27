@@ -1,5 +1,5 @@
 name: ZoneRental
-version: 3.0.2
+version: 3.0.3
 main: com.zonerental.ZoneRental
 api-version: '1.21'
 author: Jean-Luc
@@ -85,11 +85,11 @@ permissions:
     default: true
 
   zonerental.member:
-    description: Manage members in rented regions
+    description: Add and remove members in rented regions
     default: true
 
   zonerental.members:
-    description: View members of rented regions
+    description: View members of rented regions (used by /zrmember list)
     default: true
 
   zonerental.tp:
