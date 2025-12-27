@@ -43,7 +43,7 @@ class RemoveCommand(private val plugin: ZoneRental) : CommandExecutor {
         // Check if WorldGuard region exists
         if (!plugin.worldGuardManager.regionExists(regionName, world)) {
             sender.sendMessage(plugin.configManager.getMessage("region-not-found",
-                "{region}", parsed.compositeKey))
+                "{region}", parsed.getCompositeKey()))
             return true
         }
 
@@ -95,7 +95,7 @@ class RemoveCommand(private val plugin: ZoneRental) : CommandExecutor {
 
         // Send comprehensive success message
         val message = buildString {
-            append(plugin.configManager.getMessage("region-removed", "{region}", parsed.compositeKey))
+            append(plugin.configManager.getMessage("region-removed", "{region}", parsed.getCompositeKey()))
 
             if (signRemoved) {
                 append("\n${ChatColor.GREEN}  ✓ Rental sign removed")
@@ -117,7 +117,7 @@ class RemoveCommand(private val plugin: ZoneRental) : CommandExecutor {
         sender.sendMessage(message)
 
         // Log the action
-        plugin.logger.info("Admin ${sender.name} removed RegionRental setup from region: ${parsed.compositeKey}")
+        plugin.logger.info("Admin ${sender.name} removed RegionRental setup from region: ${parsed.getCompositeKey()}")
 
         return true
     }
