@@ -50,6 +50,7 @@ public class ZoneRental extends JavaPlugin {
     private Economy economy;
 
     // Track command prefix
+    private static final String DEFAULT_PREFIX = "zr";
     private String activePrefix;
     private boolean usingFallback = false;
     private List<String> registeredCommands = new ArrayList<>();
@@ -242,7 +243,7 @@ public class ZoneRental extends JavaPlugin {
         // Log final status
         logPrefixStatus(configuredPrefix);
 
-        // Update /zr command description to show active prefix
+        // Update default command description to show active prefix
         updateHelpCommandDescription();
     }
 
@@ -257,18 +258,18 @@ public class ZoneRental extends JavaPlugin {
 
         // Configured prefix has conflicts, log warning
         getLogger().warning("Custom prefix '" + configuredPrefix + "' conflicts with existing commands!");
-        getLogger().warning("Falling back to default 'zr' prefix due to conflicts...");
+        getLogger().warning("Falling back to default '" + DEFAULT_PREFIX + "' prefix due to conflicts...");
         usingFallback = true;
 
-        // Check if 'zr' has conflicts
-        if (!checkPrefixConflicts(commandMap, "zr")) {
-            return "zr";
+        // Check if default prefix has conflicts
+        if (!checkPrefixConflicts(commandMap, DEFAULT_PREFIX)) {
+            return DEFAULT_PREFIX;
         }
 
-        // Both configured and 'zr' have conflicts, generate suffixed version
-        getLogger().warning("Fallback prefix 'zr' also has conflicts!");
+        // Both configured and default have conflicts, generate suffixed version
+        getLogger().warning("Fallback prefix '" + DEFAULT_PREFIX + "' also has conflicts!");
         getLogger().warning("Generating auto-suffixed prefix...");
-        return generateSuffixedPrefix(commandMap, "zr");
+        return generateSuffixedPrefix(commandMap, DEFAULT_PREFIX);
     }
 
     /**
@@ -276,14 +277,25 @@ public class ZoneRental extends JavaPlugin {
      */
     private boolean checkPrefixConflicts(CommandMap commandMap, String prefix) {
         // Check main command
-        if (commandMap.getCommand(prefix) != null) {
-            return true;
+        Command existingCmd = commandMap.getCommand(prefix);
+        if (existingCmd != null) {
+            // Check if this is our own command from plugin.yml - not a conflict
+            if (existingCmd instanceof org.bukkit.command.PluginCommand) {
+                org.bukkit.command.PluginCommand pluginCmd = (org.bukkit.command.PluginCommand) existingCmd;
+                if (pluginCmd.getPlugin() != this) {
+                    return true; // Conflict with another plugin
+                }
+                // This is our own command, skip conflict check for main command
+            } else {
+                return true; // Conflict with non-plugin command
+            }
         }
 
         // Check all subcommands
         String[] subcommands = {
             "reload", "createsign", "reset", "retrieve", "info", "list",
-            "extend", "duration", "remove", "refundhistory", "verify", "override"
+            "extend", "duration", "remove", "refundhistory", "verify", "override",
+            "member", "members", "tp", "group"
         };
 
         for (String sub : subcommands) {
@@ -322,7 +334,24 @@ public class ZoneRental extends JavaPlugin {
                                            org.bukkit.command.CommandExecutor executor, String permission) {
         String commandName = subcommand.isEmpty() ? prefix : prefix + subcommand;
 
-        // Create a custom command instance
+        // For main command with default prefix, use existing PluginCommand from plugin.yml
+        if (subcommand.isEmpty() && prefix.equals(DEFAULT_PREFIX)) {
+            org.bukkit.command.PluginCommand existingCmd = getCommand(DEFAULT_PREFIX);
+            if (existingCmd != null) {
+                existingCmd.setExecutor(executor);
+                existingCmd.setPermission(permission);
+                registeredCommands.add(commandName);
+                if (configManager.isDebug()) {
+                    getLogger().info("  Using existing PluginCommand: /" + commandName);
+                }
+                return;
+            } else {
+                getLogger().warning("Expected PluginCommand '" + DEFAULT_PREFIX +
+                    "' from plugin.yml was not found. Falling back to DynamicCommand.");
+            }
+        }
+
+        // For subcommands or custom prefix, use DynamicCommand
         DynamicCommand cmd = new DynamicCommand(commandName, this);
         cmd.setExecutor(executor);
         cmd.setPermission(permission);
@@ -356,11 +385,11 @@ public class ZoneRental extends JavaPlugin {
     private void logPrefixStatus(String configuredPrefix) {
         if (activePrefix.equals(configuredPrefix) && !usingFallback) {
             getLogger().info("✓ Using custom prefix '" + activePrefix + "' for all commands");
-        } else if (usingFallback && activePrefix.equals("zr")) {
+        } else if (usingFallback && activePrefix.equals(DEFAULT_PREFIX)) {
             getLogger().warning("⚠ Custom prefix '" + configuredPrefix + "' had conflicts");
-            getLogger().info("✓ Using fallback prefix 'zr'");
+            getLogger().info("✓ Using fallback prefix '" + DEFAULT_PREFIX + "'");
         } else {
-            getLogger().warning("⚠ Both custom prefix '" + configuredPrefix + "' and 'zr' had conflicts");
+            getLogger().warning("⚠ Both custom prefix '" + configuredPrefix + "' and '" + DEFAULT_PREFIX + "' had conflicts");
             getLogger().info("✓ Using auto-generated prefix '" + activePrefix + "'");
         }
 
@@ -368,24 +397,24 @@ public class ZoneRental extends JavaPlugin {
     }
 
     /**
-     * Updates the /zr command description to show the active prefix
+     * Updates the default command description to show the active prefix
      * This ensures /help displays the correct prefix players should use
      */
     private void updateHelpCommandDescription() {
-        org.bukkit.command.PluginCommand zrCommand = getCommand("zr");
-        if (zrCommand != null) {
+        org.bukkit.command.PluginCommand defaultCommand = getCommand(DEFAULT_PREFIX);
+        if (defaultCommand != null) {
             String description;
-            if (activePrefix.equals("zr")) {
-                // Using default zr prefix
-                description = "ZoneRental - Rent WorldGuard regions. Type /zr for help";
+            if (activePrefix.equals(DEFAULT_PREFIX)) {
+                // Using default prefix
+                description = "ZoneRental - Rent WorldGuard regions. Type /" + DEFAULT_PREFIX + " for help";
             } else {
                 // Using custom prefix - update description to show it
                 description = "ZoneRental (active prefix: /" + activePrefix + ") - Type /" + activePrefix + " for help";
             }
-            zrCommand.setDescription(description);
+            defaultCommand.setDescription(description);
 
             if (configManager.isDebug()) {
-                getLogger().info("Updated /zr command description: " + description);
+                getLogger().info("Updated /" + DEFAULT_PREFIX + " command description: " + description);
             }
         }
     }
@@ -394,7 +423,7 @@ public class ZoneRental extends JavaPlugin {
      * Returns the currently active command prefix
      */
     public String getActivePrefix() {
-        return activePrefix != null ? activePrefix : "zr";
+        return activePrefix != null ? activePrefix : DEFAULT_PREFIX;
     }
 
     private CommandMap getCommandMap() {
@@ -487,7 +516,7 @@ public class ZoneRental extends JavaPlugin {
             regionsConfig.verifyAndRepairRegions();
         }
 
-        // Update /zr command description in case prefix changed
+        // Update default command description in case prefix changed
         updateHelpCommandDescription();
 
         getLogger().info("Plugin reloaded successfully!");

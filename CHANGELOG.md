@@ -24,6 +24,20 @@ Going forward, all references use the new name "ZoneRental".
 
 ---
 
+## [3.0.2] - Fix Duplicate Command Registration
+
+### Fixed
+
+- **Command Registration Bug** - Fixed issue where `/zr` command was being registered twice
+  - Plugin's own PluginCommand from plugin.yml was incorrectly detected as a conflict
+  - This caused fallback to `/zr1` prefix instead of `/zr`
+  - `checkPrefixConflicts()` now recognizes the plugin's own PluginCommand and skips it
+  - `registerCommandWithPrefix()` now uses existing PluginCommand for main `/zr` command
+
+- **Missing Subcommands in Conflict Check** - Added `member`, `members`, `tp`, `group` to the subcommands array in conflict detection
+
+---
+
 ## [3.0.1] - Tier 3 Command Kotlin Migration
 
 Internal refactoring: Migrated four command classes from Java to Kotlin.
