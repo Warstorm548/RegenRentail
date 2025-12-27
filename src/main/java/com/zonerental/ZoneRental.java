@@ -276,14 +276,25 @@ public class ZoneRental extends JavaPlugin {
      */
     private boolean checkPrefixConflicts(CommandMap commandMap, String prefix) {
         // Check main command
-        if (commandMap.getCommand(prefix) != null) {
-            return true;
+        Command existingCmd = commandMap.getCommand(prefix);
+        if (existingCmd != null) {
+            // Check if this is our own command from plugin.yml - not a conflict
+            if (existingCmd instanceof org.bukkit.command.PluginCommand) {
+                org.bukkit.command.PluginCommand pluginCmd = (org.bukkit.command.PluginCommand) existingCmd;
+                if (pluginCmd.getPlugin() != this) {
+                    return true; // Conflict with another plugin
+                }
+                // This is our own command, skip conflict check for main command
+            } else {
+                return true; // Conflict with non-plugin command
+            }
         }
 
         // Check all subcommands
         String[] subcommands = {
             "reload", "createsign", "reset", "retrieve", "info", "list",
-            "extend", "duration", "remove", "refundhistory", "verify", "override"
+            "extend", "duration", "remove", "refundhistory", "verify", "override",
+            "member", "members", "tp", "group"
         };
 
         for (String sub : subcommands) {
@@ -322,7 +333,21 @@ public class ZoneRental extends JavaPlugin {
                                            org.bukkit.command.CommandExecutor executor, String permission) {
         String commandName = subcommand.isEmpty() ? prefix : prefix + subcommand;
 
-        // Create a custom command instance
+        // For main command with default prefix, use existing PluginCommand from plugin.yml
+        if (subcommand.isEmpty() && prefix.equals("zr")) {
+            org.bukkit.command.PluginCommand existingCmd = getCommand("zr");
+            if (existingCmd != null) {
+                existingCmd.setExecutor(executor);
+                existingCmd.setPermission(permission);
+                registeredCommands.add(commandName);
+                if (configManager.isDebug()) {
+                    getLogger().info("  Using existing PluginCommand: /" + commandName);
+                }
+                return;
+            }
+        }
+
+        // For subcommands or custom prefix, use DynamicCommand
         DynamicCommand cmd = new DynamicCommand(commandName, this);
         cmd.setExecutor(executor);
         cmd.setPermission(permission);
