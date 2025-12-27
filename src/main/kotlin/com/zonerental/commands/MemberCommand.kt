@@ -233,7 +233,7 @@ class MemberCommand(private val plugin: ZoneRental) : CommandExecutor, TabComple
 
         player.sendMessage(plugin.configManager.getMessage("members-list-header", "{region}", parsed.getCompositeKey()))
 
-        val members = rental.members
+        val members = rental.getMembers()
         if (members.isEmpty()) {
             player.sendMessage(plugin.configManager.getMessage("members-list-empty"))
         } else {
