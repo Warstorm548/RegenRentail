@@ -95,7 +95,7 @@ All commands start with `/zr` to avoid conflicts:
 - `/zrretrieve` - Get stored items from expired rentals
 - `/zrmember add <region> <player>` - Add a member to your rented region
 - `/zrmember remove <region> <player>` - Remove a member from your rented region
-- `/zrmembers <region>` - List members of your rented region
+- `/zrmember list <region>` - List members of a rented region
 - `/zrtp <region>` - Teleport to your rented region (works for owners and members)
 
 **Admin Commands:**

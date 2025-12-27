@@ -24,6 +24,36 @@ Going forward, all references use the new name "ZoneRental".
 
 ---
 
+## [3.0.3] - Merge Member Commands
+
+### Changed
+
+- **Consolidated `/zrmembers` into `/zrmember list`** - Reduced command redundancy
+  - `/zrmember add <region> <username>` - Add a member (unchanged)
+  - `/zrmember remove <region> <username>` - Remove a member (unchanged)
+  - `/zrmember list <region>` - View members (previously `/zrmembers <region>`)
+
+### Kotlin Migration
+
+- **MemberCommand.kt** - Migrated from Java and merged with MembersCommand
+  - Combined MemberCommand.java (204 lines) + MembersCommand.java (142 lines) → MemberCommand.kt (268 lines)
+  - World-aware parser support for all subcommands
+  - Unified tab completion for all subcommands
+
+### Removed
+
+- **MemberCommand.java** - Replaced by Kotlin implementation
+- **MembersCommand.java** - Merged into `/zrmember list` subcommand
+- **`/zrmembers` command** - Use `/zrmember list` instead
+
+### Notes
+
+- Both permissions preserved for backward compatibility:
+  - `zonerental.member` - For `add` and `remove` subcommands
+  - `zonerental.members` - For `list` subcommand
+
+---
+
 ## [3.0.2] - Fix Duplicate Command Registration
 
 ### Fixed

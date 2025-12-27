@@ -167,7 +167,7 @@ Basic functionality verification:
 - [ ] Only renter can remove members
 
 ### Listing Members
-- [ ] `/zrmembers <region>` shows member list
+- [ ] `/zrmember list <region>` shows member list
 - [ ] Shows correct member count
 
 ### Member Cleanup
