@@ -27,7 +27,7 @@ ZoneRental is a Minecraft Paper/Spigot plugin (1.21+) that implements a complete
 ./gradlew clean build
 
 # Output location
-build/libs/ZoneRental-3.0.3.jar
+build/libs/ZoneRental-3.0.4.jar
 ```
 
 ### Development Commands
@@ -60,7 +60,7 @@ When updating the version, modify these files:
 - `README.md` - Version references
 - Output JAR: `build/libs/ZoneRental-X.X.X.jar`
 
-**Current Version:** 3.0.3
+**Current Version:** 3.0.4
 
 ## Architecture Overview
 
