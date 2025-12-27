@@ -67,8 +67,7 @@
 | `/zrlist [player]` | List rentals | `zonerental.list` |
 | `/zrextend <region>` | Extend rental | `zonerental.extend` |
 | `/zrretrieve` | Retrieve stored items | `zonerental.retrieve` |
-| `/zrmember add\|remove <region> <player>` | Manage rental members | `zonerental.member` |
-| `/zrmembers <region>` | List rental members | `zonerental.members` |
+| `/zrmember add\|remove\|list <region> [player]` | Manage and view rental members | `zonerental.member` / `zonerental.members` |
 | `/zrtp <region>` | Teleport to rented region | `zonerental.tp` |
 
 ## Key Features Explained
@@ -265,7 +264,7 @@ Rental owners can add other players as members to their rented regions.
 |---------|-------------|------------|
 | `/zrmember add <region> <player>` | Add member to rental | `zonerental.member` |
 | `/zrmember remove <region> <player>` | Remove member from rental | `zonerental.member` |
-| `/zrmembers <region>` | List all members | `zonerental.members` |
+| `/zrmember list <region>` | List all members | `zonerental.members` |
 
 **Features:**
 - Members are added to WorldGuard region members
