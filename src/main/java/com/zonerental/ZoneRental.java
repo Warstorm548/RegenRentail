@@ -224,7 +224,6 @@ public class ZoneRental extends JavaPlugin {
         registerCommandWithPrefix(commandMap, activePrefix, "list", new ListCommand(this), "zonerental.list");
         registerCommandWithPrefix(commandMap, activePrefix, "extend", new ExtendCommand(this), "zonerental.extend");
         registerCommandWithPrefix(commandMap, activePrefix, "member", new MemberCommand(this), "zonerental.member");
-        registerCommandWithPrefix(commandMap, activePrefix, "members", new MembersCommand(this), "zonerental.members");
         registerCommandWithPrefix(commandMap, activePrefix, "tp", new TpCommand(this), "zonerental.tp");
 
         DurationCommand durationCommand = new DurationCommand(this);
@@ -295,7 +294,7 @@ public class ZoneRental extends JavaPlugin {
         String[] subcommands = {
             "reload", "createsign", "reset", "retrieve", "info", "list",
             "extend", "duration", "remove", "refundhistory", "verify", "override",
-            "member", "members", "tp", "group"
+            "member", "tp", "group"
         };
 
         for (String sub : subcommands) {
