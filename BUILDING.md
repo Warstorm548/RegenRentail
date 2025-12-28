@@ -30,7 +30,7 @@ Or build directly with Gradle:
 
 4. **Find your JAR file:**
 ```
-build/libs/ZoneRental-2.8.2.jar
+build/libs/ZoneRental-3.0.4.jar
 ```
 
 ## Development Commands

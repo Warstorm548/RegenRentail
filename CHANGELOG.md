@@ -24,6 +24,39 @@ Going forward, all references use the new name "ZoneRental".
 
 ---
 
+## [3.0.4] - Complete Command Kotlin Migration
+
+Internal refactoring: Migrated the final four Java command classes to Kotlin.
+
+### Kotlin Conversions
+
+- **RRCommand.kt** - Migrated from Java (467 → 444 lines, 5% reduction)
+  - Multi-page help system with `when` expressions
+  - String templates for dynamic prefix interpolation
+  - Tab completion with filtered list operations
+
+- **RetrieveCommand.kt** - Migrated from Java (37 → 28 lines, 24% reduction)
+  - Kotlin smart cast for Player type check
+  - Property access for plugin managers
+
+- **RemoveCommand.kt** - Migrated from Java (132 → 124 lines, 6% reduction)
+  - `buildString {}` instead of StringBuilder
+  - Null-safe property access with `?.let {}`
+  - World-aware region parsing preserved
+
+- **ReloadCommand.kt** - Migrated from Java (27 → 20 lines, 26% reduction)
+  - Simple command with idiomatic Kotlin patterns
+  - Property access for config manager
+
+### Technical Notes
+
+- **All commands now in Kotlin** - Zero Java command classes remain
+- **Total line reduction:** 663 lines Java → 616 lines Kotlin (7% reduction)
+- No user-facing changes - all commands work identically
+- `src/main/java/com/zonerental/commands/` directory is now empty
+
+---
+
 ## [3.0.3] - Merge Member Commands
 
 ### Changed

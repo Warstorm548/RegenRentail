@@ -484,7 +484,7 @@ plugins/ZoneRental/
 
 **Output:**
 ```
-build/libs/ZoneRental-2.7.0.jar
+build/libs/ZoneRental-3.0.4.jar
 ```
 
 ## Dependencies
@@ -531,8 +531,9 @@ See [In_Game_Testing_Checklist.md](In_Game_Testing_Checklist.md) for comprehensi
 
 See [CHANGELOG.md](CHANGELOG.md) for detailed version history.
 
-**v2.7.0** - Current
-- Kotlin migration for improved code quality and type safety
+**v3.0.4** - Current
+- Complete Kotlin migration for all commands
+- Project renamed from RegionRental to ZoneRental
 - Sealed classes for type-safe command handling
 - Extension functions for cleaner APIs
 - Performance optimizations (dirty tracking, lazy loading, O(1) lookups)
