@@ -24,6 +24,24 @@ Going forward, all references use the new name "ZoneRental".
 
 ---
 
+## [3.0.5] - Fix Retrieval GUI Navigation Buttons
+
+### Fixed
+
+- **Retrieval GUI missing navigation elements** - Close button and page indicator are now always visible
+  - Previously, navigation buttons only appeared when there were more than 45 items (multiple pages)
+  - Single-page GUIs now show page indicator (slot 49) and close button (slot 50)
+  - Navigation arrows still only appear when there are multiple pages to navigate
+
+### Changed
+
+- **Consolidated StorageGUISession classes** - Removed duplicate inner class
+  - Replaced `StorageManager.StorageGUISession` inner class with external model
+  - Now uses `com.zonerental.models.StorageGUISession` for session tracking
+  - Improved code organization and maintainability
+
+---
+
 ## [3.0.4] - Complete Command Kotlin Migration
 
 Internal refactoring: Migrated the final four Java command classes to Kotlin.
