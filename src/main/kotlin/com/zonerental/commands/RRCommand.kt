@@ -56,6 +56,7 @@ class RRCommand(private val plugin: ZoneRental) : CommandExecutor, TabCompleter 
             "list" -> {
                 if (args.size == 1) {
                     sender.sendMessage("${ChatColor.RED}Usage: /$prefix list <player>")
+                    return true
                 }
                 // Handle list command
             }
@@ -63,6 +64,7 @@ class RRCommand(private val plugin: ZoneRental) : CommandExecutor, TabCompleter 
             "info" -> {
                 if (args.size < 2) {
                     sender.sendMessage("${ChatColor.RED}Usage: /$prefix info <region>")
+                    return true
                 }
                 // Handle info command
             }

@@ -117,7 +117,7 @@ class RemoveCommand(private val plugin: ZoneRental) : CommandExecutor {
         sender.sendMessage(message)
 
         // Log the action
-        plugin.logger.info("Admin ${sender.name} removed RegionRental setup from region: ${parsed.getCompositeKey()}")
+        plugin.logger.info("Admin ${sender.name} removed ZoneRental setup from region: ${parsed.getCompositeKey()}")
 
         return true
     }
