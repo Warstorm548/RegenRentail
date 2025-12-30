@@ -22,6 +22,7 @@ import org.bukkit.inventory.Inventory
 import org.bukkit.inventory.InventoryHolder
 import org.bukkit.inventory.ItemStack
 import org.bukkit.inventory.meta.BlockStateMeta
+import com.zonerental.models.StorageGUISession
 import java.util.EnumSet
 import java.util.UUID
 
@@ -365,7 +366,7 @@ class StorageManager(private val plugin: ZoneRental) : Listener {
             return
         }
 
-        val session = StorageGUISession(player.uniqueId, items)
+        val session = StorageGUISession.create(player.uniqueId, items)
         activeGUISessions[player.uniqueId] = session
 
         openGUIPage(player, session, 0)
@@ -401,6 +402,20 @@ class StorageManager(private val plugin: ZoneRental) : Listener {
                 session.items[i]?.let { gui.addItem(it) }
             }
 
+            // Always show page indicator and close button
+            gui.setItem(49, createNavigationButton(
+                Material.PAPER,
+                "${ChatColor.YELLOW}Page ${currentPage + 1} of $totalPages",
+                "${ChatColor.GRAY}Total items: ${session.items.size}"
+            ))
+
+            gui.setItem(50, createNavigationButton(
+                Material.BARRIER,
+                "${ChatColor.RED}Close",
+                "${ChatColor.GRAY}Click to close and save items"
+            ))
+
+            // Only show navigation arrows if multiple pages exist
             if (totalPages > 1) {
                 if (currentPage > 0) {
                     gui.setItem(45, createNavigationButton(
@@ -410,12 +425,6 @@ class StorageManager(private val plugin: ZoneRental) : Listener {
                     ))
                 }
 
-                gui.setItem(49, createNavigationButton(
-                    Material.PAPER,
-                    "${ChatColor.YELLOW}Page ${currentPage + 1} of $totalPages",
-                    "${ChatColor.GRAY}Total items: ${session.items.size}"
-                ))
-
                 if (currentPage < totalPages - 1) {
                     gui.setItem(53, createNavigationButton(
                         Material.ARROW,
@@ -423,12 +432,6 @@ class StorageManager(private val plugin: ZoneRental) : Listener {
                         "${ChatColor.GRAY}Click to go to page ${currentPage + 2}"
                     ))
                 }
-
-                gui.setItem(50, createNavigationButton(
-                    Material.BARRIER,
-                    "${ChatColor.RED}Close",
-                    "${ChatColor.GRAY}Click to close and save items"
-                ))
             }
         }
 
@@ -551,17 +554,6 @@ class StorageManager(private val plugin: ZoneRental) : Listener {
             }
         }
         return Bukkit.getWorlds().firstOrNull()
-    }
-
-    // Inner class for GUI session tracking
-    private class StorageGUISession(
-        val playerUUID: UUID,
-        val items: List<ItemStack>
-    ) {
-        var currentPage: Int = 0
-
-        val totalPages: Int
-            get() = maxOf(1, (items.size - 1) / ITEMS_PER_PAGE + 1)
     }
 
     /**
