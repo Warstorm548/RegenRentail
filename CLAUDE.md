@@ -15,6 +15,7 @@ ZoneRental is a Minecraft Paper/Spigot plugin (1.21+) that implements a complete
 - WorldEdit 7.3.16 (block editing/restoration)
 - Vault API (economy integration)
 - LuckPerms API (optional permissions)
+- MCCoroutine 2.21.0 (async coroutines)
 
 ## Build Commands
 
@@ -27,7 +28,7 @@ ZoneRental is a Minecraft Paper/Spigot plugin (1.21+) that implements a complete
 ./gradlew clean build
 
 # Output location
-build/libs/ZoneRental-3.0.5.jar
+build/libs/ZoneRental-3.1.0.jar
 ```
 
 ### Development Commands
@@ -60,12 +61,12 @@ When updating the version, modify these files:
 - `README.md` - Version references
 - Output JAR: `build/libs/ZoneRental-X.X.X.jar`
 
-**Current Version:** 3.0.5
+**Current Version:** 3.1.0
 
 ## Architecture Overview
 
 ### Main Plugin Class
-**`ZoneRental.java`** - Main plugin entry point extending JavaPlugin. Handles:
+**`ZoneRental.java`** - Main plugin entry point extending SuspendingJavaPlugin (MCCoroutine). Handles:
 - Plugin lifecycle (onEnable/onDisable)
 - Manager initialization and coordination
 - Dynamic command registration with configurable prefix (defaults to `/zr`)
@@ -342,7 +343,7 @@ See [In_Game_Testing_Checklist.md](In_Game_Testing_Checklist.md) for comprehensi
 - `signs.yml` - Sign locations
 - `storage.yml` - Stored items
 - `rentals.yml` - Active rentals
-- `schematics/` - WorldEdit region snapshots (*.dat files)
+- `schematics/` - WorldEdit region snapshots (*.schem files)
 
 ### Source Structure
 
@@ -353,6 +354,7 @@ See [In_Game_Testing_Checklist.md](In_Game_Testing_Checklist.md) for comprehensi
 - `listeners/` - 2 event listeners
 
 **Kotlin source:** `src/main/kotlin/com/zonerental/`
+- `async/` - Async scanning services (ScanModels.kt, TpsMonitor.kt, AsyncScanService.kt)
 - `extensions/` - String, Location, Player, Collection extensions (4 files)
 - `util/` - TimeUtils.kt, WorldRegionParser.kt (2 files)
 - `models/` - RefundRecord, ParsedRegion, StorageGUISession, SupportBlockData (4 files)
@@ -360,7 +362,7 @@ See [In_Game_Testing_Checklist.md](In_Game_Testing_Checklist.md) for comprehensi
 - `commands/` - OverrideCommand.kt, DurationAction.kt (2 files)
 - `managers/` - All 10 manager classes including Rental, RentalManager, SignManager, etc.
 
-**Total: 19 Java classes + 29 Kotlin files**
+**Total: 19 Java classes + 32 Kotlin files**
 
 ## Version History
 

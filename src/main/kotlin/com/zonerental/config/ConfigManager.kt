@@ -63,6 +63,20 @@ class ConfigManager(private val plugin: ZoneRental) {
     var isSignProtection: Boolean = true
         private set
 
+    // Async scanning settings
+    var isAsyncScanningEnabled: Boolean = true
+        private set
+    var minChunksForAsync: Int = 10
+        private set
+    var tpsHealthyThreshold: Double = 19.5
+        private set
+    var tpsWarningThreshold: Double = 18.5
+        private set
+    var isDebugAsync: Boolean = false
+        private set
+    var maxRentalChunks: Int = 2000
+        private set
+
     // Teleport settings
     var isTeleportEnabled: Boolean = true
         private set
@@ -162,6 +176,14 @@ class ConfigManager(private val plugin: ZoneRental) {
         isItemStorage = config.getBoolean("storage.enabled", true)
         isSignProtection = config.getBoolean("signs.protect-signs", true)
 
+        // Async scanning settings
+        isAsyncScanningEnabled = config.getBoolean("async-scanning.enabled", true)
+        minChunksForAsync = config.getInt("async-scanning.min-chunks-for-async", 10)
+        tpsHealthyThreshold = config.getDouble("async-scanning.tps-healthy-threshold", 19.5)
+        tpsWarningThreshold = config.getDouble("async-scanning.tps-warning-threshold", 18.5)
+        isDebugAsync = config.getBoolean("async-scanning.debug-async", false)
+        maxRentalChunks = config.getInt("async-scanning.max-rental-chunks", 2000)
+
         // Teleport settings
         isTeleportEnabled = config.getBoolean("teleport.enabled", true)
         teleportMaxSearchDistance = config.getInt("teleport.max-search-distance", 20)
@@ -205,7 +227,9 @@ class ConfigManager(private val plugin: ZoneRental) {
             "duration-add-charged" to "&aAdded &e{days}&a days to &e{region}&a. Player &e{player}&a was charged &e{amount}&a.",
             "duration-add-free" to "&aAdded &e{days}&a to &e{region}&a (no charge).",
             "duration-remove-refunded" to "&aRemoved &e{days}&a days from &e{region}&a. Player &e{player}&a was refunded &e{amount}&a.",
-            "duration-remove-no-refund" to "&aRemoved &e{days}&a days from &e{region}&a (no refund issued)."
+            "duration-remove-no-refund" to "&aRemoved &e{days}&a days from &e{region}&a (no refund issued).",
+            // Region size messages
+            "region-too-large" to "&cRegion &e{region}&c is too large to rent! (&e{chunks}&c chunks, max: &e{max}&c)"
         )
 
         // Override with config values

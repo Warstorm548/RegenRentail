@@ -1,5 +1,6 @@
 package com.zonerental.managers
 
+import com.github.shynixn.mccoroutine.bukkit.launch
 import com.zonerental.ZoneRental
 import com.zonerental.extensions.color
 import org.bukkit.Bukkit
@@ -45,7 +46,11 @@ class ExpirationManager(private val plugin: ZoneRental) {
             )
             return
         }
-        plugin.rentalManager.expireRental(rental.regionName, world)
+
+        // Launch async expiration using MCCoroutine
+        plugin.launch {
+            plugin.rentalManager.expireRentalAsync(rental.regionName, world)
+        }
 
         plugin.logger.info(
             "Expired rental for ${rental.worldName}:${rental.regionName} (Player: ${rental.playerName})"

@@ -1,5 +1,6 @@
 package com.zonerental.managers
 
+import com.github.shynixn.mccoroutine.bukkit.minecraftDispatcher
 import com.zonerental.ZoneRental
 import com.sk89q.worldedit.EditSession
 import com.sk89q.worldedit.WorldEdit
@@ -13,6 +14,8 @@ import com.sk89q.worldedit.function.operation.Operations
 import com.sk89q.worldedit.regions.CuboidRegion
 import com.sk89q.worldedit.session.ClipboardHolder
 import com.sk89q.worldguard.WorldGuard
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import org.bukkit.Bukkit
 import org.bukkit.World
 import java.io.File
@@ -234,6 +237,140 @@ class WorldEditManager(private val plugin: ZoneRental) {
             plugin.logger.info("Schematic cache cleared")
         }
     }
+
+    // ========================================
+    // ASYNC METHODS (File I/O on background thread)
+    // ========================================
+
+    /**
+     * Async version of captureRegion.
+     * WorldEdit clipboard creation runs on main thread, file I/O runs on IO dispatcher.
+     */
+    suspend fun captureRegionAsync(regionName: String, world: World): Boolean {
+        if (!plugin.configManager.isBlockRestoration) {
+            return false
+        }
+
+        return try {
+            // WorldEdit operations must run on main thread
+            val clipboard = withContext(plugin.minecraftDispatcher) {
+                createClipboard(regionName, world)
+            } ?: return false
+
+            val compositeKey = "${world.name}:$regionName"
+            clipboardCache[compositeKey] = clipboard
+            knownSchematics.add(compositeKey)
+
+            // File I/O on background thread
+            withContext(Dispatchers.IO) {
+                saveSchematic(compositeKey, clipboard)
+            }
+
+            if (plugin.configManager.isDebug) {
+                plugin.logger.info("Captured region state for: $regionName in world ${world.name}")
+            }
+
+            true
+        } catch (e: Exception) {
+            plugin.logger.log(Level.SEVERE, "Failed to capture region: $regionName in world ${world.name}", e)
+            false
+        }
+    }
+
+    /**
+     * Async version of restoreRegion.
+     * WorldEdit paste runs on main thread, file I/O runs on IO dispatcher.
+     */
+    suspend fun restoreRegionAsync(regionName: String, world: World): Boolean {
+        if (!plugin.configManager.isBlockRestoration) {
+            return false
+        }
+
+        val compositeKey = "${world.name}:$regionName"
+
+        // Load schematic from disk on IO thread if not in cache
+        val clipboard = clipboardCache[compositeKey] ?: withContext(Dispatchers.IO) {
+            loadSchematic(compositeKey)
+        }
+
+        if (clipboard == null) {
+            plugin.logger.warning("No saved state found for region: $regionName in world ${world.name}")
+            return false
+        }
+
+        return try {
+            // WorldEdit paste operation on main thread
+            withContext(plugin.minecraftDispatcher) {
+                performRestore(clipboard, world)
+            }
+
+            if (plugin.configManager.isDebug) {
+                plugin.logger.info("Restored region state for: $regionName in world ${world.name}")
+            }
+
+            if (plugin.configManager.isAutoDeleteSchematics) {
+                clipboardCache.remove(compositeKey)
+                knownSchematics.remove(compositeKey)
+                withContext(Dispatchers.IO) {
+                    deleteSchematic(compositeKey)
+                }
+            }
+
+            true
+        } catch (e: Exception) {
+            plugin.logger.log(Level.SEVERE, "Failed to restore region: $regionName in world ${world.name}", e)
+            false
+        }
+    }
+
+    /**
+     * Creates a WorldEdit clipboard for a region.
+     * Must be called from main thread.
+     */
+    private fun createClipboard(regionName: String, world: World): Clipboard? {
+        val wgRegion = getWorldGuardRegion(regionName, world)
+        if (wgRegion == null) {
+            plugin.logger.warning("Could not find WorldGuard region: $regionName in world ${world.name}")
+            return null
+        }
+
+        val weWorld = BukkitAdapter.adapt(world)
+        val min = wgRegion.minimumPoint
+        val max = wgRegion.maximumPoint
+        val region = CuboidRegion(weWorld, min, max)
+
+        val clipboard = BlockArrayClipboard(region)
+
+        WorldEdit.getInstance().newEditSession(weWorld).use { editSession ->
+            val copy = ForwardExtentCopy(editSession, region, clipboard, region.minimumPoint)
+            copy.isCopyingEntities = true
+            copy.isCopyingBiomes = false
+            Operations.complete(copy)
+        }
+
+        return clipboard
+    }
+
+    /**
+     * Performs WorldEdit paste operation.
+     * Must be called from main thread.
+     */
+    private fun performRestore(clipboard: Clipboard, world: World) {
+        val weWorld = BukkitAdapter.adapt(world)
+
+        WorldEdit.getInstance().newEditSession(weWorld).use { editSession ->
+            val holder = ClipboardHolder(clipboard)
+            val operation = holder.createPaste(editSession)
+                .to(clipboard.origin)
+                .ignoreAirBlocks(false)
+                .build()
+            Operations.complete(operation)
+        }
+    }
+
+    // ========================================
+    // SYNC METHODS (Original implementation)
+    // ========================================
 
     private fun getOrLoadClipboard(compositeKey: String): Clipboard? {
         // Check cache first

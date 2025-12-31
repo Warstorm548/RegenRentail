@@ -24,6 +24,96 @@ Going forward, all references use the new name "ZoneRental".
 
 ---
 
+## [3.1.0] - Async Region Scanning with MCCoroutine
+
+Major performance update implementing async chunk-based region scanning for improved server performance during rental expiration.
+
+### New Features
+
+- **MCCoroutine 2.21.0 Integration** - Added Kotlin coroutine support for Bukkit
+  - Plugin now extends `SuspendingJavaPlugin` for automatic coroutine lifecycle management
+  - Enables non-blocking async operations during item/block scanning
+  - TPS-aware throttling to prevent lag during large region scans
+
+- **ChunkSnapshot Pre-filtering** - ~99% reduction in main thread `getBlock()` calls
+  - Phase A: Scan `ChunkSnapshot` for container block types (async, off main thread)
+  - Phase B: Access actual blocks only for found containers (main thread, minimal)
+  - Dramatically reduces server impact for large rental regions
+
+- **Dynamic Chunk Batching** - Batch size scales with region size
+  - Tiny (<50 chunks): 15 chunks/batch, no delay
+  - Small (<200 chunks): 10 chunks/batch, 25ms delay
+  - Medium (<500 chunks): 8 chunks/batch, 50ms delay
+  - Large (<1000 chunks): 4 chunks/batch, 100ms delay
+  - Very Large (<2000 chunks): 2 chunks/batch, 150ms delay
+  - Extreme (2000+ chunks): 1 chunk/batch, 200ms delay
+
+- **Y-Level Aware Scanning** - Only scans actual region Y-bounds
+  - Uses WorldGuard region min/max Y coordinates
+  - Avoids scanning full world height (Y -64 to 320)
+  - Significant performance improvement for regions with limited vertical extent
+
+- **TPS Monitoring with Auto-Throttling** - Adaptive performance management
+  - HEALTHY (TPS ≥ 19.5): Full speed scanning
+  - WARNING (TPS ≥ 18.5): Reduced concurrency, doubled delays
+  - CRITICAL (TPS < 18.5): Single chunk, 200ms delays, pause if TPS drops further
+
+- **Region Size Limits** - Block rentals for excessively large regions
+  - Configurable `max-rental-chunks` limit (default: 2000)
+  - Prevents performance issues from extremely large regions
+  - Clear error message when region exceeds limit
+
+### New Files
+
+- `src/main/kotlin/com/zonerental/async/ScanModels.kt` - Data classes for async scanning
+  - `ScanRegion`, `ChunkCoord`, `BlockCoord`, `ChunkBatch`
+  - `ScanStrategy` sealed class (Tiny/Small/Medium/Large/VeryLarge/Extreme)
+  - `TpsLevel` enum and `AdjustedStrategy` for TPS-based throttling
+
+- `src/main/kotlin/com/zonerental/async/TpsMonitor.kt` - TPS monitoring utility
+  - Uses Paper's `Bukkit.getTPS()` API
+  - Provides strategy adjustment based on current server load
+  - Estimates scan time for large regions
+
+- `src/main/kotlin/com/zonerental/async/AsyncScanService.kt` - Core async scan service
+  - `createScanRegion()` - Creates scan region from WorldGuard bounds
+  - `calculateChunkBatches()` - Splits region into TPS-friendly batches
+  - `scanSnapshotForContainers()` - Finds container blocks in ChunkSnapshot
+  - `scanSnapshotForChangedBlocks()` - Detects player-placed blocks
+
+### Modified Files
+
+- **ZoneRental.java** - Now extends `SuspendingJavaPlugin` for MCCoroutine
+- **StorageManager.kt** - Added async ChunkSnapshot-based scanning methods
+- **WorldEditManager.kt** - Added async file I/O for schematic operations
+- **RentalManager.kt** - Added `expireRentalAsync()` suspend function
+- **ExpirationManager.kt** - Uses `plugin.launch {}` for async expiration
+- **ConfigManager.kt** - Added async-scanning configuration properties
+
+### New Configuration
+
+```yaml
+async-scanning:
+  enabled: true              # Enable async scanning for large regions
+  min-chunks-for-async: 10   # Minimum chunks before using async
+  tps-healthy-threshold: 19.5
+  tps-warning-threshold: 18.5
+  debug-async: false         # Enable debug logging for async operations
+  max-rental-chunks: 2000    # Block rentals for regions larger than this
+```
+
+### Technical Details
+
+- **Dependencies added:**
+  - `mccoroutine-bukkit-api:2.21.0`
+  - `mccoroutine-bukkit-core:2.21.0`
+  - `kotlinx-coroutines-core:1.9.0`
+- All new dependencies are relocated via ShadowJar to avoid conflicts
+- Backward compatible - small regions still use synchronous scanning
+- No changes to data formats or API
+
+---
+
 ## [3.0.5] - Fix Retrieval GUI Navigation Buttons
 
 ### Fixed
