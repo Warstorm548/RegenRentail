@@ -2,7 +2,7 @@
 
 **Complete WorldGuard Region Rental System with Clickable Signs**
 
-Version: 3.0.4
+Version: 3.1.0
 Minecraft: Paper/Spigot 1.21+
 Languages: Java 21, Kotlin 2.2.20
 
@@ -32,6 +32,7 @@ Languages: Java 21, Kotlin 2.2.20
 - ✅ **Custom messages** - All configurable
 - ✅ **Refund tracking** - Complete refund history per rental
 - ✅ **EzChestShop integration** - Automatic shop removal on expiration
+- ✅ **Async region scanning** - TPS-aware chunk scanning for large regions
 - ✅ **Admin commands** - `/zrreload` and more
 
 ## 🔨 Building from Source
@@ -42,7 +43,7 @@ For build instructions and project structure, see [BUILDING.md](BUILDING.md).
 
 1. **Copy the JAR to your server:**
 ```bash
-cp build/libs/ZoneRental-3.0.4.jar /path/to/server/plugins/
+cp build/libs/ZoneRental-3.1.0.jar /path/to/server/plugins/
 ```
 
 2. **Install required dependencies:**
@@ -524,8 +525,8 @@ For build-related issues, see [BUILDING.md](BUILDING.md).
 ## ⚠️ Known Limitations
 
 - **Manual sign placement**: Signs must be manually placed before creating rental sign with `/zrcreatesign`
-- **Container scanning**: Synchronous operation that may cause minor lag on very large regions
 - **Support block detection**: Requires sign to be properly attached when using `/zrcreatesign`
+- **Region size limit**: Regions exceeding `max-rental-chunks` (default: 2000) cannot be rented
 
 These limitations are noted for transparency and may be addressed in future updates based on user feedback.
 

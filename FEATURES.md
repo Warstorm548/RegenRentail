@@ -37,6 +37,13 @@
 - **Auto-cleanup** - Configurable item storage expiration
 - **Supported containers** - Chests, barrels, shulkers, hoppers, furnaces, etc.
 
+### Async Region Scanning (v3.1.0+)
+- **ChunkSnapshot pre-filtering** - Scans chunk data off main thread
+- **TPS-aware throttling** - Automatically reduces scan speed when server is under load
+- **Dynamic batch sizing** - Larger regions use smaller batches to prevent lag
+- **Region size limits** - Configurable max chunk limit for rentable regions
+- **Y-level aware** - Only scans actual region Y-bounds, not full world height
+
 ### Sign Management
 - **Customizable formats** - 4-line sign templates
 - **Dynamic updates** - Auto-update every 30 seconds
@@ -464,7 +471,7 @@ plugins/ZoneRental/
 ├── storage.yml         # Stored items
 ├── rentals.yml         # Active rentals
 └── schematics/         # WorldEdit snapshots
-    └── *.dat          # Region backups
+    └── *.schem        # Region backups (Sponge format)
 ```
 
 ## Build System
@@ -484,7 +491,7 @@ plugins/ZoneRental/
 
 **Output:**
 ```
-build/libs/ZoneRental-3.0.4.jar
+build/libs/ZoneRental-3.1.0.jar
 ```
 
 ## Dependencies
@@ -493,6 +500,7 @@ build/libs/ZoneRental-3.0.4.jar
 |------------|---------|---------|
 | Paper API | 1.21.3 | Server platform |
 | Kotlin | 2.2.20 | JVM language support |
+| MCCoroutine | 2.21.0 | Async coroutines for Bukkit |
 | WorldGuard | 7.0.14+ | Region management |
 | WorldEdit | 7.3.16+ | Block restoration |
 | Vault | 1.7+ | Economy integration |
@@ -523,15 +531,21 @@ See [In_Game_Testing_Checklist.md](In_Game_Testing_Checklist.md) for comprehensi
 ## Known Limitations
 
 - Support block detection requires sign to be properly attached during `/zrcreatesign`
-- Container scanning is synchronous (may cause lag on very large regions)
-- Extension limit is global (not per-region configurable)
-- Schematic serialization uses Java serialization
+- Extension limit is global (not per-region configurable via config, but can use `/zroverride`)
+- Regions exceeding `max-rental-chunks` (default: 2000) cannot be rented
 
 ## Version History
 
 See [CHANGELOG.md](CHANGELOG.md) for detailed version history.
 
-**v3.0.4** - Current
+**v3.1.0** - Current
+- Async chunk-based region scanning with MCCoroutine
+- TPS-aware throttling to prevent lag during large region scans
+- ChunkSnapshot pre-filtering (~99% reduction in main thread calls)
+- Region size limits to prevent performance issues
+- Dynamic batch sizing based on region size
+
+**v3.0.x** - Previous
 - Complete Kotlin migration for all commands
 - Project renamed from RegionRental to ZoneRental
 - Sealed classes for type-safe command handling
