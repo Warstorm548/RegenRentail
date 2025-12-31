@@ -375,9 +375,6 @@ async-scanning:
   tps-healthy-threshold: 19.5
   tps-warning-threshold: 18.5
 
-  # Maximum chunks to process per tick (for batching)
-  max-chunks-per-tick: 15
-
   # Enable debug logging for async operations
   debug-async: false
 

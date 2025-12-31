@@ -7,6 +7,7 @@ import com.sk89q.worldedit.bukkit.BukkitAdapter
 import com.sk89q.worldedit.extent.clipboard.Clipboard
 import com.sk89q.worldedit.math.BlockVector3
 import com.sk89q.worldguard.WorldGuard
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
@@ -95,6 +96,14 @@ class StorageManager(private val plugin: ZoneRental) : Listener {
     // Async scan service for optimized chunk-based scanning
     private val asyncScanService = AsyncScanService(plugin)
 
+    /**
+     * Gets the chunk count for a region, or null if region not found.
+     * Used for region size validation before rental creation.
+     */
+    fun getRegionChunkCount(regionName: String, world: World): Int? {
+        return asyncScanService.createScanRegion(regionName, world)?.chunkCount
+    }
+
     init {
         plugin.server.pluginManager.registerEvents(this, plugin)
     }
@@ -131,7 +140,8 @@ class StorageManager(private val plugin: ZoneRental) : Listener {
         val allItems = mutableListOf<ItemStack>()
         val containerCounts = mutableMapOf<Material, Int>()
 
-        // Phase A: Scan ChunkSnapshots for container locations (mostly async)
+        // Phase A: Scan ChunkSnapshots for container locations
+        // Note: getChunkSnapshot() loads chunks on main thread; snapshot analysis is fast
         for (batch in batches) {
             val adjusted = asyncScanService.tpsMonitor.adjustStrategy(strategy)
             if (adjusted.shouldPause) {
@@ -160,7 +170,7 @@ class StorageManager(private val plugin: ZoneRental) : Listener {
                 val block = world.getBlockAt(coord.x, coord.y, coord.z)
 
                 // Skip shulker boxes - they preserve items when stored as blocks
-                if (isShulkerBox(block.type)) continue
+                if (AsyncScanService.isShulkerBox(block.type)) continue
 
                 val container = block.state as? Container ?: continue
                 val inv = container.inventory
@@ -230,6 +240,7 @@ class StorageManager(private val plugin: ZoneRental) : Listener {
         val allChangedBlocks = mutableListOf<BlockCoord>()
 
         // Phase A: Scan ChunkSnapshots for changed blocks
+        // Note: getChunkSnapshot() requires main thread; snapshot comparison is fast
         for (batch in batches) {
             val adjusted = asyncScanService.tpsMonitor.adjustStrategy(strategy)
             if (adjusted.shouldPause) {
@@ -286,7 +297,10 @@ class StorageManager(private val plugin: ZoneRental) : Listener {
         val playerBlocks = storePlayerBlocksFromRegionAsync(regionName, world, playerUUID)
 
         if (containerItems.isNotEmpty() || playerBlocks.isNotEmpty()) {
-            plugin.storageConfig.storeItems(playerUUID, regionName, containerItems, playerBlocks)
+            // Store items using IO dispatcher for file operations
+            withContext(Dispatchers.IO) {
+                plugin.storageConfig.storeItems(playerUUID, regionName, containerItems, playerBlocks)
+            }
 
             val totalItems = containerItems.size + playerBlocks.size
 
@@ -383,7 +397,7 @@ class StorageManager(private val plugin: ZoneRental) : Listener {
 
                     if (block.type in CONTAINER_TYPES) {
                         // Skip shulker boxes - they preserve items when stored as blocks
-                        if (isShulkerBox(block.type)) continue
+                        if (AsyncScanService.isShulkerBox(block.type)) continue
 
                         val container = block.state as? Container ?: continue
                         val inv = container.inventory
@@ -642,8 +656,6 @@ class StorageManager(private val plugin: ZoneRental) : Listener {
 
         return blacklist
     }
-
-    private fun isShulkerBox(material: Material): Boolean = material.name.endsWith("SHULKER_BOX")
 
     fun openRetrievalGUI(player: Player) {
         val items = plugin.storageConfig.getAllStoredItems(player.uniqueId)

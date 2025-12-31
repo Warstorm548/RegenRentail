@@ -67,26 +67,6 @@ class TpsMonitor(private val plugin: ZoneRental) {
     }
 
     /**
-     * Checks if async scanning should be paused due to low TPS.
-     */
-    fun shouldPauseScan(): Boolean {
-        return getCurrentTps() < 18.0
-    }
-
-    /**
-     * Logs TPS status for debugging.
-     */
-    fun logTpsStatus(regionName: String) {
-        if (config.isDebugAsync) {
-            val tps = getCurrentTps()
-            val level = getTpsLevel()
-            plugin.logger.info(
-                "[$regionName] TPS: %.2f (%s)".format(tps, level.name)
-            )
-        }
-    }
-
-    /**
      * Estimates scan time based on chunk count and current TPS.
      */
     fun estimateScanTime(chunkCount: Int): Long {

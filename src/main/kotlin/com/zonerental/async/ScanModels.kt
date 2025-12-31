@@ -1,8 +1,5 @@
 package com.zonerental.async
 
-import org.bukkit.Material
-import org.bukkit.inventory.ItemStack
-
 /**
  * Represents a WorldGuard region's bounds for scanning.
  * Y-level aware to only scan the region's actual vertical extent.
@@ -126,15 +123,7 @@ enum class TpsLevel(
     WARNING(0.5, 2.0),
 
     /** TPS < 18.5 - Minimum concurrency, maximum delays */
-    CRITICAL(0.25, 4.0);
-
-    companion object {
-        fun fromTps(tps: Double): TpsLevel = when {
-            tps >= 19.5 -> HEALTHY
-            tps >= 18.5 -> WARNING
-            else -> CRITICAL
-        }
-    }
+    CRITICAL(0.25, 4.0)
 }
 
 /**
@@ -161,25 +150,3 @@ sealed class ScanResult<out T> {
         is Failure -> null
     }
 }
-
-/**
- * Result of processing a batch of chunks for items.
- */
-data class BatchResult(
-    val items: List<ItemStack>,
-    val containerCounts: Map<Material, Int>,
-    val blocksScanned: Long = 0,
-    val containersFound: Int = 0
-)
-
-/**
- * Combined result of scanning a region for items and blocks.
- */
-data class RegionScanResult(
-    val items: List<ItemStack>,
-    val playerPlacedContainers: Map<Material, Int>,
-    val playerPlacedBlocks: List<ItemStack>,
-    val totalBlocksScanned: Long,
-    val totalContainersFound: Int,
-    val scanTimeMs: Long
-)

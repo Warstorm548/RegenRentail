@@ -249,6 +249,19 @@ class RentalManager(private val plugin: ZoneRental) {
             return false
         }
 
+        // Check if region is too large for rental
+        val maxChunks = plugin.configManager.maxRentalChunks
+        if (maxChunks > 0) {
+            val chunkCount = plugin.storageManager.getRegionChunkCount(regionName, world)
+            if (chunkCount != null && chunkCount > maxChunks) {
+                player.sendMessage(plugin.configManager.getMessage("region-too-large",
+                    "{region}", regionName,
+                    "{chunks}", chunkCount.toString(),
+                    "{max}", maxChunks.toString()))
+                return false
+            }
+        }
+
         if (plugin.configManager.isBlockRestoration) {
             val captured = plugin.worldEditManager.captureRegion(regionName, world)
             if (!captured && plugin.configManager.isDebug) {

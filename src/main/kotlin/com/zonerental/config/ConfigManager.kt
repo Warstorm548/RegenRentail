@@ -72,8 +72,6 @@ class ConfigManager(private val plugin: ZoneRental) {
         private set
     var tpsWarningThreshold: Double = 18.5
         private set
-    var maxChunksPerTick: Int = 15
-        private set
     var isDebugAsync: Boolean = false
         private set
     var maxRentalChunks: Int = 2000
@@ -183,7 +181,6 @@ class ConfigManager(private val plugin: ZoneRental) {
         minChunksForAsync = config.getInt("async-scanning.min-chunks-for-async", 10)
         tpsHealthyThreshold = config.getDouble("async-scanning.tps-healthy-threshold", 19.5)
         tpsWarningThreshold = config.getDouble("async-scanning.tps-warning-threshold", 18.5)
-        maxChunksPerTick = config.getInt("async-scanning.max-chunks-per-tick", 15)
         isDebugAsync = config.getBoolean("async-scanning.debug-async", false)
         maxRentalChunks = config.getInt("async-scanning.max-rental-chunks", 2000)
 

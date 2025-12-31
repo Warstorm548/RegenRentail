@@ -216,15 +216,21 @@ class AsyncScanService(private val plugin: ZoneRental) {
                     // Skip containers (handled separately)
                     if (currentType in CONTAINER_TYPES) continue
 
-                    // Compare to clipboard
+                    // Compare to clipboard (with bounds checking)
                     val pos = BlockVector3.at(x, y, z)
-                    val originalBlockState = clipboard.getBlock(pos)
-                    val originalBlockType = originalBlockState.blockType.id
-                    val originalMaterial = Material.matchMaterial(
-                        originalBlockType.replace("minecraft:", "").uppercase()
-                    )
+                    try {
+                        val originalBlockState = clipboard.getBlock(pos)
+                        val originalBlockType = originalBlockState.blockType.id
+                        val originalMaterial = Material.matchMaterial(
+                            originalBlockType.replace("minecraft:", "").uppercase()
+                        )
 
-                    if (originalMaterial == null || currentType != originalMaterial) {
+                        if (originalMaterial == null || currentType != originalMaterial) {
+                            changedBlocks.add(BlockCoord(x, y, z))
+                        }
+                    } catch (e: Exception) {
+                        // Block is outside clipboard bounds (region may have been resized)
+                        // Treat as changed block since we can't compare
                         changedBlocks.add(BlockCoord(x, y, z))
                     }
                 }
@@ -287,18 +293,4 @@ class AsyncScanService(private val plugin: ZoneRental) {
         }
     }
 
-    /**
-     * Converts a block to an ItemStack for storage.
-     */
-    fun blockToItemStack(material: Material): ItemStack? {
-        return try {
-            if (material.isItem) {
-                ItemStack(material, 1)
-            } else {
-                null
-            }
-        } catch (e: Exception) {
-            null
-        }
-    }
 }
