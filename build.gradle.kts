@@ -5,7 +5,7 @@ plugins {
 }
 
 group = "com.zonerental"
-version = "3.0.5"
+version = "3.1.0"
 
 repositories {
     mavenCentral()
@@ -87,6 +87,13 @@ dependencies {
 
     // Kotlin Standard Library
     implementation(kotlin("stdlib"))
+
+    // MCCoroutine for Bukkit (async coroutines)
+    implementation("com.github.shynixn.mccoroutine:mccoroutine-bukkit-api:2.21.0")
+    implementation("com.github.shynixn.mccoroutine:mccoroutine-bukkit-core:2.21.0")
+
+    // Kotlin Coroutines
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.9.0")
 }
 
 java {
@@ -126,6 +133,12 @@ tasks.shadowJar {
 
     // Relocate Kotlin stdlib to avoid conflicts with other plugins
     relocate("kotlin", "com.zonerental.shaded.kotlin")
+
+    // Relocate kotlinx.coroutines to avoid conflicts with other plugins
+    relocate("kotlinx.coroutines", "com.zonerental.shaded.kotlinx.coroutines")
+
+    // Relocate MCCoroutine to avoid conflicts with other plugins
+    relocate("com.github.shynixn.mccoroutine", "com.zonerental.shaded.mccoroutine")
 
     // Merge service files for proper ServiceLoader support
     mergeServiceFiles()

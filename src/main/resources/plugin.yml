@@ -1,5 +1,5 @@
 name: ZoneRental
-version: 3.0.5
+version: 3.1.0
 main: com.zonerental.ZoneRental
 api-version: '1.21'
 author: Jean-Luc

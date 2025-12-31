@@ -1,5 +1,6 @@
 package com.zonerental;
 
+import com.github.shynixn.mccoroutine.bukkit.SuspendingJavaPlugin;
 import com.zonerental.commands.*;
 import com.zonerental.config.ConfigManager;
 import com.zonerental.config.GroupsConfig;
@@ -14,14 +15,17 @@ import org.bukkit.Bukkit;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandMap;
 import org.bukkit.plugin.RegisteredServiceProvider;
-import org.bukkit.plugin.java.JavaPlugin;
 
 import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.logging.Level;
 
-public class ZoneRental extends JavaPlugin {
+/**
+ * Main plugin class for ZoneRental.
+ * Extends SuspendingJavaPlugin for MCCoroutine async support.
+ */
+public class ZoneRental extends SuspendingJavaPlugin {
 
     private static ZoneRental instance;
     

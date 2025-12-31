@@ -15,6 +15,7 @@ ZoneRental is a Minecraft Paper/Spigot plugin (1.21+) that implements a complete
 - WorldEdit 7.3.16 (block editing/restoration)
 - Vault API (economy integration)
 - LuckPerms API (optional permissions)
+- MCCoroutine 2.21.0 (async coroutines)
 
 ## Build Commands
 
@@ -27,7 +28,7 @@ ZoneRental is a Minecraft Paper/Spigot plugin (1.21+) that implements a complete
 ./gradlew clean build
 
 # Output location
-build/libs/ZoneRental-3.0.5.jar
+build/libs/ZoneRental-3.1.0.jar
 ```
 
 ### Development Commands
@@ -60,12 +61,12 @@ When updating the version, modify these files:
 - `README.md` - Version references
 - Output JAR: `build/libs/ZoneRental-X.X.X.jar`
 
-**Current Version:** 3.0.5
+**Current Version:** 3.1.0
 
 ## Architecture Overview
 
 ### Main Plugin Class
-**`ZoneRental.java`** - Main plugin entry point extending JavaPlugin. Handles:
+**`ZoneRental.java`** - Main plugin entry point extending SuspendingJavaPlugin (MCCoroutine). Handles:
 - Plugin lifecycle (onEnable/onDisable)
 - Manager initialization and coordination
 - Dynamic command registration with configurable prefix (defaults to `/zr`)

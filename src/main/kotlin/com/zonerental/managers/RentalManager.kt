@@ -1,6 +1,8 @@
 package com.zonerental.managers
 
+import com.github.shynixn.mccoroutine.bukkit.minecraftDispatcher
 import com.zonerental.ZoneRental
+import kotlinx.coroutines.withContext
 import org.bukkit.Bukkit
 import org.bukkit.ChatColor
 import org.bukkit.World
@@ -336,6 +338,78 @@ class RentalManager(private val plugin: ZoneRental) {
         markDirty(null)
 
         plugin.logger.info("Rental expired for region $regionName in world ${world.name}")
+    }
+
+    /**
+     * Async version of expireRental that uses coroutine-based scanning and restoration.
+     * This should be called from a coroutine context (e.g., from ExpirationManager).
+     */
+    suspend fun expireRentalAsync(regionName: String, world: World) {
+        val compositeKey = "${world.name}:$regionName"
+        val rental = rentals[compositeKey] ?: return
+
+        // Remove player and members from WorldGuard region (main thread)
+        withContext(plugin.minecraftDispatcher) {
+            plugin.worldGuardManager.removePlayerFromRegion(regionName, world, rental.playerUUID)
+
+            for (memberUUID in rental.getMembers()) {
+                plugin.worldGuardManager.removePlayerFromRegion(regionName, world, memberUUID)
+            }
+        }
+
+        // Update indexes
+        removeAllMembersFromIndex(rental)
+        rental.clearMembers()
+
+        // Store items and blocks asynchronously
+        if (plugin.configManager.isItemStorage) {
+            plugin.storageManager.storeItemsAndBlocksFromRegionAsync(regionName, world, rental.playerUUID)
+        }
+
+        // Handle EzChestShop removal (main thread)
+        withContext(plugin.minecraftDispatcher) {
+            plugin.ezChestShopManager?.let { ezManager ->
+                if (ezManager.isEnabled) {
+                    val shopsRemoved = ezManager.removeShopsInRegion(regionName, world)
+
+                    if (shopsRemoved > 0 && plugin.configManager.isEzChestShopNotifyOnRemoval) {
+                        Bukkit.getPlayer(rental.playerUUID)?.let { player ->
+                            if (player.isOnline) {
+                                val message = ChatColor.translateAlternateColorCodes(
+                                    '&',
+                                    plugin.configManager.prefix + plugin.configManager.ezChestShopRemovalMessage
+                                        .replace("{region}", regionName)
+                                )
+                                player.sendMessage(message)
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        // Restore blocks asynchronously
+        if (plugin.configManager.isBlockRestoration) {
+            val restored = plugin.worldEditManager.restoreRegionAsync(regionName, world)
+            if (restored) {
+                plugin.logger.info("Restored blocks for region: $regionName in world ${world.name}")
+            } else if (plugin.configManager.isDebug) {
+                plugin.logger.warning("Failed to restore blocks for region: $regionName in world ${world.name}")
+            }
+        }
+
+        // Clean up rental data
+        removeFromPlayerIndex(rental.playerUUID, compositeKey)
+        rentals.remove(compositeKey)
+
+        // Update sign (main thread)
+        withContext(plugin.minecraftDispatcher) {
+            plugin.signManager.markSignDirty(regionName, world)
+        }
+
+        markDirty(null)
+
+        plugin.logger.info("Rental expired (async) for region $regionName in world ${world.name}")
     }
 
     fun issueRefund(rental: Rental?, amount: Double, reason: String, adminName: String): Map<String, Any>? {
