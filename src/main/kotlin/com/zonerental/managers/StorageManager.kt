@@ -734,7 +734,12 @@ class StorageManager(private val plugin: ZoneRental) : Listener {
             }
         }
 
+        // Set transitioning flag to prevent onInventoryClose from removing session
+        session.isTransitioning = true
         player.openInventory(gui)
+        // Re-add session in case close handler ran during transition
+        activeGUISessions[player.uniqueId] = session
+        session.isTransitioning = false
     }
 
     private fun createNavigationButton(material: Material, name: String, lore: String): ItemStack {
@@ -813,7 +818,13 @@ class StorageManager(private val plugin: ZoneRental) : Listener {
         val playerUUID = player.uniqueId
         val closingInventory = event.inventory
 
-        val session = activeGUISessions.remove(playerUUID) ?: return
+        val session = activeGUISessions[playerUUID] ?: return
+
+        // Don't process close during page transitions
+        if (session.isTransitioning) return
+
+        // Now safe to remove and process the close
+        activeGUISessions.remove(playerUUID)
 
         val remainingItems = getRemainingItemsFromGUI(closingInventory)
 
