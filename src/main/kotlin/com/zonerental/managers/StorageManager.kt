@@ -42,7 +42,7 @@ class StorageManager(private val plugin: ZoneRental) : Listener {
     private val activeGUISessions = mutableMapOf<UUID, StorageGUISession>()
 
     companion object {
-        private const val ITEMS_PER_PAGE = 45
+        // Use StorageGUISession.ITEMS_PER_PAGE as single source of truth
 
         // Container types using EnumSet for O(1) contains() lookup
         private val CONTAINER_TYPES: Set<Material> = EnumSet.of(
@@ -308,8 +308,8 @@ class StorageManager(private val plugin: ZoneRental) : Listener {
                 if (player.isOnline) {
                     player.sendMessage("${ChatColor.GREEN}Stored ${containerItems.size} items and ${playerBlocks.size} blocks from $regionName")
 
-                    if (totalItems > ITEMS_PER_PAGE) {
-                        val pages = (totalItems - 1) / ITEMS_PER_PAGE + 1
+                    if (totalItems > StorageGUISession.ITEMS_PER_PAGE) {
+                        val pages = (totalItems - 1) / StorageGUISession.ITEMS_PER_PAGE + 1
                         player.sendMessage("${ChatColor.YELLOW}Your items are stored across $pages pages. Use /zrretrieve to access them.")
                     }
                 }
@@ -475,8 +475,8 @@ class StorageManager(private val plugin: ZoneRental) : Listener {
                             "{count}", allItems.size.toString())
                     )
 
-                    if (allItems.size > ITEMS_PER_PAGE) {
-                        val pages = (allItems.size - 1) / ITEMS_PER_PAGE + 1
+                    if (allItems.size > StorageGUISession.ITEMS_PER_PAGE) {
+                        val pages = (allItems.size - 1) / StorageGUISession.ITEMS_PER_PAGE + 1
                         player.sendMessage("${ChatColor.YELLOW}Your items are stored across $pages pages. Use /zrretrieve to access them.")
                     }
                 }
@@ -502,8 +502,8 @@ class StorageManager(private val plugin: ZoneRental) : Listener {
                 if (player.isOnline) {
                     player.sendMessage("${ChatColor.GREEN}Stored ${containerItems.size} items and ${playerBlocks.size} blocks from $regionName")
 
-                    if (totalItems > ITEMS_PER_PAGE) {
-                        val pages = (totalItems - 1) / ITEMS_PER_PAGE + 1
+                    if (totalItems > StorageGUISession.ITEMS_PER_PAGE) {
+                        val pages = (totalItems - 1) / StorageGUISession.ITEMS_PER_PAGE + 1
                         player.sendMessage("${ChatColor.YELLOW}Your items are stored across $pages pages. Use /zrretrieve to access them.")
                     }
                 }
@@ -689,8 +689,8 @@ class StorageManager(private val plugin: ZoneRental) : Listener {
         val gui = Bukkit.createInventory(StorageGUIHolder(player.uniqueId), 54, title)
 
         synchronized(session.items) {
-            val startIndex = currentPage * ITEMS_PER_PAGE
-            val endIndex = minOf(startIndex + ITEMS_PER_PAGE, session.items.size)
+            val startIndex = currentPage * StorageGUISession.ITEMS_PER_PAGE
+            val endIndex = minOf(startIndex + StorageGUISession.ITEMS_PER_PAGE, session.items.size)
 
             if (startIndex >= session.items.size) {
                 plugin.logger.warning("Page index out of bounds for player ${player.name} (startIndex: $startIndex, items: ${session.items.size})")
@@ -813,8 +813,8 @@ class StorageManager(private val plugin: ZoneRental) : Listener {
      */
     private fun syncCurrentPageToSession(session: StorageGUISession, inventory: Inventory) {
         synchronized(session.items) {
-            val startIndex = session.currentPage * ITEMS_PER_PAGE
-            val endIndex = minOf(startIndex + ITEMS_PER_PAGE, session.items.size)
+            val startIndex = session.currentPage * StorageGUISession.ITEMS_PER_PAGE
+            val endIndex = minOf(startIndex + StorageGUISession.ITEMS_PER_PAGE, session.items.size)
 
             // Remove old items for this page range (reverse order to avoid index shift issues)
             for (i in (endIndex - 1) downTo startIndex) {
@@ -825,7 +825,7 @@ class StorageManager(private val plugin: ZoneRental) : Listener {
 
             // Insert current GUI items at startIndex (only non-null/non-air items)
             var insertIndex = startIndex
-            for (slot in 0 until ITEMS_PER_PAGE) {
+            for (slot in 0 until StorageGUISession.ITEMS_PER_PAGE) {
                 val item = inventory.getItem(slot)
                 if (item != null && item.type != Material.AIR) {
                     session.items.add(insertIndex, item.clone())
