@@ -98,7 +98,6 @@ async-scanning:
   min-chunks-for-async: 10   # Minimum chunks before using async
   tps-healthy-threshold: 19.5
   tps-warning-threshold: 18.5
-  max-chunks-per-tick: 15
   debug-async: false         # Enable debug logging for async operations
   max-rental-chunks: 2000    # Block rentals for regions larger than this
 ```
