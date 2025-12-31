@@ -24,6 +24,37 @@ Going forward, all references use the new name "ZoneRental".
 
 ---
 
+## [3.1.1] - Fix Storage GUI Pagination Bugs
+
+### Fixed
+
+- **Storage retrieval GUI pagination broken on pages 2 and above** - Fixed critical bug where navigation buttons became moveable objects after navigating past page 1
+  - **Root cause:** When opening a new page, `player.openInventory()` automatically closes the previous inventory, triggering `onInventoryClose` which removed the session from `activeGUISessions` before the new page could use it
+  - **Fix:** Added `isTransitioning` flag to `StorageGUISession` that prevents the close handler from removing the session during page transitions
+  - Navigation buttons now work correctly on all pages
+  - Close button and item retrieval work on all pages
+
+- **Items on pages 2+ lost when closing GUI** - Fixed critical bug where only items from the currently visible page were saved on close
+  - **Root cause:** `getRemainingItemsFromGUI()` only read the 45 visible slots of the current page, ignoring items on other pages stored in `session.items`
+  - **Fix:** Added `syncCurrentPageToSession()` method that syncs GUI state back to session before page transitions and on close
+  - All remaining items across all pages now persist correctly when GUI is closed
+  - Items consolidate automatically into fewer pages as items are taken
+
+### Changed
+
+- **StorageGUISession.kt**
+  - Added `isTransitioning: Boolean` property for page transition tracking
+  - Added `originalItemCount: Int` property for accurate "items taken" messaging
+
+- **StorageManager.kt**
+  - Added `syncCurrentPageToSession()` method to sync GUI state back to session
+  - Updated navigation handlers to sync current page before changing pages
+  - Updated `onInventoryClose()` to sync and save all items from session
+  - Removed local `ITEMS_PER_PAGE` constant, now uses `StorageGUISession.ITEMS_PER_PAGE` as single source of truth
+  - Removed unused `getRemainingItemsFromGUI()` method
+
+---
+
 ## [3.1.0] - Async Region Scanning with MCCoroutine
 
 Major performance update implementing async chunk-based region scanning for improved server performance during rental expiration.

@@ -42,7 +42,7 @@ class StorageManager(private val plugin: ZoneRental) : Listener {
     private val activeGUISessions = mutableMapOf<UUID, StorageGUISession>()
 
     companion object {
-        private const val ITEMS_PER_PAGE = 45
+        // Use StorageGUISession.ITEMS_PER_PAGE as single source of truth
 
         // Container types using EnumSet for O(1) contains() lookup
         private val CONTAINER_TYPES: Set<Material> = EnumSet.of(
@@ -308,8 +308,8 @@ class StorageManager(private val plugin: ZoneRental) : Listener {
                 if (player.isOnline) {
                     player.sendMessage("${ChatColor.GREEN}Stored ${containerItems.size} items and ${playerBlocks.size} blocks from $regionName")
 
-                    if (totalItems > ITEMS_PER_PAGE) {
-                        val pages = (totalItems - 1) / ITEMS_PER_PAGE + 1
+                    if (totalItems > StorageGUISession.ITEMS_PER_PAGE) {
+                        val pages = (totalItems - 1) / StorageGUISession.ITEMS_PER_PAGE + 1
                         player.sendMessage("${ChatColor.YELLOW}Your items are stored across $pages pages. Use /zrretrieve to access them.")
                     }
                 }
@@ -475,8 +475,8 @@ class StorageManager(private val plugin: ZoneRental) : Listener {
                             "{count}", allItems.size.toString())
                     )
 
-                    if (allItems.size > ITEMS_PER_PAGE) {
-                        val pages = (allItems.size - 1) / ITEMS_PER_PAGE + 1
+                    if (allItems.size > StorageGUISession.ITEMS_PER_PAGE) {
+                        val pages = (allItems.size - 1) / StorageGUISession.ITEMS_PER_PAGE + 1
                         player.sendMessage("${ChatColor.YELLOW}Your items are stored across $pages pages. Use /zrretrieve to access them.")
                     }
                 }
@@ -502,8 +502,8 @@ class StorageManager(private val plugin: ZoneRental) : Listener {
                 if (player.isOnline) {
                     player.sendMessage("${ChatColor.GREEN}Stored ${containerItems.size} items and ${playerBlocks.size} blocks from $regionName")
 
-                    if (totalItems > ITEMS_PER_PAGE) {
-                        val pages = (totalItems - 1) / ITEMS_PER_PAGE + 1
+                    if (totalItems > StorageGUISession.ITEMS_PER_PAGE) {
+                        val pages = (totalItems - 1) / StorageGUISession.ITEMS_PER_PAGE + 1
                         player.sendMessage("${ChatColor.YELLOW}Your items are stored across $pages pages. Use /zrretrieve to access them.")
                     }
                 }
@@ -689,8 +689,8 @@ class StorageManager(private val plugin: ZoneRental) : Listener {
         val gui = Bukkit.createInventory(StorageGUIHolder(player.uniqueId), 54, title)
 
         synchronized(session.items) {
-            val startIndex = currentPage * ITEMS_PER_PAGE
-            val endIndex = minOf(startIndex + ITEMS_PER_PAGE, session.items.size)
+            val startIndex = currentPage * StorageGUISession.ITEMS_PER_PAGE
+            val endIndex = minOf(startIndex + StorageGUISession.ITEMS_PER_PAGE, session.items.size)
 
             if (startIndex >= session.items.size) {
                 plugin.logger.warning("Page index out of bounds for player ${player.name} (startIndex: $startIndex, items: ${session.items.size})")
@@ -734,7 +734,12 @@ class StorageManager(private val plugin: ZoneRental) : Listener {
             }
         }
 
+        // Set transitioning flag to prevent onInventoryClose from removing session
+        session.isTransitioning = true
         player.openInventory(gui)
+        // Re-add session in case close handler ran during transition
+        activeGUISessions[player.uniqueId] = session
+        session.isTransitioning = false
     }
 
     private fun createNavigationButton(material: Material, name: String, lore: String): ItemStack {
@@ -770,8 +775,16 @@ class StorageManager(private val plugin: ZoneRental) : Listener {
             event.isCancelled = true
 
             when {
-                slot == 45 && session.currentPage > 0 -> openGUIPage(player, session, session.currentPage - 1)
-                slot == 53 && session.currentPage < session.totalPages - 1 -> openGUIPage(player, session, session.currentPage + 1)
+                slot == 45 && session.currentPage > 0 -> {
+                    // Sync current page state before navigating away
+                    syncCurrentPageToSession(session, event.inventory)
+                    openGUIPage(player, session, session.currentPage - 1)
+                }
+                slot == 53 && session.currentPage < session.totalPages - 1 -> {
+                    // Sync current page state before navigating away
+                    syncCurrentPageToSession(session, event.inventory)
+                    openGUIPage(player, session, session.currentPage + 1)
+                }
                 slot == 50 -> player.closeInventory()
             }
             return
@@ -794,15 +807,32 @@ class StorageManager(private val plugin: ZoneRental) : Listener {
         }
     }
 
-    private fun getRemainingItemsFromGUI(inventory: Inventory): List<ItemStack> {
-        val remaining = mutableListOf<ItemStack>()
-        for (i in 0 until 45) {
-            val item = inventory.getItem(i)
-            if (item != null && item.type != Material.AIR) {
-                remaining.add(item.clone())
+    /**
+     * Synchronizes the current GUI page state back to the session's items list.
+     * This captures which items have been taken from the current page.
+     */
+    private fun syncCurrentPageToSession(session: StorageGUISession, inventory: Inventory) {
+        synchronized(session.items) {
+            val startIndex = session.currentPage * StorageGUISession.ITEMS_PER_PAGE
+            val endIndex = minOf(startIndex + StorageGUISession.ITEMS_PER_PAGE, session.items.size)
+
+            // Remove old items for this page range (reverse order to avoid index shift issues)
+            for (i in (endIndex - 1) downTo startIndex) {
+                if (i < session.items.size) {
+                    session.items.removeAt(i)
+                }
+            }
+
+            // Insert current GUI items at startIndex (only non-null/non-air items)
+            var insertIndex = startIndex
+            for (slot in 0 until StorageGUISession.ITEMS_PER_PAGE) {
+                val item = inventory.getItem(slot)
+                if (item != null && item.type != Material.AIR) {
+                    session.items.add(insertIndex, item.clone())
+                    insertIndex++
+                }
             }
         }
-        return remaining
     }
 
     @EventHandler
@@ -813,9 +843,21 @@ class StorageManager(private val plugin: ZoneRental) : Listener {
         val playerUUID = player.uniqueId
         val closingInventory = event.inventory
 
-        val session = activeGUISessions.remove(playerUUID) ?: return
+        val session = activeGUISessions[playerUUID] ?: return
 
-        val remainingItems = getRemainingItemsFromGUI(closingInventory)
+        // Don't process close during page transitions
+        if (session.isTransitioning) return
+
+        // Now safe to remove and process the close
+        activeGUISessions.remove(playerUUID)
+
+        // Sync the current page state to session before calculating remaining items
+        syncCurrentPageToSession(session, closingInventory)
+
+        // Get all remaining items from the session (all pages, now properly synced)
+        val remainingItems = synchronized(session.items) {
+            session.items.filter { it.type != Material.AIR }.map { it.clone() }
+        }
 
         if (remainingItems.isEmpty()) {
             plugin.storageConfig.clearPlayerStorage(playerUUID)
@@ -823,9 +865,8 @@ class StorageManager(private val plugin: ZoneRental) : Listener {
         } else {
             plugin.storageConfig.updatePartialStorage(playerUUID, remainingItems)
 
-            val itemsTaken = synchronized(session.items) {
-                session.items.size - remainingItems.size
-            }
+            // Use originalItemCount for accurate "items taken" count
+            val itemsTaken = session.originalItemCount - remainingItems.size
             player.sendMessage("${ChatColor.YELLOW}Retrieved $itemsTaken items. ${remainingItems.size} items remain in storage. Use /zrretrieve to get them.")
         }
     }

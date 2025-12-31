@@ -10,7 +10,9 @@ import java.util.UUID
 data class StorageGUISession(
     val playerUUID: UUID,
     val items: MutableList<ItemStack>,
-    var currentPage: Int = 0
+    var currentPage: Int = 0,
+    var isTransitioning: Boolean = false,
+    val originalItemCount: Int = 0
 ) {
     /**
      * Items per page in the GUI (45 slots, leaving room for navigation).
@@ -23,7 +25,7 @@ data class StorageGUISession(
          */
         @JvmStatic
         fun create(playerUUID: UUID, items: List<ItemStack>): StorageGUISession =
-            StorageGUISession(playerUUID, items.toMutableList())
+            StorageGUISession(playerUUID, items.toMutableList(), originalItemCount = items.size)
     }
 
     /**
