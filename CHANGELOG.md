@@ -28,7 +28,7 @@ Going forward, all references use the new name "ZoneRental".
 
 ### Fixed
 
-- **Storage retrieval GUI pagination broken on page 2+** - Fixed critical bug where navigation buttons became moveable objects after navigating past page 1
+- **Storage retrieval GUI pagination broken on pages 2 and above** - Fixed critical bug where navigation buttons became moveable objects after navigating past page 1
   - **Root cause:** When opening a new page, `player.openInventory()` automatically closes the previous inventory, triggering `onInventoryClose` which removed the session from `activeGUISessions` before the new page could use it
   - **Fix:** Added `isTransitioning` flag to `StorageGUISession` that prevents the close handler from removing the session during page transitions
   - Navigation buttons now work correctly on all pages
