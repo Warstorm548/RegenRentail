@@ -775,8 +775,16 @@ class StorageManager(private val plugin: ZoneRental) : Listener {
             event.isCancelled = true
 
             when {
-                slot == 45 && session.currentPage > 0 -> openGUIPage(player, session, session.currentPage - 1)
-                slot == 53 && session.currentPage < session.totalPages - 1 -> openGUIPage(player, session, session.currentPage + 1)
+                slot == 45 && session.currentPage > 0 -> {
+                    // Sync current page state before navigating away
+                    syncCurrentPageToSession(session, event.inventory)
+                    openGUIPage(player, session, session.currentPage - 1)
+                }
+                slot == 53 && session.currentPage < session.totalPages - 1 -> {
+                    // Sync current page state before navigating away
+                    syncCurrentPageToSession(session, event.inventory)
+                    openGUIPage(player, session, session.currentPage + 1)
+                }
                 slot == 50 -> player.closeInventory()
             }
             return
@@ -799,15 +807,32 @@ class StorageManager(private val plugin: ZoneRental) : Listener {
         }
     }
 
-    private fun getRemainingItemsFromGUI(inventory: Inventory): List<ItemStack> {
-        val remaining = mutableListOf<ItemStack>()
-        for (i in 0 until 45) {
-            val item = inventory.getItem(i)
-            if (item != null && item.type != Material.AIR) {
-                remaining.add(item.clone())
+    /**
+     * Synchronizes the current GUI page state back to the session's items list.
+     * This captures which items have been taken from the current page.
+     */
+    private fun syncCurrentPageToSession(session: StorageGUISession, inventory: Inventory) {
+        synchronized(session.items) {
+            val startIndex = session.currentPage * ITEMS_PER_PAGE
+            val endIndex = minOf(startIndex + ITEMS_PER_PAGE, session.items.size)
+
+            // Remove old items for this page range (reverse order to avoid index shift issues)
+            for (i in (endIndex - 1) downTo startIndex) {
+                if (i < session.items.size) {
+                    session.items.removeAt(i)
+                }
+            }
+
+            // Insert current GUI items at startIndex (only non-null/non-air items)
+            var insertIndex = startIndex
+            for (slot in 0 until ITEMS_PER_PAGE) {
+                val item = inventory.getItem(slot)
+                if (item != null && item.type != Material.AIR) {
+                    session.items.add(insertIndex, item.clone())
+                    insertIndex++
+                }
             }
         }
-        return remaining
     }
 
     @EventHandler
@@ -826,7 +851,13 @@ class StorageManager(private val plugin: ZoneRental) : Listener {
         // Now safe to remove and process the close
         activeGUISessions.remove(playerUUID)
 
-        val remainingItems = getRemainingItemsFromGUI(closingInventory)
+        // Sync the current page state to session before calculating remaining items
+        syncCurrentPageToSession(session, closingInventory)
+
+        // Get all remaining items from the session (all pages, now properly synced)
+        val remainingItems = synchronized(session.items) {
+            session.items.filter { it.type != Material.AIR }.map { it.clone() }
+        }
 
         if (remainingItems.isEmpty()) {
             plugin.storageConfig.clearPlayerStorage(playerUUID)
@@ -834,9 +865,8 @@ class StorageManager(private val plugin: ZoneRental) : Listener {
         } else {
             plugin.storageConfig.updatePartialStorage(playerUUID, remainingItems)
 
-            val itemsTaken = synchronized(session.items) {
-                session.items.size - remainingItems.size
-            }
+            // Use originalItemCount for accurate "items taken" count
+            val itemsTaken = session.originalItemCount - remainingItems.size
             player.sendMessage("${ChatColor.YELLOW}Retrieved $itemsTaken items. ${remainingItems.size} items remain in storage. Use /zrretrieve to get them.")
         }
     }
