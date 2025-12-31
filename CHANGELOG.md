@@ -24,6 +24,23 @@ Going forward, all references use the new name "ZoneRental".
 
 ---
 
+## [3.1.1] - Fix Storage GUI Pagination Bug
+
+### Fixed
+
+- **Storage retrieval GUI pagination broken on page 2+** - Fixed critical bug where navigation buttons became moveable objects after navigating past page 1
+  - **Root cause:** When opening a new page, `player.openInventory()` automatically closes the previous inventory, triggering `onInventoryClose` which removed the session from `activeGUISessions` before the new page could use it
+  - **Fix:** Added `isTransitioning` flag to `StorageGUISession` that prevents the close handler from removing the session during page transitions
+  - Navigation buttons now work correctly on all pages
+  - Close button and item retrieval work on all pages
+
+### Changed
+
+- **StorageGUISession.kt** - Added `isTransitioning: Boolean` property for page transition tracking
+- **StorageManager.kt** - Set transitioning flag before/after `openInventory()` calls, check flag in `onInventoryClose()`
+
+---
+
 ## [3.1.0] - Async Region Scanning with MCCoroutine
 
 Major performance update implementing async chunk-based region scanning for improved server performance during rental expiration.

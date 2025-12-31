@@ -491,7 +491,7 @@ plugins/ZoneRental/
 
 **Output:**
 ```
-build/libs/ZoneRental-3.1.0.jar
+build/libs/ZoneRental-3.1.1.jar
 ```
 
 ## Dependencies
@@ -538,26 +538,8 @@ See [In_Game_Testing_Checklist.md](In_Game_Testing_Checklist.md) for comprehensi
 
 See [CHANGELOG.md](CHANGELOG.md) for detailed version history.
 
-**v3.1.0** - Current
-- Async chunk-based region scanning with MCCoroutine
-- TPS-aware throttling to prevent lag during large region scans
-- ChunkSnapshot pre-filtering (~99% reduction in main thread calls)
-- Region size limits to prevent performance issues
-- Dynamic batch sizing based on region size
-
-**v3.0.x** - Previous
-- Complete Kotlin migration for all commands
-- Project renamed from RegionRental to ZoneRental
-- Sealed classes for type-safe command handling
-- Extension functions for cleaner APIs
-- Performance optimizations (dirty tracking, lazy loading, O(1) lookups)
-- Region grouping system for mass configuration
-- Multi-world support for rental regions
-- Member management for rented regions
-- Teleportation to rented regions
-- Full refund system
-- Support block protection
-- WorldEdit block restoration
+**v3.1.1** - Current
+- Fixed storage retrieval GUI pagination bug (buttons became moveable on page 2+)
 
 ---
 
