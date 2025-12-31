@@ -4,7 +4,7 @@ import com.github.shynixn.mccoroutine.bukkit.minecraftDispatcher
 import com.sk89q.worldedit.math.BlockVector3
 import com.sk89q.worldedit.extent.clipboard.Clipboard
 import com.sk89q.worldguard.WorldGuard
-import com.sk89q.worldguard.bukkit.BukkitAdapter
+import com.sk89q.worldedit.bukkit.BukkitAdapter
 import com.zonerental.ZoneRental
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.withContext
