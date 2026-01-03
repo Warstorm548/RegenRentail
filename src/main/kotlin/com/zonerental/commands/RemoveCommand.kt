@@ -90,7 +90,6 @@ class RemoveCommand(private val plugin: ZoneRental) : CommandExecutor {
         val groupName = plugin.groupsConfig.getRegionGroup(compositeKey)
         val groupRemoved = if (groupName != null) {
             plugin.groupsConfig.removeRegionsFromGroup(groupName, listOf(compositeKey))
-            true
         } else {
             false
         }
