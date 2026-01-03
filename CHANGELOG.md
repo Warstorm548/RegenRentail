@@ -24,7 +24,7 @@ Going forward, all references use the new name "ZoneRental".
 
 ---
 
-## [Unreleased] - /zrremove Group Cleanup Fix
+## [3.1.2] - /zrremove Group Cleanup Fix
 
 ### Fixed
 
