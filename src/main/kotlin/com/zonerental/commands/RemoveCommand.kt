@@ -85,8 +85,18 @@ class RemoveCommand(private val plugin: ZoneRental) : CommandExecutor {
             false
         }
 
-        // Remove region from regions.yml
-        val regionConfigRemoved = if (plugin.regionsConfig.hasRegion(regionName, world)) {
+        // Check if region is in a group and remove it
+        val compositeKey = parsed.getCompositeKey()
+        val groupName = plugin.groupsConfig.getRegionGroup(compositeKey)
+        val groupRemoved = if (groupName != null) {
+            plugin.groupsConfig.removeRegionsFromGroup(groupName, listOf(compositeKey))
+        } else {
+            false
+        }
+
+        // Only remove individual overrides if region was NOT in a group
+        // (group membership already clears individual overrides when joining)
+        val regionConfigRemoved = if (!groupRemoved && plugin.regionsConfig.hasRegion(regionName, world)) {
             plugin.regionsConfig.removeRegion(regionName, world)
             true
         } else {
@@ -107,6 +117,10 @@ class RemoveCommand(private val plugin: ZoneRental) : CommandExecutor {
 
             if (regionConfigRemoved) {
                 append("\n${ChatColor.GREEN}  ✓ Region configuration removed from regions.yml")
+            }
+
+            if (groupRemoved) {
+                append("\n${ChatColor.GREEN}  ✓ Removed from group '$groupName'")
             }
 
             if (rental != null) {

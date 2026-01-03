@@ -24,6 +24,18 @@ Going forward, all references use the new name "ZoneRental".
 
 ---
 
+## [3.1.2] - /zrremove Group Cleanup Fix
+
+### Fixed
+
+- **Regions not removed from groups when using `/zrremove`** - Fixed bug where removing a rental region did not remove it from any groups it belonged to
+  - When `/zrremove <region>` is executed, the region is now automatically removed from its group (if any)
+  - Prevents orphaned group memberships that could cause conflicts when re-adding regions
+  - Individual region overrides are only removed if the region was NOT in a group (groups already clear individual overrides when joining)
+  - Success message now shows group removal confirmation
+
+---
+
 ## [3.1.1] - Fix Storage GUI Pagination Bugs
 
 ### Fixed
