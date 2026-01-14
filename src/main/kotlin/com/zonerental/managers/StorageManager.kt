@@ -11,8 +11,11 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
+import com.zonerental.extensions.legacyToComponent
+import com.zonerental.extensions.sendMiniMessage
+import com.zonerental.extensions.toComponent
+import net.kyori.adventure.text.Component
 import org.bukkit.Bukkit
-import org.bukkit.ChatColor
 import org.bukkit.ChunkSnapshot
 import org.bukkit.Location
 import org.bukkit.Material
@@ -279,7 +282,7 @@ class StorageManager(private val plugin: ZoneRental) : Listener {
         if (playerBlocks.isNotEmpty()) {
             Bukkit.getPlayer(playerUUID)?.let { player ->
                 if (player.isOnline) {
-                    player.sendMessage("${ChatColor.GREEN}Stored ${playerBlocks.size} player-placed blocks from $regionName")
+                    player.sendMiniMessage("<green>Stored ${playerBlocks.size} player-placed blocks from $regionName")
                 }
             }
         }
@@ -306,11 +309,11 @@ class StorageManager(private val plugin: ZoneRental) : Listener {
 
             Bukkit.getPlayer(playerUUID)?.let { player ->
                 if (player.isOnline) {
-                    player.sendMessage("${ChatColor.GREEN}Stored ${containerItems.size} items and ${playerBlocks.size} blocks from $regionName")
+                    player.sendMiniMessage("<green>Stored ${containerItems.size} items and ${playerBlocks.size} blocks from $regionName")
 
                     if (totalItems > StorageGUISession.ITEMS_PER_PAGE) {
                         val pages = (totalItems - 1) / StorageGUISession.ITEMS_PER_PAGE + 1
-                        player.sendMessage("${ChatColor.YELLOW}Your items are stored across $pages pages. Use /zrretrieve to access them.")
+                        player.sendMiniMessage("<yellow>Your items are stored across $pages pages. Use /zrretrieve to access them.")
                     }
                 }
             }
@@ -467,7 +470,7 @@ class StorageManager(private val plugin: ZoneRental) : Listener {
 
                     if (allItems.size > StorageGUISession.ITEMS_PER_PAGE) {
                         val pages = (allItems.size - 1) / StorageGUISession.ITEMS_PER_PAGE + 1
-                        player.sendMessage("${ChatColor.YELLOW}Your items are stored across $pages pages. Use /zrretrieve to access them.")
+                        player.sendMiniMessage("<yellow>Your items are stored across $pages pages. Use /zrretrieve to access them.")
                     }
                 }
             }
@@ -490,11 +493,11 @@ class StorageManager(private val plugin: ZoneRental) : Listener {
 
             Bukkit.getPlayer(playerUUID)?.let { player ->
                 if (player.isOnline) {
-                    player.sendMessage("${ChatColor.GREEN}Stored ${containerItems.size} items and ${playerBlocks.size} blocks from $regionName")
+                    player.sendMiniMessage("<green>Stored ${containerItems.size} items and ${playerBlocks.size} blocks from $regionName")
 
                     if (totalItems > StorageGUISession.ITEMS_PER_PAGE) {
                         val pages = (totalItems - 1) / StorageGUISession.ITEMS_PER_PAGE + 1
-                        player.sendMessage("${ChatColor.YELLOW}Your items are stored across $pages pages. Use /zrretrieve to access them.")
+                        player.sendMiniMessage("<yellow>Your items are stored across $pages pages. Use /zrretrieve to access them.")
                     }
                 }
             }
@@ -593,7 +596,7 @@ class StorageManager(private val plugin: ZoneRental) : Listener {
         if (playerBlocks.isNotEmpty()) {
             Bukkit.getPlayer(playerUUID)?.let { player ->
                 if (player.isOnline) {
-                    player.sendMessage("${ChatColor.GREEN}Stored $blocksStored player-placed blocks from $regionName")
+                    player.sendMiniMessage("<green>Stored $blocksStored player-placed blocks from $regionName")
                 }
             }
         }
@@ -609,8 +612,8 @@ class StorageManager(private val plugin: ZoneRental) : Listener {
             itemMeta.blockState = container
         }
 
-        container.customName?.let { name ->
-            itemMeta.setDisplayName(name)
+        container.customName()?.let { name ->
+            itemMeta.displayName(name)
         }
 
         item.itemMeta = itemMeta
@@ -676,7 +679,7 @@ class StorageManager(private val plugin: ZoneRental) : Listener {
             "Retrieve Your Items"
         }
 
-        val gui = Bukkit.createInventory(StorageGUIHolder(player.uniqueId), 54, title)
+        val gui = Bukkit.createInventory(StorageGUIHolder(player.uniqueId), 54, title.toComponent())
 
         synchronized(session.items) {
             val startIndex = currentPage * StorageGUISession.ITEMS_PER_PAGE
@@ -694,14 +697,14 @@ class StorageManager(private val plugin: ZoneRental) : Listener {
             // Always show page indicator and close button
             gui.setItem(49, createNavigationButton(
                 Material.PAPER,
-                "${ChatColor.YELLOW}Page ${currentPage + 1} of $totalPages",
-                "${ChatColor.GRAY}Total items: ${session.items.size}"
+                "<yellow>Page ${currentPage + 1} of $totalPages",
+                "<gray>Total items: ${session.items.size}"
             ))
 
             gui.setItem(50, createNavigationButton(
                 Material.BARRIER,
-                "${ChatColor.RED}Close",
-                "${ChatColor.GRAY}Click to close and save items"
+                "<red>Close",
+                "<gray>Click to close and save items"
             ))
 
             // Only show navigation arrows if multiple pages exist
@@ -709,16 +712,16 @@ class StorageManager(private val plugin: ZoneRental) : Listener {
                 if (currentPage > 0) {
                     gui.setItem(45, createNavigationButton(
                         Material.ARROW,
-                        "${ChatColor.GREEN}« Previous Page",
-                        "${ChatColor.GRAY}Click to go to page $currentPage"
+                        "<green>« Previous Page",
+                        "<gray>Click to go to page $currentPage"
                     ))
                 }
 
                 if (currentPage < totalPages - 1) {
                     gui.setItem(53, createNavigationButton(
                         Material.ARROW,
-                        "${ChatColor.GREEN}Next Page »",
-                        "${ChatColor.GRAY}Click to go to page ${currentPage + 2}"
+                        "<green>Next Page »",
+                        "<gray>Click to go to page ${currentPage + 2}"
                     ))
                 }
             }
@@ -735,8 +738,8 @@ class StorageManager(private val plugin: ZoneRental) : Listener {
     private fun createNavigationButton(material: Material, name: String, lore: String): ItemStack {
         val button = ItemStack(material)
         val meta = button.itemMeta
-        meta?.setDisplayName(name)
-        meta?.lore = listOf(lore)
+        meta?.displayName(name.toComponent())
+        meta?.lore(listOf(lore.toComponent()))
         button.itemMeta = meta
         return button
     }
@@ -755,7 +758,7 @@ class StorageManager(private val plugin: ZoneRental) : Listener {
         if (event.clickedInventory != event.view.topInventory) {
             if (clickType.isShiftClick) {
                 event.isCancelled = true
-                player.sendMessage("${ChatColor.RED}You cannot add items to the retrieval GUI!")
+                player.sendMiniMessage("<red>You cannot add items to the retrieval GUI!")
                 return
             }
         }
@@ -784,14 +787,14 @@ class StorageManager(private val plugin: ZoneRental) : Listener {
         if (event.clickedInventory == event.view.topInventory && slot in 0 until 45) {
             if (clickType == ClickType.NUMBER_KEY) {
                 event.isCancelled = true
-                player.sendMessage("${ChatColor.RED}You cannot add items to the retrieval GUI!")
+                player.sendMiniMessage("<red>You cannot add items to the retrieval GUI!")
                 return
             }
 
             val cursor = event.cursor
             if (cursor != null && cursor.type != Material.AIR) {
                 event.isCancelled = true
-                player.sendMessage("${ChatColor.RED}You cannot add items to the retrieval GUI!")
+                player.sendMiniMessage("<red>You cannot add items to the retrieval GUI!")
                 return
             }
         }
@@ -857,7 +860,7 @@ class StorageManager(private val plugin: ZoneRental) : Listener {
 
             // Use originalItemCount for accurate "items taken" count
             val itemsTaken = session.originalItemCount - remainingItems.size
-            player.sendMessage("${ChatColor.YELLOW}Retrieved $itemsTaken items. ${remainingItems.size} items remain in storage. Use /zrretrieve to get them.")
+            player.sendMiniMessage("<yellow>Retrieved $itemsTaken items. ${remainingItems.size} items remain in storage. Use /zrretrieve to get them.")
         }
     }
 

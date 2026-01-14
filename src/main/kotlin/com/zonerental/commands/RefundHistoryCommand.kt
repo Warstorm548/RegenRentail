@@ -1,8 +1,8 @@
 package com.zonerental.commands
 
 import com.zonerental.ZoneRental
+import com.zonerental.extensions.sendMiniMessage
 import com.zonerental.util.WorldRegionParser
-import org.bukkit.ChatColor
 import org.bukkit.command.Command
 import org.bukkit.command.CommandExecutor
 import org.bukkit.command.CommandSender
@@ -20,28 +20,28 @@ class RefundHistoryCommand(private val plugin: ZoneRental) : CommandExecutor {
         }
 
         if (args.isEmpty()) {
-            sender.sendMessage("${ChatColor.RED}Usage: /zrrefundhistory <world:region>")
-            sender.sendMessage("${ChatColor.YELLOW}Example: /zrrefundhistory world:shop1")
-            sender.sendMessage("${ChatColor.YELLOW}Shows refund transaction history for a rental region.")
+            sender.sendMiniMessage("<red>Usage: /zrrefundhistory <world:region>")
+            sender.sendMiniMessage("<yellow>Example: /zrrefundhistory world:shop1")
+            sender.sendMiniMessage("<yellow>Shows refund transaction history for a rental region.")
             return true
         }
 
         // Parse region argument with world inference
         val parsed = WorldRegionParser.parse(args[0], sender) ?: run {
-            sender.sendMessage("${ChatColor.RED}Invalid format! Console must use world:region format (e.g., world:shop1)")
+            sender.sendMiniMessage("<red>Invalid format! Console must use world:region format (e.g., world:shop1)")
             return true
         }
 
         val world = parsed.getWorld() ?: run {
-            sender.sendMessage("${ChatColor.RED}World '${parsed.worldName}' is not loaded!")
+            sender.sendMiniMessage("<red>World '${parsed.worldName}' is not loaded!")
             return true
         }
         val regionName = parsed.regionName
 
         // Get rental
         val rental = plugin.rentalManager.getRental(regionName, world) ?: run {
-            sender.sendMessage("${ChatColor.RED}Region ${parsed.getCompositeKey()} is not currently rented!")
-            sender.sendMessage("${ChatColor.YELLOW}Refund history is only available for active rentals.")
+            sender.sendMiniMessage("<red>Region ${parsed.getCompositeKey()} is not currently rented!")
+            sender.sendMiniMessage("<yellow>Refund history is only available for active rentals.")
             return true
         }
 
@@ -53,46 +53,46 @@ class RefundHistoryCommand(private val plugin: ZoneRental) : CommandExecutor {
         val formattedNet = String.format(currencyFormat, rental.netRefundableAmount)
 
         // Build header
-        val divider = "${ChatColor.GOLD}${ChatColor.BOLD}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-        sender.sendMessage("")
-        sender.sendMessage(divider)
+        val divider = "<gold><bold>━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+        sender.sendMiniMessage("")
+        sender.sendMiniMessage(divider)
         sender.sendMessage(plugin.configManager.getMessage("refund-history-header", "{region}", parsed.getCompositeKey()))
-        sender.sendMessage(divider)
-        sender.sendMessage("")
+        sender.sendMiniMessage(divider)
+        sender.sendMiniMessage("")
 
         // Rental summary
-        sender.sendMessage("${ChatColor.YELLOW}${ChatColor.BOLD}Rental Summary:")
-        sender.sendMessage("${ChatColor.GRAY}  Player: ${ChatColor.WHITE}${rental.playerName}")
-        sender.sendMessage("${ChatColor.GRAY}  Total Paid: ${ChatColor.GREEN}$formattedTotal")
-        sender.sendMessage("${ChatColor.GRAY}  Total Refunded: ${ChatColor.YELLOW}$formattedRefunded")
-        sender.sendMessage("${ChatColor.GRAY}  Net Amount: ${ChatColor.AQUA}$formattedNet")
-        sender.sendMessage("")
+        sender.sendMiniMessage("<yellow><bold>Rental Summary:")
+        sender.sendMiniMessage("<gray>  Player: <white>${rental.playerName}")
+        sender.sendMiniMessage("<gray>  Total Paid: <green>$formattedTotal")
+        sender.sendMiniMessage("<gray>  Total Refunded: <yellow>$formattedRefunded")
+        sender.sendMiniMessage("<gray>  Net Amount: <aqua>$formattedNet")
+        sender.sendMiniMessage("")
 
         // Refund transactions
         if (refundHistory.isEmpty()) {
-            sender.sendMessage("${ChatColor.GRAY}No refund transactions yet.")
+            sender.sendMiniMessage("<gray>No refund transactions yet.")
         } else {
-            sender.sendMessage("${ChatColor.YELLOW}${ChatColor.BOLD}Refund Transactions:")
-            sender.sendMessage("")
+            sender.sendMiniMessage("<yellow><bold>Refund Transactions:")
+            sender.sendMiniMessage("")
 
             refundHistory.forEachIndexed { index, record ->
                 val formattedAmount = String.format(currencyFormat, record.amount)
                 val reason = formatReason(record.reason)
-                sender.sendMessage(
-                    "${ChatColor.GRAY}  ${index + 1}. " +
-                    "${ChatColor.GREEN}$formattedAmount${ChatColor.GRAY} - " +
-                    "${ChatColor.WHITE}${record.formattedTimestamp}${ChatColor.GRAY} - " +
-                    "${ChatColor.YELLOW}$reason" +
-                    "${ChatColor.GRAY} (by ${ChatColor.AQUA}${record.adminName}${ChatColor.GRAY})"
+                sender.sendMiniMessage(
+                    "<gray>  ${index + 1}. " +
+                    "<green>$formattedAmount<gray> - " +
+                    "<white>${record.formattedTimestamp}<gray> - " +
+                    "<yellow>$reason" +
+                    "<gray> (by <aqua>${record.adminName}<gray>)"
                 )
             }
 
-            sender.sendMessage("")
-            sender.sendMessage("${ChatColor.GRAY}Total Refunds: ${ChatColor.WHITE}${refundHistory.size}")
+            sender.sendMiniMessage("")
+            sender.sendMiniMessage("<gray>Total Refunds: <white>${refundHistory.size}")
         }
 
-        sender.sendMessage(divider)
-        sender.sendMessage("")
+        sender.sendMiniMessage(divider)
+        sender.sendMiniMessage("")
 
         return true
     }

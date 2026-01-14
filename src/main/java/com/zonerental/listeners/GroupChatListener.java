@@ -3,7 +3,7 @@ package com.zonerental.listeners;
 import com.zonerental.ZoneRental;
 import com.zonerental.commands.GroupCommand;
 import com.zonerental.commands.PendingGroupAction;
-import org.bukkit.ChatColor;
+import net.kyori.adventure.text.minimessage.MiniMessage;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
@@ -17,6 +17,8 @@ import java.util.UUID;
  * Part of the hybrid command system (arguments or chat prompts)
  */
 public class GroupChatListener implements Listener {
+
+    private static final MiniMessage MINI_MESSAGE = MiniMessage.miniMessage();
 
     private final ZoneRental plugin;
     private final GroupCommand groupCommand;
@@ -41,7 +43,7 @@ public class GroupChatListener implements Listener {
         long currentTime = System.currentTimeMillis();
         if (currentTime - pendingAction.getTimestamp() > GroupCommand.PENDING_TIMEOUT) {
             groupCommand.cancelPendingAction(playerUUID);
-            player.sendMessage(ChatColor.RED + "Group action timed out. Please try again.");
+            player.sendMessage(MINI_MESSAGE.deserialize("<red>Group action timed out. Please try again."));
             event.setCancelled(true);
             return;
         }
@@ -55,15 +57,15 @@ public class GroupChatListener implements Listener {
         // Allow player to cancel with "cancel" or "stop"
         if (regionsInput.equalsIgnoreCase("cancel") || regionsInput.equalsIgnoreCase("stop")) {
             groupCommand.cancelPendingAction(playerUUID);
-            player.sendMessage(ChatColor.YELLOW + "Group action cancelled.");
+            player.sendMessage(MINI_MESSAGE.deserialize("<yellow>Group action cancelled."));
             return;
         }
 
         // Validate input is not empty
         if (regionsInput.isEmpty()) {
-            player.sendMessage(ChatColor.RED + "Please provide at least one region name.");
-            player.sendMessage(ChatColor.GRAY + "Format: region1,region2 or world:region1,region2");
-            player.sendMessage(ChatColor.GRAY + "Type 'cancel' to abort.");
+            player.sendMessage(MINI_MESSAGE.deserialize("<red>Please provide at least one region name."));
+            player.sendMessage(MINI_MESSAGE.deserialize("<gray>Format: region1,region2 or world:region1,region2"));
+            player.sendMessage(MINI_MESSAGE.deserialize("<gray>Type 'cancel' to abort."));
             return;
         }
 
@@ -87,7 +89,7 @@ public class GroupChatListener implements Listener {
                     groupCommand.processRemoveRegions(player, groupName, regionsInput);
                     break;
                 default:
-                    player.sendMessage(ChatColor.RED + "Unknown action type: " + action);
+                    player.sendMessage(MINI_MESSAGE.deserialize("<red>Unknown action type: " + action));
                     break;
             }
         });

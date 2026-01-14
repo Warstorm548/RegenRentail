@@ -2,9 +2,11 @@ package com.zonerental.managers
 
 import com.github.shynixn.mccoroutine.bukkit.launch
 import com.zonerental.ZoneRental
-import com.zonerental.extensions.color
+import com.zonerental.extensions.toComponent
+import net.kyori.adventure.title.Title
 import org.bukkit.Bukkit
 import org.bukkit.Sound
+import java.time.Duration
 
 /**
  * Manages rental expiration checking and warning notifications.
@@ -86,10 +88,18 @@ class ExpirationManager(private val plugin: ZoneRental) {
 
         // Send title if configured
         if (plugin.config.getBoolean("notifications.title-enabled", true)) {
-            val title = "&c&lRental Expiring!".color()
-            val subtitle = "&e${rental.regionName} - ${formatTime(hours)}".color()
+            val titleComponent = "<red><bold>Rental Expiring!".toComponent()
+            val subtitleComponent = "<yellow>${rental.regionName} - ${formatTime(hours)}".toComponent()
 
-            player.sendTitle(title, subtitle, 10, 60, 20)
+            player.showTitle(Title.title(
+                titleComponent,
+                subtitleComponent,
+                Title.Times.times(
+                    Duration.ofMillis(500),   // fadeIn (10 ticks = 500ms)
+                    Duration.ofMillis(3000),  // stay (60 ticks = 3000ms)
+                    Duration.ofMillis(1000)   // fadeOut (20 ticks = 1000ms)
+                )
+            ))
         }
 
         // Play sound if configured

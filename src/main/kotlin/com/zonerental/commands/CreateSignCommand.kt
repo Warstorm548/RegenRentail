@@ -2,7 +2,7 @@ package com.zonerental.commands
 
 import com.zonerental.ZoneRental
 import com.zonerental.extensions.asPlayerOrNull
-import org.bukkit.ChatColor
+import com.zonerental.extensions.sendMiniMessage
 import org.bukkit.block.Sign
 import org.bukkit.command.Command
 import org.bukkit.command.CommandExecutor
@@ -12,7 +12,7 @@ class CreateSignCommand(private val plugin: ZoneRental) : CommandExecutor {
 
     override fun onCommand(sender: CommandSender, command: Command, label: String, args: Array<String>): Boolean {
         val player = sender.asPlayerOrNull() ?: run {
-            sender.sendMessage("${ChatColor.RED}This command can only be used by players!")
+            sender.sendMiniMessage("<red>This command can only be used by players!")
             return true
         }
 
@@ -22,7 +22,7 @@ class CreateSignCommand(private val plugin: ZoneRental) : CommandExecutor {
         }
 
         if (args.isEmpty()) {
-            player.sendMessage("${ChatColor.RED}Usage: /zrcreatesign <region>")
+            player.sendMiniMessage("<red>Usage: /zrcreatesign <region>")
             return true
         }
 
@@ -38,7 +38,7 @@ class CreateSignCommand(private val plugin: ZoneRental) : CommandExecutor {
         val targetBlock = player.getTargetBlock(null, 5)
 
         if (targetBlock.state !is Sign) {
-            player.sendMessage("${ChatColor.RED}You must be looking at a sign!")
+            player.sendMiniMessage("<red>You must be looking at a sign!")
             return true
         }
 
@@ -46,7 +46,7 @@ class CreateSignCommand(private val plugin: ZoneRental) : CommandExecutor {
         plugin.signManager.createSign(regionName, targetBlock.location)
 
         player.sendMessage(plugin.configManager.getMessage("sign-created", "{region}", regionName))
-        player.sendMessage("${ChatColor.GRAY}Use /zroverride to set custom rental settings for this region.")
+        player.sendMiniMessage("<gray>Use /zroverride to set custom rental settings for this region.")
 
         return true
     }

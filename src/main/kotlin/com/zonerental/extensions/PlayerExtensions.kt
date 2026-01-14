@@ -1,5 +1,7 @@
 package com.zonerental.extensions
 
+import net.kyori.adventure.audience.Audience
+import net.kyori.adventure.text.Component
 import org.bukkit.command.CommandSender
 import org.bukkit.entity.Player
 
@@ -21,9 +23,9 @@ fun CommandSender.asPlayer(): Player = this as? Player
 /**
  * Checks if sender is a player and returns it, or sends a message and returns null.
  */
-fun CommandSender.requirePlayer(message: String = "&cThis command can only be used by players."): Player? {
+fun CommandSender.requirePlayer(message: String = "<red>This command can only be used by players."): Player? {
     return asPlayerOrNull() ?: run {
-        sendMessage(message.color())
+        sendMessage(message.toComponent())
         null
     }
 }
@@ -33,12 +35,12 @@ fun CommandSender.requirePlayer(message: String = "&cThis command can only be us
  */
 fun CommandSender.requirePermission(
     permission: String,
-    message: String = "&cYou don't have permission to use this command."
+    message: String = "<red>You don't have permission to use this command."
 ): Boolean {
     return if (hasPermission(permission)) {
         true
     } else {
-        sendMessage(message.color())
+        sendMessage(message.toComponent())
         false
     }
 }
@@ -49,24 +51,77 @@ fun CommandSender.requirePermission(
  */
 fun CommandSender.checkPermission(
     permission: String,
-    message: String = "&cYou don't have permission to use this command."
+    message: String = "<red>You don't have permission to use this command."
 ): CommandSender? {
     return if (hasPermission(permission)) this else {
-        sendMessage(message.color())
+        sendMessage(message.toComponent())
+        null
+    }
+}
+
+/**
+ * Checks if sender has permission, returning null if not (with Component message).
+ * Useful for chaining: sender.checkPermission("perm", component)?.let { ... }
+ */
+fun CommandSender.checkPermission(
+    permission: String,
+    message: Component
+): CommandSender? {
+    return if (hasPermission(permission)) this else {
+        sendMessage(message)
         null
     }
 }
 
 /**
  * Sends a colored message to the sender.
+ * @deprecated Use [sendMiniMessage] with MiniMessage format instead.
  */
+@Deprecated(
+    message = "Use sendMiniMessage() with MiniMessage format",
+    replaceWith = ReplaceWith("sendMiniMessage(message)", "com.zonerental.extensions.sendMiniMessage")
+)
+@Suppress("DEPRECATION")
 fun CommandSender.sendColoredMessage(message: String) {
     sendMessage(message.color())
 }
 
 /**
  * Sends a colored message with placeholders to the sender.
+ * @deprecated Use [sendMiniMessage] with MiniMessage format instead.
  */
+@Deprecated(
+    message = "Use sendMiniMessage() with MiniMessage format",
+    replaceWith = ReplaceWith("sendMiniMessage(message, *placeholders)", "com.zonerental.extensions.sendMiniMessage")
+)
+@Suppress("DEPRECATION")
 fun CommandSender.sendColoredMessage(message: String, vararg placeholders: Pair<String, String>) {
     sendMessage(message.formatMessage(*placeholders))
+}
+
+// ========================================
+// Adventure Component API Extensions
+// ========================================
+
+/**
+ * Sends a MiniMessage formatted message to the sender.
+ * Example: sender.sendMiniMessage("<red>Error: <gray>Something went wrong")
+ */
+fun Audience.sendMiniMessage(message: String) {
+    sendMessage(message.toComponent())
+}
+
+/**
+ * Sends a MiniMessage formatted message with placeholder replacements.
+ * Placeholders are replaced before MiniMessage parsing.
+ */
+fun Audience.sendMiniMessage(message: String, vararg placeholders: Pair<String, String>) {
+    sendMessage(message.withPlaceholders(*placeholders).toComponent())
+}
+
+/**
+ * Sends a Component directly to the audience.
+ */
+fun Audience.sendComponent(component: Component) {
+    sendMessage(component)
 }

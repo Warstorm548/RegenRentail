@@ -2,8 +2,8 @@ package com.zonerental.commands
 
 import com.zonerental.ZoneRental
 import com.zonerental.extensions.checkPermission
+import com.zonerental.extensions.sendMiniMessage
 import org.bukkit.Bukkit
-import org.bukkit.ChatColor
 import org.bukkit.World
 import org.bukkit.command.Command
 import org.bukkit.command.CommandExecutor
@@ -54,7 +54,7 @@ class GroupCommand(private val plugin: ZoneRental) : CommandExecutor, TabComplet
     }
 
     override fun onCommand(sender: CommandSender, command: Command, label: String, args: Array<String>): Boolean {
-        sender.checkPermission("zonerental.admin.group", "${ChatColor.RED}You don't have permission to use this command.")
+        sender.checkPermission("zonerental.admin.group", "<red>You don't have permission to use this command.")
             ?: return true
 
         if (args.isEmpty()) {
@@ -69,7 +69,7 @@ class GroupCommand(private val plugin: ZoneRental) : CommandExecutor, TabComplet
             "list" -> handleList(sender)
             "view" -> handleView(sender, args)
             else -> {
-                sender.sendMessage("${ChatColor.RED}Unknown subcommand: ${args[0]}")
+                sender.sendMiniMessage("<red>Unknown subcommand: ${args[0]}")
                 sendHelp(sender)
                 true
             }
@@ -80,7 +80,7 @@ class GroupCommand(private val plugin: ZoneRental) : CommandExecutor, TabComplet
 
     private fun handleCreate(sender: CommandSender, args: Array<String>): Boolean {
         if (args.size < 2) {
-            sender.sendMessage("${ChatColor.RED}Usage: /zrgroup create <group_name> [regions]")
+            sender.sendMiniMessage("<red>Usage: /zrgroup create <group_name> [regions]")
             return true
         }
 
@@ -88,13 +88,13 @@ class GroupCommand(private val plugin: ZoneRental) : CommandExecutor, TabComplet
 
         // Validate group name
         plugin.groupsConfig.getValidationError(groupName)?.let { error ->
-            sender.sendMessage("${ChatColor.RED}$error")
+            sender.sendMiniMessage("<red>$error")
             return true
         }
 
         // Check if group already exists
         if (plugin.groupsConfig.groupExists(groupName)) {
-            sender.sendMessage("${ChatColor.RED}Group '$groupName' already exists!")
+            sender.sendMiniMessage("<red>Group '$groupName' already exists!")
             return true
         }
 
@@ -111,7 +111,7 @@ class GroupCommand(private val plugin: ZoneRental) : CommandExecutor, TabComplet
 
     private fun handleEdit(sender: CommandSender, args: Array<String>): Boolean {
         if (args.size < 3) {
-            sender.sendMessage("${ChatColor.RED}Usage: /zrgroup edit <group_name> <add|remove> [regions]")
+            sender.sendMiniMessage("<red>Usage: /zrgroup edit <group_name> <add|remove> [regions]")
             return true
         }
 
@@ -120,13 +120,13 @@ class GroupCommand(private val plugin: ZoneRental) : CommandExecutor, TabComplet
 
         // Validate group exists
         if (!plugin.groupsConfig.groupExists(groupName)) {
-            sender.sendMessage("${ChatColor.RED}Group '$groupName' does not exist!")
+            sender.sendMiniMessage("<red>Group '$groupName' does not exist!")
             return true
         }
 
         // Validate action
         if (action !in EDIT_ACTIONS) {
-            sender.sendMessage("${ChatColor.RED}Action must be 'add' or 'remove'")
+            sender.sendMiniMessage("<red>Action must be 'add' or 'remove'")
             return true
         }
 
@@ -146,7 +146,7 @@ class GroupCommand(private val plugin: ZoneRental) : CommandExecutor, TabComplet
 
     private fun handleDelete(sender: CommandSender, args: Array<String>): Boolean {
         if (args.size < 2) {
-            sender.sendMessage("${ChatColor.RED}Usage: /zrgroup delete <group_name> [confirm]")
+            sender.sendMiniMessage("<red>Usage: /zrgroup delete <group_name> [confirm]")
             return true
         }
 
@@ -154,17 +154,17 @@ class GroupCommand(private val plugin: ZoneRental) : CommandExecutor, TabComplet
 
         // Validate group exists
         if (!plugin.groupsConfig.groupExists(groupName)) {
-            sender.sendMessage("${ChatColor.RED}Group '$groupName' does not exist!")
+            sender.sendMiniMessage("<red>Group '$groupName' does not exist!")
             return true
         }
 
         // Require confirmation
         if (args.size < 3 || !args[2].equals("confirm", ignoreCase = true)) {
             val regionCount = plugin.groupsConfig.getGroupSize(groupName)
-            sender.sendMessage("${ChatColor.YELLOW}WARNING: You are about to delete group '$groupName' with $regionCount regions!")
-            sender.sendMessage("${ChatColor.YELLOW}Group overrides in regions.yml will be removed.")
-            sender.sendMessage("${ChatColor.YELLOW}Individual region overrides will remain intact.")
-            sender.sendMessage("${ChatColor.RED}Type: /zrgroup delete $groupName confirm")
+            sender.sendMiniMessage("<yellow>WARNING: You are about to delete group '$groupName' with $regionCount regions!")
+            sender.sendMiniMessage("<yellow>Group overrides in regions.yml will be removed.")
+            sender.sendMiniMessage("<yellow>Individual region overrides will remain intact.")
+            sender.sendMiniMessage("<red>Type: /zrgroup delete $groupName confirm")
             return true
         }
 
@@ -180,7 +180,7 @@ class GroupCommand(private val plugin: ZoneRental) : CommandExecutor, TabComplet
         // Mark all signs as dirty so they update to fallback prices
         plugin.signManager.bulkMarkSignsDirty(groupRegions)
 
-        sender.sendMessage("${ChatColor.GREEN}Deleted group '$groupName' and removed all group overrides")
+        sender.sendMiniMessage("<green>Deleted group '$groupName' and removed all group overrides")
 
         invalidateGroupCache()
 
@@ -191,30 +191,30 @@ class GroupCommand(private val plugin: ZoneRental) : CommandExecutor, TabComplet
         val allGroups = plugin.groupsConfig.allGroups
 
         if (allGroups.isEmpty()) {
-            sender.sendMessage("${ChatColor.YELLOW}No groups exist. Create one with /zrgroup create <name>")
+            sender.sendMiniMessage("<yellow>No groups exist. Create one with /zrgroup create <name>")
             return true
         }
 
-        sender.sendMessage("${ChatColor.GOLD}=== Region Groups ===")
+        sender.sendMiniMessage("<gold>=== Region Groups ===")
 
         for (groupName in allGroups) {
             val size = plugin.groupsConfig.getGroupSize(groupName)
-            sender.sendMessage("${ChatColor.GREEN}  $groupName${ChatColor.GRAY} ($size regions)")
+            sender.sendMiniMessage("<green>  $groupName<gray> ($size regions)")
         }
 
         val stats = plugin.groupsConfig.getStatistics()
         val totalGroups = stats["group_count"] as Int
         val totalRegions = stats["total_regions"] as Int
 
-        sender.sendMessage("${ChatColor.GOLD}Total: $totalGroups groups, $totalRegions regions")
-        sender.sendMessage("${ChatColor.GRAY}Use /zrgroup view <group_name> for details")
+        sender.sendMiniMessage("<gold>Total: $totalGroups groups, $totalRegions regions")
+        sender.sendMiniMessage("<gray>Use /zrgroup view <group_name> for details")
 
         return true
     }
 
     private fun handleView(sender: CommandSender, args: Array<String>): Boolean {
         if (args.size < 2) {
-            sender.sendMessage("${ChatColor.RED}Usage: /zrgroup view <group_name>")
+            sender.sendMiniMessage("<red>Usage: /zrgroup view <group_name>")
             return true
         }
 
@@ -222,21 +222,21 @@ class GroupCommand(private val plugin: ZoneRental) : CommandExecutor, TabComplet
 
         // Validate group exists
         if (!plugin.groupsConfig.groupExists(groupName)) {
-            sender.sendMessage("${ChatColor.RED}Group '$groupName' does not exist!")
+            sender.sendMiniMessage("<red>Group '$groupName' does not exist!")
             return true
         }
 
         val regions = plugin.groupsConfig.getGroupRegions(groupName)
 
-        sender.sendMessage("${ChatColor.GOLD}=== Group: $groupName ===")
-        sender.sendMessage("${ChatColor.YELLOW}Regions (${regions.size}):")
+        sender.sendMiniMessage("<gold>=== Group: $groupName ===")
+        sender.sendMiniMessage("<yellow>Regions (${regions.size}):")
 
         for (compositeKey in regions) {
-            sender.sendMessage("${ChatColor.GREEN}  - $compositeKey")
+            sender.sendMiniMessage("<green>  - $compositeKey")
         }
 
-        sender.sendMessage("")
-        sender.sendMessage("${ChatColor.GRAY}Apply overrides: /zroverride <setting> $groupName <value>")
+        sender.sendMiniMessage("")
+        sender.sendMiniMessage("<gray>Apply overrides: /zroverride <setting> $groupName <value>")
 
         return true
     }
@@ -247,7 +247,7 @@ class GroupCommand(private val plugin: ZoneRental) : CommandExecutor, TabComplet
         val parseResult = parseRegionInput(sender, regionsInput)
 
         if (parseResult.validRegions.isEmpty()) {
-            sender.sendMessage("${ChatColor.RED}No valid regions provided!")
+            sender.sendMiniMessage("<red>No valid regions provided!")
             sendParseErrors(sender, parseResult)
             return
         }
@@ -256,11 +256,11 @@ class GroupCommand(private val plugin: ZoneRental) : CommandExecutor, TabComplet
         val duplicates = plugin.groupsConfig.checkGroupMembership(parseResult.validRegions)
 
         if (duplicates.isNotEmpty()) {
-            sender.sendMessage("${ChatColor.RED}Some regions are already in groups:")
+            sender.sendMiniMessage("<red>Some regions are already in groups:")
             for ((region, existingGroup) in duplicates) {
-                sender.sendMessage("${ChatColor.YELLOW}  - $region is in group '$existingGroup'")
+                sender.sendMiniMessage("<yellow>  - $region is in group '$existingGroup'")
             }
-            sender.sendMessage("${ChatColor.RED}Remove them from their groups first.")
+            sender.sendMiniMessage("<red>Remove them from their groups first.")
             return
         }
 
@@ -278,7 +278,7 @@ class GroupCommand(private val plugin: ZoneRental) : CommandExecutor, TabComplet
         // Mark signs as dirty
         plugin.signManager.bulkMarkSignsDirty(parseResult.validRegions)
 
-        sender.sendMessage("${ChatColor.GREEN}Created group '$groupName' with ${parseResult.validRegions.size} regions")
+        sender.sendMiniMessage("<green>Created group '$groupName' with ${parseResult.validRegions.size} regions")
 
         notifyCleanedOverrides(sender, cleanedCount)
         sendParseErrors(sender, parseResult)
@@ -290,7 +290,7 @@ class GroupCommand(private val plugin: ZoneRental) : CommandExecutor, TabComplet
         val parseResult = parseRegionInput(sender, regionsInput)
 
         if (parseResult.validRegions.isEmpty()) {
-            sender.sendMessage("${ChatColor.RED}No valid regions provided!")
+            sender.sendMiniMessage("<red>No valid regions provided!")
             return
         }
 
@@ -298,16 +298,16 @@ class GroupCommand(private val plugin: ZoneRental) : CommandExecutor, TabComplet
         val duplicates = plugin.groupsConfig.checkGroupMembership(parseResult.validRegions)
 
         if (duplicates.isNotEmpty()) {
-            sender.sendMessage("${ChatColor.RED}Some regions are already in groups:")
+            sender.sendMiniMessage("<red>Some regions are already in groups:")
             for ((region, existingGroup) in duplicates) {
                 val message = if (existingGroup == groupName) {
-                    "${ChatColor.YELLOW}  - $region is already in this group"
+                    "<yellow>  - $region is already in this group"
                 } else {
-                    "${ChatColor.YELLOW}  - $region is in group '$existingGroup'"
+                    "<yellow>  - $region is in group '$existingGroup'"
                 }
-                sender.sendMessage(message)
+                sender.sendMiniMessage(message)
             }
-            sender.sendMessage("${ChatColor.RED}Remove them from other groups first.")
+            sender.sendMiniMessage("<red>Remove them from other groups first.")
             return
         }
 
@@ -326,7 +326,7 @@ class GroupCommand(private val plugin: ZoneRental) : CommandExecutor, TabComplet
         plugin.signManager.bulkMarkSignsDirty(parseResult.validRegions)
 
         val totalSize = plugin.groupsConfig.getGroupSize(groupName)
-        sender.sendMessage("${ChatColor.GREEN}Added ${parseResult.validRegions.size} regions to group '$groupName' (Total: $totalSize regions)")
+        sender.sendMiniMessage("<green>Added ${parseResult.validRegions.size} regions to group '$groupName' (Total: $totalSize regions)")
 
         notifyCleanedOverrides(sender, cleanedCount)
         sendParseErrors(sender, parseResult)
@@ -338,7 +338,7 @@ class GroupCommand(private val plugin: ZoneRental) : CommandExecutor, TabComplet
         val parseResult = parseRegionInput(sender, regionsInput)
 
         if (parseResult.validRegions.isEmpty()) {
-            sender.sendMessage("${ChatColor.RED}No valid regions provided!")
+            sender.sendMiniMessage("<red>No valid regions provided!")
             return
         }
 
@@ -349,7 +349,7 @@ class GroupCommand(private val plugin: ZoneRental) : CommandExecutor, TabComplet
         val (toRemove, notInGroup) = parseResult.validRegions.partition { it in currentRegions }
 
         if (toRemove.isEmpty()) {
-            sender.sendMessage("${ChatColor.RED}None of the specified regions are in group '$groupName'")
+            sender.sendMiniMessage("<red>None of the specified regions are in group '$groupName'")
             return
         }
 
@@ -360,10 +360,10 @@ class GroupCommand(private val plugin: ZoneRental) : CommandExecutor, TabComplet
         plugin.signManager.bulkMarkSignsDirty(toRemove)
 
         val remainingSize = plugin.groupsConfig.getGroupSize(groupName)
-        sender.sendMessage("${ChatColor.GREEN}Removed ${toRemove.size} regions from group '$groupName' (Remaining: $remainingSize regions)")
+        sender.sendMiniMessage("<green>Removed ${toRemove.size} regions from group '$groupName' (Remaining: $remainingSize regions)")
 
         if (notInGroup.isNotEmpty()) {
-            sender.sendMessage("${ChatColor.YELLOW}Note: ${notInGroup.size} regions were not in the group")
+            sender.sendMiniMessage("<yellow>Note: ${notInGroup.size} regions were not in the group")
         }
 
         invalidateGroupCache()
@@ -429,37 +429,37 @@ class GroupCommand(private val plugin: ZoneRental) : CommandExecutor, TabComplet
 
     private fun sendParseErrors(sender: CommandSender, result: ParseResult) {
         if (result.errors.isNotEmpty()) {
-            sender.sendMessage("${ChatColor.YELLOW}Warnings (${result.errors.size} regions skipped):")
-            result.errors.forEach { sender.sendMessage("${ChatColor.YELLOW}  - $it") }
+            sender.sendMiniMessage("<yellow>Warnings (${result.errors.size} regions skipped):")
+            result.errors.forEach { sender.sendMiniMessage("<yellow>  - $it") }
         }
     }
 
     private fun notifyCleanedOverrides(sender: CommandSender, count: Int) {
         if (count > 0) {
-            sender.sendMessage("${ChatColor.YELLOW}Removed individual overrides from $count region(s) to prevent conflicts with group overrides")
+            sender.sendMiniMessage("<yellow>Removed individual overrides from $count region(s) to prevent conflicts with group overrides")
         }
     }
 
     private fun promptForRegions(sender: CommandSender, groupName: String, action: String) {
         val player = sender as? Player ?: run {
-            sender.sendMessage("${ChatColor.RED}Console must provide regions as arguments.")
+            sender.sendMiniMessage("<red>Console must provide regions as arguments.")
             val usage = when (action) {
                 "create" -> "Usage: /zrgroup create $groupName region1,region2,world:region3"
                 "add" -> "Usage: /zrgroup edit $groupName add region1,region2"
                 "remove" -> "Usage: /zrgroup edit $groupName remove region1,region2"
                 else -> ""
             }
-            sender.sendMessage("${ChatColor.GRAY}$usage")
+            sender.sendMiniMessage("<gray>$usage")
             return
         }
 
         // Create pending action
         pendingActions[player.uniqueId] = PendingGroupAction(groupName, action)
 
-        sender.sendMessage("${ChatColor.GREEN}Please type the regions in chat:")
-        sender.sendMessage("${ChatColor.GRAY}Format: region1,region2 or world:region1,region2")
-        sender.sendMessage("${ChatColor.GRAY}Use world:region for regions in different worlds")
-        sender.sendMessage("${ChatColor.YELLOW}Type 'cancel' to abort (60 second timeout)")
+        sender.sendMiniMessage("<green>Please type the regions in chat:")
+        sender.sendMiniMessage("<gray>Format: region1,region2 or world:region1,region2")
+        sender.sendMiniMessage("<gray>Use world:region for regions in different worlds")
+        sender.sendMiniMessage("<yellow>Type 'cancel' to abort (60 second timeout)")
     }
 
     // ========== Pending Actions ==========
@@ -490,8 +490,8 @@ class GroupCommand(private val plugin: ZoneRental) : CommandExecutor, TabComplet
 
         expired.forEach { uuid ->
             pendingActions.remove(uuid)
-            Bukkit.getPlayer(uuid)?.takeIf { it.isOnline }?.sendMessage(
-                "${ChatColor.YELLOW}Region input timed out. Please run the command again."
+            Bukkit.getPlayer(uuid)?.takeIf { it.isOnline }?.sendMiniMessage(
+                "<yellow>Region input timed out. Please run the command again."
             )
         }
     }
@@ -574,14 +574,14 @@ class GroupCommand(private val plugin: ZoneRental) : CommandExecutor, TabComplet
     // ========== Help ==========
 
     private fun sendHelp(sender: CommandSender) {
-        sender.sendMessage("${ChatColor.GOLD}=== ZoneRental Groups ===")
-        sender.sendMessage("${ChatColor.YELLOW}/zrgroup create <name> [regions]${ChatColor.GRAY} - Create group")
-        sender.sendMessage("${ChatColor.YELLOW}/zrgroup edit <name> add [regions]${ChatColor.GRAY} - Add regions")
-        sender.sendMessage("${ChatColor.YELLOW}/zrgroup edit <name> remove [regions]${ChatColor.GRAY} - Remove regions")
-        sender.sendMessage("${ChatColor.YELLOW}/zrgroup delete <name>${ChatColor.GRAY} - Delete group")
-        sender.sendMessage("${ChatColor.YELLOW}/zrgroup list${ChatColor.GRAY} - List all groups")
-        sender.sendMessage("${ChatColor.YELLOW}/zrgroup view <name>${ChatColor.GRAY} - View group details")
-        sender.sendMessage("${ChatColor.GRAY}Regions format: region1,region2,world:region3")
+        sender.sendMiniMessage("<gold>=== ZoneRental Groups ===")
+        sender.sendMiniMessage("<yellow>/zrgroup create <name> [regions]<gray> - Create group")
+        sender.sendMiniMessage("<yellow>/zrgroup edit <name> add [regions]<gray> - Add regions")
+        sender.sendMiniMessage("<yellow>/zrgroup edit <name> remove [regions]<gray> - Remove regions")
+        sender.sendMiniMessage("<yellow>/zrgroup delete <name><gray> - Delete group")
+        sender.sendMiniMessage("<yellow>/zrgroup list<gray> - List all groups")
+        sender.sendMiniMessage("<yellow>/zrgroup view <name><gray> - View group details")
+        sender.sendMiniMessage("<gray>Regions format: region1,region2,world:region3")
     }
 }
 

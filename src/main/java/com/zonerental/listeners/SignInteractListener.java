@@ -3,8 +3,8 @@ package com.zonerental.listeners;
 import com.zonerental.ZoneRental;
 import com.zonerental.managers.Rental;
 import com.zonerental.util.WorldRegionParser;
+import net.kyori.adventure.text.minimessage.MiniMessage;
 import net.milkbowl.vault.economy.Economy;
-import org.bukkit.ChatColor;
 import org.bukkit.Location;
 import org.bukkit.block.Sign;
 import org.bukkit.entity.Player;
@@ -16,6 +16,8 @@ import org.bukkit.event.block.BlockBreakEvent;
 import org.bukkit.event.player.PlayerInteractEvent;
 
 public class SignInteractListener implements Listener {
+
+    private static final MiniMessage MINI_MESSAGE = MiniMessage.miniMessage();
     
     private final ZoneRental plugin;
 
@@ -113,7 +115,7 @@ public class SignInteractListener implements Listener {
         // Check economy
         Economy economy = plugin.getEconomy();
         if (economy == null) {
-            player.sendMessage(ChatColor.RED + "Economy system not available!");
+            player.sendMessage(MINI_MESSAGE.deserialize("<red>Economy system not available!"));
             return;
         }
         
@@ -140,7 +142,7 @@ public class SignInteractListener implements Listener {
         } else {
             // Refund if rental failed
             economy.depositPlayer(player, price);
-            player.sendMessage(ChatColor.RED + "Failed to create rental!");
+            player.sendMessage(MINI_MESSAGE.deserialize("<red>Failed to create rental!"));
         }
     }
     
@@ -154,13 +156,13 @@ public class SignInteractListener implements Listener {
         Rental rental = plugin.getRentalManager().getRental(regionName, player.getWorld());
 
         if (rental == null) {
-            player.sendMessage(ChatColor.RED + "This region is not rented!");
+            player.sendMessage(MINI_MESSAGE.deserialize("<red>This region is not rented!"));
             return;
         }
 
         // Check if player owns this rental
         if (!rental.getPlayerUUID().equals(player.getUniqueId())) {
-            player.sendMessage(ChatColor.RED + "You don't own this rental!");
+            player.sendMessage(MINI_MESSAGE.deserialize("<red>You don't own this rental!"));
             return;
         }
 
@@ -178,7 +180,7 @@ public class SignInteractListener implements Listener {
         // Check economy
         Economy economy = plugin.getEconomy();
         if (economy == null) {
-            player.sendMessage(ChatColor.RED + "Economy system not available!");
+            player.sendMessage(MINI_MESSAGE.deserialize("<red>Economy system not available!"));
             return;
         }
 
@@ -205,23 +207,23 @@ public class SignInteractListener implements Listener {
         } else {
             // Refund if extension failed
             economy.depositPlayer(player, price);
-            player.sendMessage(ChatColor.RED + "Failed to extend rental!");
+            player.sendMessage(MINI_MESSAGE.deserialize("<red>Failed to extend rental!"));
         }
     }
     
     private void showRentalInfo(Player player, Rental rental) {
-        player.sendMessage(ChatColor.GOLD + "=== Rental Info ===");
-        player.sendMessage(ChatColor.YELLOW + "Region: " + ChatColor.WHITE + rental.getRegionName());
-        player.sendMessage(ChatColor.YELLOW + "Owner: " + ChatColor.WHITE + rental.getPlayerName());
-        player.sendMessage(ChatColor.YELLOW + "Expires: " + ChatColor.WHITE + rental.getFormattedEndDate());
-        player.sendMessage(ChatColor.YELLOW + "Time Remaining: " + ChatColor.WHITE + 
-            rental.getDaysRemaining() + " days, " + 
-            (rental.getHoursRemaining() % 24) + " hours");
-        player.sendMessage(ChatColor.YELLOW + "Extensions Used: " + ChatColor.WHITE + 
-            rental.getExtensionCount() + "/" + plugin.getConfigManager().getMaxExtensions());
-        
+        player.sendMessage(MINI_MESSAGE.deserialize("<gold>=== Rental Info ==="));
+        player.sendMessage(MINI_MESSAGE.deserialize("<yellow>Region: <white>" + rental.getRegionName()));
+        player.sendMessage(MINI_MESSAGE.deserialize("<yellow>Owner: <white>" + rental.getPlayerName()));
+        player.sendMessage(MINI_MESSAGE.deserialize("<yellow>Expires: <white>" + rental.getFormattedEndDate()));
+        player.sendMessage(MINI_MESSAGE.deserialize("<yellow>Time Remaining: <white>" +
+            rental.getDaysRemaining() + " days, " +
+            (rental.getHoursRemaining() % 24) + " hours"));
+        player.sendMessage(MINI_MESSAGE.deserialize("<yellow>Extensions Used: <white>" +
+            rental.getExtensionCount() + "/" + plugin.getConfigManager().getMaxExtensions()));
+
         if (rental.getPlayerUUID().equals(player.getUniqueId())) {
-            player.sendMessage(ChatColor.GREEN + "Shift+Right-Click to extend your rental!");
+            player.sendMessage(MINI_MESSAGE.deserialize("<green>Shift+Right-Click to extend your rental!"));
         }
     }
     

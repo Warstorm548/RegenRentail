@@ -1,6 +1,7 @@
 package com.zonerental.commands
 
 import com.zonerental.ZoneRental
+import com.zonerental.extensions.sendMiniMessage
 import com.zonerental.util.WorldRegionParser
 import org.bukkit.*
 import org.bukkit.block.Block
@@ -36,7 +37,7 @@ class TpCommand(private val plugin: ZoneRental) : CommandExecutor, TabCompleter 
     override fun onCommand(sender: CommandSender, command: Command, label: String, args: Array<String>): Boolean {
         // Player-only command
         val player = sender as? Player ?: run {
-            sender.sendMessage("${ChatColor.RED}This command can only be used by players!")
+            sender.sendMiniMessage("<red>This command can only be used by players!")
             return true
         }
 
@@ -48,27 +49,27 @@ class TpCommand(private val plugin: ZoneRental) : CommandExecutor, TabCompleter 
 
         // Check if teleport is enabled
         if (!plugin.configManager.isTeleportEnabled) {
-            player.sendMessage("${ChatColor.RED}Teleportation is currently disabled!")
+            player.sendMiniMessage("<red>Teleportation is currently disabled!")
             return true
         }
 
         // Validate arguments
         if (args.isEmpty()) {
-            player.sendMessage("${ChatColor.RED}Usage: /$label <region>")
-            player.sendMessage("${ChatColor.YELLOW}Example: /$label shop1")
-            player.sendMessage("${ChatColor.YELLOW}Example: /$label world:shop1")
+            player.sendMiniMessage("<red>Usage: /$label <region>")
+            player.sendMiniMessage("<yellow>Example: /$label shop1")
+            player.sendMiniMessage("<yellow>Example: /$label world:shop1")
             return true
         }
 
         // Parse region with world awareness
         val parsed = WorldRegionParser.parse(args[0], player) ?: run {
-            player.sendMessage("${ChatColor.RED}Invalid region format!")
-            player.sendMessage("${ChatColor.YELLOW}Use: <region> or world:<region>")
+            player.sendMiniMessage("<red>Invalid region format!")
+            player.sendMiniMessage("<yellow>Use: <region> or world:<region>")
             return true
         }
 
         val world = parsed.getWorld() ?: run {
-            player.sendMessage("${ChatColor.RED}World '${parsed.worldName}' is not loaded!")
+            player.sendMiniMessage("<red>World '${parsed.worldName}' is not loaded!")
             return true
         }
         val regionName = parsed.regionName
@@ -109,8 +110,8 @@ class TpCommand(private val plugin: ZoneRental) : CommandExecutor, TabCompleter 
 
         // Get sign location
         val signLocation = plugin.signsConfig.getSignLocation(regionName, world) ?: run {
-            player.sendMessage("${ChatColor.RED}No rental sign found for region ${parsed.getCompositeKey()}")
-            player.sendMessage("${ChatColor.YELLOW}Please contact an administrator.")
+            player.sendMiniMessage("<red>No rental sign found for region ${parsed.getCompositeKey()}")
+            player.sendMiniMessage("<yellow>Please contact an administrator.")
             return true
         }
 
@@ -153,7 +154,7 @@ class TpCommand(private val plugin: ZoneRental) : CommandExecutor, TabCompleter 
                 plugin.teleportCooldownManager.startCooldown(player)
             }
         } else {
-            player.sendMessage("${ChatColor.RED}Teleport failed! Please try again.")
+            player.sendMiniMessage("<red>Teleport failed! Please try again.")
         }
 
         return true

@@ -2,9 +2,9 @@ package com.zonerental.managers
 
 import com.github.shynixn.mccoroutine.bukkit.minecraftDispatcher
 import com.zonerental.ZoneRental
+import com.zonerental.extensions.sendMiniMessage
 import kotlinx.coroutines.withContext
 import org.bukkit.Bukkit
-import org.bukkit.ChatColor
 import org.bukkit.World
 import org.bukkit.configuration.file.YamlConfiguration
 import org.bukkit.entity.Player
@@ -324,12 +324,8 @@ class RentalManager(private val plugin: ZoneRental) {
                 if (shopsRemoved > 0 && plugin.configManager.isEzChestShopNotifyOnRemoval) {
                     Bukkit.getPlayer(rental.playerUUID)?.let { player ->
                         if (player.isOnline) {
-                            val message = ChatColor.translateAlternateColorCodes(
-                                '&',
-                                plugin.configManager.prefix + plugin.configManager.ezChestShopRemovalMessage
-                                    .replace("{region}", regionName)
-                            )
-                            player.sendMessage(message)
+                            player.sendMessage(plugin.configManager.getMessage("ezchestshop-removed",
+                                "{region}", regionName))
                         }
                     }
                 }
@@ -388,12 +384,8 @@ class RentalManager(private val plugin: ZoneRental) {
                     if (shopsRemoved > 0 && plugin.configManager.isEzChestShopNotifyOnRemoval) {
                         Bukkit.getPlayer(rental.playerUUID)?.let { player ->
                             if (player.isOnline) {
-                                val message = ChatColor.translateAlternateColorCodes(
-                                    '&',
-                                    plugin.configManager.prefix + plugin.configManager.ezChestShopRemovalMessage
-                                        .replace("{region}", regionName)
-                                )
-                                player.sendMessage(message)
+                                player.sendMessage(plugin.configManager.getMessage("ezchestshop-removed",
+                                    "{region}", regionName))
                             }
                         }
                     }
