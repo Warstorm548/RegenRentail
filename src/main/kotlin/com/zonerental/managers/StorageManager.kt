@@ -13,6 +13,7 @@ import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
 import com.zonerental.extensions.legacyToComponent
 import com.zonerental.extensions.sendMiniMessage
+import com.zonerental.extensions.toComponent
 import net.kyori.adventure.text.Component
 import org.bukkit.Bukkit
 import org.bukkit.ChunkSnapshot
