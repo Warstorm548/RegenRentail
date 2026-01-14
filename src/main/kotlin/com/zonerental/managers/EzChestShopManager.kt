@@ -213,38 +213,6 @@ class EzChestShopManager(private val plugin: ZoneRental) {
     }
 
     /**
-     * Remove all chest shops from a WorldGuard region (searches all worlds).
-     * This method maintains the original signature for backward compatibility.
-     *
-     * @param regionName The name of the WorldGuard region
-     * @return Number of shops removed
-     */
-    @Deprecated("Use removeShopsInRegion(String, World) instead")
-    fun removeShopsInRegion(regionName: String): Int {
-        if (!ezChestShopEnabled) return 0
-
-        if (!plugin.configManager.isEzChestShopRemovalEnabled) {
-            return 0
-        }
-
-        // Find the world containing this region
-        val world = findWorldForRegion(regionName)
-        if (world == null) {
-            plugin.logger.warning("Cannot remove shops from region '$regionName' - world not found")
-            return 0
-        }
-
-        // Get the WorldGuard region
-        val region = plugin.worldGuardManager.getRegion(regionName, world)
-        if (region == null) {
-            plugin.logger.warning("Cannot remove shops from region '$regionName' - region not found")
-            return 0
-        }
-
-        return removeShopsInRegionInternal(region, world, regionName)
-    }
-
-    /**
      * Internal method to remove shops from a region.
      */
     private fun removeShopsInRegionInternal(

@@ -116,12 +116,6 @@ class WorldEditManager(private val plugin: ZoneRental) {
         }
     }
 
-    @Deprecated("Use world-aware version", ReplaceWith("captureRegion(regionName, world)"))
-    fun captureRegion(regionName: String): Boolean {
-        val world = Bukkit.getWorlds()[0]
-        return captureRegion(regionName, world)
-    }
-
     /**
      * Restores a region to its captured state.
      */
@@ -167,12 +161,6 @@ class WorldEditManager(private val plugin: ZoneRental) {
         }
     }
 
-    @Deprecated("Use world-aware version", ReplaceWith("restoreRegion(regionName, world)"))
-    fun restoreRegion(regionName: String): Boolean {
-        val world = Bukkit.getWorlds()[0]
-        return restoreRegion(regionName, world)
-    }
-
     /**
      * Checks if a region state has been captured (checks index, doesn't load from disk).
      * World-aware version using composite key format.
@@ -181,13 +169,6 @@ class WorldEditManager(private val plugin: ZoneRental) {
         val compositeKey = "${world.name}:$regionName"
         return compositeKey in knownSchematics
     }
-
-    /**
-     * Checks if a region state has been captured (checks index, doesn't load from disk).
-     * @deprecated Use world-aware version hasCapture(regionName, world) instead.
-     */
-    @Deprecated("Use world-aware version", ReplaceWith("hasCapture(regionName, world)"))
-    fun hasCapture(regionName: String): Boolean = regionName in knownSchematics
 
     /**
      * Gets the captured clipboard for a region (lazy loads from disk if needed).
@@ -203,17 +184,6 @@ class WorldEditManager(private val plugin: ZoneRental) {
         clipboardCache.remove(compositeKey)
         knownSchematics.remove(compositeKey)
         deleteSchematic(compositeKey)
-    }
-
-    /**
-     * Deletes a captured region state from cache, index, and disk.
-     * @deprecated Use world-aware version deleteCapture(regionName, world) instead.
-     */
-    @Deprecated("Use world-aware version", ReplaceWith("deleteCapture(regionName, world)"))
-    fun deleteCapture(regionName: String) {
-        clipboardCache.remove(regionName)
-        knownSchematics.remove(regionName)
-        deleteSchematic(regionName)
     }
 
     /**
