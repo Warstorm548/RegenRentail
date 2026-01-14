@@ -212,16 +212,16 @@ worldGuardManager.removePlayerFromRegion(regionName, playerUUID);
 Block restoration is handled through `WorldEditManager`:
 ```java
 // Capture region state before renting
-worldEditManager.captureRegion(regionName);
+worldEditManager.captureRegion(regionName, world);
 
 // Restore region to captured state
-worldEditManager.restoreRegion(regionName);
+worldEditManager.restoreRegion(regionName, world);
 
 // Check if a capture exists
-boolean hasCapture = worldEditManager.hasCapture(regionName);
+boolean hasCapture = worldEditManager.hasCapture(regionName, world);
 
 // Delete schematic
-worldEditManager.deleteCapture(regionName);
+worldEditManager.deleteCapture(regionName, world);
 ```
 
 ### Refund System
