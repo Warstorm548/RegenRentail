@@ -1,10 +1,12 @@
 package com.zonerental.extensions
 
-import org.bukkit.ChatColor
+import net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer
 
 /**
  * Extension functions for String operations commonly used throughout the plugin.
  */
+
+private val LEGACY_SERIALIZER = LegacyComponentSerializer.legacyAmpersand()
 
 /**
  * Translates color codes using '&' as the alternate color code character.
@@ -16,7 +18,7 @@ import org.bukkit.ChatColor
     message = "Use toComponent() for MiniMessage format or legacyToComponent() for legacy '&' codes",
     replaceWith = ReplaceWith("this.legacyToComponent()", "com.zonerental.extensions.legacyToComponent")
 )
-fun String.color(): String = ChatColor.translateAlternateColorCodes('&', this)
+fun String.color(): String = LegacyComponentSerializer.legacySection().serialize(LEGACY_SERIALIZER.deserialize(this))
 
 /**
  * Returns this string if not null/blank, otherwise returns the default.

@@ -491,7 +491,7 @@ plugins/ZoneRental/
 
 **Output:**
 ```
-build/libs/ZoneRental-3.1.3.jar
+build/libs/ZoneRental-3.2.0.jar
 ```
 
 ## Dependencies
@@ -538,7 +538,11 @@ See [In_Game_Testing_Checklist.md](In_Game_Testing_Checklist.md) for comprehensi
 
 See [CHANGELOG.md](CHANGELOG.md) for detailed version history.
 
-**v3.1.3** - Current
+**v3.2.0** - Current
+- Complete migration from ChatColor to Adventure API with MiniMessage format
+- Config now uses MiniMessage tags instead of `&` color codes
+
+**v3.1.3**
 - Deprecated code cleanup (removed ~145 lines of dead/unused code)
 
 **v3.1.2**
