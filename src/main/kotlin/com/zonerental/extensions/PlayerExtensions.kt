@@ -60,6 +60,20 @@ fun CommandSender.checkPermission(
 }
 
 /**
+ * Checks if sender has permission, returning null if not (with Component message).
+ * Useful for chaining: sender.checkPermission("perm", component)?.let { ... }
+ */
+fun CommandSender.checkPermission(
+    permission: String,
+    message: Component
+): CommandSender? {
+    return if (hasPermission(permission)) this else {
+        sendMessage(message)
+        null
+    }
+}
+
+/**
  * Sends a colored message to the sender.
  */
 fun CommandSender.sendColoredMessage(message: String) {
