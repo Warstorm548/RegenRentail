@@ -9,7 +9,13 @@ import org.bukkit.ChatColor
 /**
  * Translates color codes using '&' as the alternate color code character.
  * Example: "&cRed text".color() -> "Red text" (in red)
+ *
+ * @deprecated Use [toComponent] for MiniMessage format or [legacyToComponent] for legacy format.
  */
+@Deprecated(
+    message = "Use toComponent() for MiniMessage format or legacyToComponent() for legacy '&' codes",
+    replaceWith = ReplaceWith("this.legacyToComponent()", "com.zonerental.extensions.legacyToComponent")
+)
 fun String.color(): String = ChatColor.translateAlternateColorCodes('&', this)
 
 /**
@@ -32,7 +38,14 @@ fun String.withPlaceholders(replacements: Map<String, String>): String =
 
 /**
  * Combines color translation and placeholder replacement.
+ *
+ * @deprecated Use MiniMessage format with [toComponent] instead.
  */
+@Deprecated(
+    message = "Use withPlaceholders().toComponent() for MiniMessage format",
+    replaceWith = ReplaceWith("this.withPlaceholders(*pairs).toComponent()", "com.zonerental.extensions.toComponent")
+)
+@Suppress("DEPRECATION")
 fun String.formatMessage(vararg pairs: Pair<String, String>): String =
     withPlaceholders(*pairs).color()
 

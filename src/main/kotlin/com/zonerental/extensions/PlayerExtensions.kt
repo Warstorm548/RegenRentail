@@ -1,5 +1,7 @@
 package com.zonerental.extensions
 
+import net.kyori.adventure.audience.Audience
+import net.kyori.adventure.text.Component
 import org.bukkit.command.CommandSender
 import org.bukkit.entity.Player
 
@@ -69,4 +71,31 @@ fun CommandSender.sendColoredMessage(message: String) {
  */
 fun CommandSender.sendColoredMessage(message: String, vararg placeholders: Pair<String, String>) {
     sendMessage(message.formatMessage(*placeholders))
+}
+
+// ========================================
+// Adventure Component API Extensions
+// ========================================
+
+/**
+ * Sends a MiniMessage formatted message to the sender.
+ * Example: sender.sendMiniMessage("<red>Error: <gray>Something went wrong")
+ */
+fun Audience.sendMiniMessage(message: String) {
+    sendMessage(message.toComponent())
+}
+
+/**
+ * Sends a MiniMessage formatted message with placeholder replacements.
+ * Placeholders are replaced before MiniMessage parsing.
+ */
+fun Audience.sendMiniMessage(message: String, vararg placeholders: Pair<String, String>) {
+    sendMessage(message.withPlaceholders(*placeholders).toComponent())
+}
+
+/**
+ * Sends a Component directly to the audience.
+ */
+fun Audience.sendComponent(component: Component) {
+    sendMessage(component)
 }
