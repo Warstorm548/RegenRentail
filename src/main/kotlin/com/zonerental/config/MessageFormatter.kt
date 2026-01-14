@@ -18,7 +18,9 @@ class MessageFormatter(private val messages: Map<String, String>, private val pr
 
     /**
      * Gets a raw message without the prefix.
+     * Uses legacy color() for backwards compatibility with existing configs.
      */
+    @Suppress("DEPRECATION")
     fun getRaw(key: String): String =
         (messages[key] ?: "&cMissing message: $key").color()
 
@@ -64,7 +66,9 @@ class MessageFormatter(private val messages: Map<String, String>, private val pr
 
         /**
          * Builds the final message string with prefix and color codes.
+         * Uses legacy color() for backwards compatibility with existing configs.
          */
+        @Suppress("DEPRECATION")
         fun build(): String {
             var result = prefix + template
             replacements.forEach { (key, value) ->
@@ -75,7 +79,9 @@ class MessageFormatter(private val messages: Map<String, String>, private val pr
 
         /**
          * Builds without prefix.
+         * Uses legacy color() for backwards compatibility with existing configs.
          */
+        @Suppress("DEPRECATION")
         fun buildRaw(): String {
             var result = template
             replacements.forEach { (key, value) ->
@@ -118,7 +124,9 @@ class MessageFormatter(private val messages: Map<String, String>, private val pr
 /**
  * Extension function for quick message formatting.
  * Usage: "Hello {name}!".format("name" to "Steve")
+ * Uses legacy color() for backwards compatibility with existing configs.
  */
+@Suppress("DEPRECATION")
 fun String.formatWith(vararg pairs: Pair<String, Any>): String {
     var result = this
     pairs.forEach { (key, value) ->

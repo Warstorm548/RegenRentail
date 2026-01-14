@@ -679,7 +679,7 @@ class StorageManager(private val plugin: ZoneRental) : Listener {
             "Retrieve Your Items"
         }
 
-        val gui = Bukkit.createInventory(StorageGUIHolder(player.uniqueId), 54, title)
+        val gui = Bukkit.createInventory(StorageGUIHolder(player.uniqueId), 54, title.toComponent())
 
         synchronized(session.items) {
             val startIndex = currentPage * StorageGUISession.ITEMS_PER_PAGE
