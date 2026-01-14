@@ -2,8 +2,8 @@ package com.zonerental.commands
 
 import com.zonerental.ZoneRental
 import com.zonerental.extensions.asPlayerOrNull
+import com.zonerental.extensions.sendMiniMessage
 import com.zonerental.util.WorldRegionParser
-import org.bukkit.ChatColor
 import org.bukkit.command.Command
 import org.bukkit.command.CommandExecutor
 import org.bukkit.command.CommandSender
@@ -12,7 +12,7 @@ class ExtendCommand(private val plugin: ZoneRental) : CommandExecutor {
 
     override fun onCommand(sender: CommandSender, command: Command, label: String, args: Array<String>): Boolean {
         val player = sender.asPlayerOrNull() ?: run {
-            sender.sendMessage("${ChatColor.RED}This command can only be used by players!")
+            sender.sendMiniMessage("<red>This command can only be used by players!")
             return true
         }
 
@@ -22,19 +22,19 @@ class ExtendCommand(private val plugin: ZoneRental) : CommandExecutor {
         }
 
         if (args.isEmpty()) {
-            player.sendMessage("${ChatColor.RED}Usage: /zrextend <region>")
-            player.sendMessage("${ChatColor.YELLOW}Example: /zrextend shop1")
+            player.sendMiniMessage("<red>Usage: /zrextend <region>")
+            player.sendMiniMessage("<yellow>Example: /zrextend shop1")
             return true
         }
 
         // Parse region argument with world inference (player's world)
         val parsed = WorldRegionParser.parse(args[0], player) ?: run {
-            player.sendMessage("${ChatColor.RED}Invalid region format!")
+            player.sendMiniMessage("<red>Invalid region format!")
             return true
         }
 
         val world = parsed.getWorld() ?: run {
-            player.sendMessage("${ChatColor.RED}World not found!")
+            player.sendMiniMessage("<red>World not found!")
             return true
         }
         val regionName = parsed.regionName
@@ -42,13 +42,13 @@ class ExtendCommand(private val plugin: ZoneRental) : CommandExecutor {
         val rental = plugin.rentalManager.getRental(regionName, world)
 
         if (rental == null) {
-            player.sendMessage("${ChatColor.RED}Region $regionName is not rented!")
+            player.sendMiniMessage("<red>Region $regionName is not rented!")
             return true
         }
 
         // Check if player owns this rental
         if (rental.playerUUID != player.uniqueId) {
-            player.sendMessage("${ChatColor.RED}You don't own this rental!")
+            player.sendMiniMessage("<red>You don't own this rental!")
             return true
         }
 
@@ -66,7 +66,7 @@ class ExtendCommand(private val plugin: ZoneRental) : CommandExecutor {
         // Check economy
         val economy = plugin.economy
         if (economy == null) {
-            player.sendMessage("${ChatColor.RED}Economy system not available!")
+            player.sendMiniMessage("<red>Economy system not available!")
             return true
         }
 
@@ -90,7 +90,7 @@ class ExtendCommand(private val plugin: ZoneRental) : CommandExecutor {
         } else {
             // Refund if extension failed
             economy.depositPlayer(player, price)
-            player.sendMessage("${ChatColor.RED}Failed to extend rental!")
+            player.sendMiniMessage("<red>Failed to extend rental!")
         }
 
         return true

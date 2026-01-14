@@ -1,8 +1,8 @@
 package com.zonerental.commands
 
 import com.zonerental.ZoneRental
+import com.zonerental.extensions.sendMiniMessage
 import com.zonerental.util.WorldRegionParser
-import org.bukkit.ChatColor
 import org.bukkit.command.Command
 import org.bukkit.command.CommandExecutor
 import org.bukkit.command.CommandSender
@@ -16,26 +16,26 @@ class ResetCommand(private val plugin: ZoneRental) : CommandExecutor {
         }
 
         if (args.isEmpty()) {
-            sender.sendMessage("${ChatColor.RED}Usage: /zrreset <world:region>")
-            sender.sendMessage("${ChatColor.YELLOW}Example: /zrreset world:shop1")
+            sender.sendMiniMessage("<red>Usage: /zrreset <world:region>")
+            sender.sendMiniMessage("<yellow>Example: /zrreset world:shop1")
             return true
         }
 
         // Parse region argument with world inference
         val parsed = WorldRegionParser.parse(args[0], sender) ?: run {
-            sender.sendMessage("${ChatColor.RED}Invalid format! Console must use world:region format (e.g., world:shop1)")
+            sender.sendMiniMessage("<red>Invalid format! Console must use world:region format (e.g., world:shop1)")
             return true
         }
 
         val world = parsed.getWorld() ?: run {
-            sender.sendMessage("${ChatColor.RED}World not found!")
+            sender.sendMiniMessage("<red>World not found!")
             return true
         }
         val regionName = parsed.regionName
 
         val rental = plugin.rentalManager.getRental(regionName, world)
         if (rental == null) {
-            sender.sendMessage("${ChatColor.RED}Region ${parsed.getCompositeKey()} is not currently rented!")
+            sender.sendMiniMessage("<red>Region ${parsed.getCompositeKey()} is not currently rented!")
             return true
         }
 
@@ -60,16 +60,16 @@ class ResetCommand(private val plugin: ZoneRental) : CommandExecutor {
 
             // Show refund breakdown if any previous refunds exist
             if (alreadyRefunded > 0) {
-                sender.sendMessage("${ChatColor.GRAY}  Total paid: ${ChatColor.YELLOW}$formattedTotal")
-                sender.sendMessage("${ChatColor.GRAY}  Already refunded: ${ChatColor.YELLOW}$formattedAlready")
-                sender.sendMessage("${ChatColor.GRAY}  Net refund: ${ChatColor.GREEN}$formattedAmount")
+                sender.sendMiniMessage("<gray>  Total paid: <yellow>$formattedTotal")
+                sender.sendMiniMessage("<gray>  Already refunded: <yellow>$formattedAlready")
+                sender.sendMiniMessage("<gray>  Net refund: <green>$formattedAmount")
             }
 
             // Log the action
             val refundLog = if (alreadyRefunded > 0) " (Total paid: $formattedTotal, Already refunded: $formattedAlready)" else ""
             plugin.logger.info("Admin ${sender.name} reset rental for region $regionName. Refunded $formattedAmount to $playerName$refundLog")
         } else {
-            sender.sendMessage("${ChatColor.RED}Failed to reset rental for region $regionName")
+            sender.sendMiniMessage("<red>Failed to reset rental for region $regionName")
         }
 
         return true

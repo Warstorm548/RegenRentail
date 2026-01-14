@@ -1,7 +1,7 @@
 package com.zonerental.commands
 
 import com.zonerental.ZoneRental
-import org.bukkit.ChatColor
+import com.zonerental.extensions.sendMiniMessage
 import org.bukkit.command.Command
 import org.bukkit.command.CommandExecutor
 import org.bukkit.command.CommandSender
@@ -11,7 +11,7 @@ class RetrieveCommand(private val plugin: ZoneRental) : CommandExecutor {
 
     override fun onCommand(sender: CommandSender, command: Command, label: String, args: Array<String>): Boolean {
         if (sender !is Player) {
-            sender.sendMessage("${ChatColor.RED}This command can only be used by players!")
+            sender.sendMiniMessage("<red>This command can only be used by players!")
             return true
         }
 
