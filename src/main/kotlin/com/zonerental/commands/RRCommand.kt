@@ -1,7 +1,7 @@
 package com.zonerental.commands
 
 import com.zonerental.ZoneRental
-import org.bukkit.ChatColor
+import com.zonerental.extensions.sendMiniMessage
 import org.bukkit.command.Command
 import org.bukkit.command.CommandExecutor
 import org.bukkit.command.CommandSender
@@ -32,7 +32,7 @@ class RRCommand(private val plugin: ZoneRental) : CommandExecutor, TabCompleter 
                 if (pageNum in 1..3) {
                     showHelp(sender, pageNum)
                 } else {
-                    sender.sendMessage("${ChatColor.RED}Invalid page number. Valid pages: 1-3")
+                    sender.sendMiniMessage("<red>Invalid page number. Valid pages: 1-3")
                 }
                 return true
             }
@@ -55,7 +55,7 @@ class RRCommand(private val plugin: ZoneRental) : CommandExecutor, TabCompleter 
 
             "list" -> {
                 if (args.size == 1) {
-                    sender.sendMessage("${ChatColor.RED}Usage: /$prefix list <player>")
+                    sender.sendMiniMessage("<red>Usage: /$prefix list <player>")
                     return true
                 }
                 // Handle list command
@@ -63,14 +63,14 @@ class RRCommand(private val plugin: ZoneRental) : CommandExecutor, TabCompleter 
 
             "info" -> {
                 if (args.size < 2) {
-                    sender.sendMessage("${ChatColor.RED}Usage: /$prefix info <region>")
+                    sender.sendMiniMessage("<red>Usage: /$prefix info <region>")
                     return true
                 }
                 // Handle info command
             }
 
             else -> {
-                sender.sendMessage("${ChatColor.RED}Unknown command. Use /$prefix help for help.")
+                sender.sendMiniMessage("<red>Unknown command. Use /$prefix help for help.")
             }
         }
 
@@ -78,353 +78,353 @@ class RRCommand(private val plugin: ZoneRental) : CommandExecutor, TabCompleter 
     }
 
     private fun showHelp(sender: CommandSender, page: Int) {
-        sender.sendMessage("${ChatColor.GOLD}=== ZoneRental Help ===")
-        sender.sendMessage("")
+        sender.sendMiniMessage("<gold>=== ZoneRental Help ===")
+        sender.sendMiniMessage("")
 
         when (page) {
             1 -> {
                 // Page 1: User Commands
-                sender.sendMessage("${ChatColor.GOLD}Player Commands:")
-                sender.sendMessage("${ChatColor.YELLOW}/$prefix help${ChatColor.GRAY} - Show this help menu")
-                sender.sendMessage("${ChatColor.YELLOW}/${prefix}info${ChatColor.GRAY} - View rental information for a region")
-                sender.sendMessage("${ChatColor.YELLOW}/${prefix}list${ChatColor.GRAY} - List your active rentals")
-                sender.sendMessage("${ChatColor.YELLOW}/${prefix}extend${ChatColor.GRAY} - Extend your rental duration")
-                sender.sendMessage("${ChatColor.YELLOW}/${prefix}retrieve${ChatColor.GRAY} - Retrieve items from expired rentals")
+                sender.sendMiniMessage("<gold>Player Commands:")
+                sender.sendMiniMessage("<yellow>/$prefix help<gray> - Show this help menu")
+                sender.sendMiniMessage("<yellow>/${prefix}info<gray> - View rental information for a region")
+                sender.sendMiniMessage("<yellow>/${prefix}list<gray> - List your active rentals")
+                sender.sendMiniMessage("<yellow>/${prefix}extend<gray> - Extend your rental duration")
+                sender.sendMiniMessage("<yellow>/${prefix}retrieve<gray> - Retrieve items from expired rentals")
             }
 
             2 -> {
                 if (!sender.hasPermission("zonerental.admin")) {
-                    sender.sendMessage("${ChatColor.RED}You don't have permission to view admin commands.")
-                    sender.sendMessage("${ChatColor.GRAY}Use ${ChatColor.YELLOW}/$prefix help 1${ChatColor.GRAY} to view player commands.")
+                    sender.sendMiniMessage("<red>You don't have permission to view admin commands.")
+                    sender.sendMiniMessage("<gray>Use <yellow>/$prefix help 1<gray> to view player commands.")
                     return
                 }
                 // Page 2: Admin Commands Part 1
-                sender.sendMessage("${ChatColor.GOLD}Admin Commands (Part 1):")
-                sender.sendMessage("${ChatColor.YELLOW}/${prefix}reload${ChatColor.GRAY} - Reload plugin configuration")
-                sender.sendMessage("${ChatColor.YELLOW}/${prefix}createsign${ChatColor.GRAY} - Create a rental sign for a region")
-                sender.sendMessage("${ChatColor.YELLOW}/${prefix}reset${ChatColor.GRAY} - Reset a rental with full refund")
-                sender.sendMessage("${ChatColor.YELLOW}/${prefix}remove${ChatColor.GRAY} - Completely remove rental setup from region")
+                sender.sendMiniMessage("<gold>Admin Commands (Part 1):")
+                sender.sendMiniMessage("<yellow>/${prefix}reload<gray> - Reload plugin configuration")
+                sender.sendMiniMessage("<yellow>/${prefix}createsign<gray> - Create a rental sign for a region")
+                sender.sendMiniMessage("<yellow>/${prefix}reset<gray> - Reset a rental with full refund")
+                sender.sendMiniMessage("<yellow>/${prefix}remove<gray> - Completely remove rental setup from region")
             }
 
             3 -> {
                 if (!sender.hasPermission("zonerental.admin")) {
-                    sender.sendMessage("${ChatColor.RED}You don't have permission to view admin commands.")
-                    sender.sendMessage("${ChatColor.GRAY}Use ${ChatColor.YELLOW}/$prefix help 1${ChatColor.GRAY} to view player commands.")
+                    sender.sendMiniMessage("<red>You don't have permission to view admin commands.")
+                    sender.sendMiniMessage("<gray>Use <yellow>/$prefix help 1<gray> to view player commands.")
                     return
                 }
                 // Page 3: Admin Commands Part 2
-                sender.sendMessage("${ChatColor.GOLD}Admin Commands (Part 2):")
-                sender.sendMessage("${ChatColor.YELLOW}/${prefix}duration${ChatColor.GRAY} - Modify rental duration (add/remove/set/reset)")
-                sender.sendMessage("${ChatColor.YELLOW}/${prefix}override${ChatColor.GRAY} - Set per-region custom settings")
-                sender.sendMessage("${ChatColor.YELLOW}/${prefix}verify${ChatColor.GRAY} - Verify region configurations")
-                sender.sendMessage("${ChatColor.YELLOW}/${prefix}refundhistory${ChatColor.GRAY} - View refund transaction history")
+                sender.sendMiniMessage("<gold>Admin Commands (Part 2):")
+                sender.sendMiniMessage("<yellow>/${prefix}duration<gray> - Modify rental duration (add/remove/set/reset)")
+                sender.sendMiniMessage("<yellow>/${prefix}override<gray> - Set per-region custom settings")
+                sender.sendMiniMessage("<yellow>/${prefix}verify<gray> - Verify region configurations")
+                sender.sendMiniMessage("<yellow>/${prefix}refundhistory<gray> - View refund transaction history")
             }
         }
 
         // Footer with navigation instructions
-        sender.sendMessage("")
-        sender.sendMessage("${ChatColor.DARK_AQUA}Page $page/3")
-        sender.sendMessage("${ChatColor.AQUA}Usage: ${ChatColor.WHITE}/$prefix help [page]${ChatColor.GRAY} - View help page")
-        sender.sendMessage("${ChatColor.AQUA}Usage: ${ChatColor.WHITE}/$prefix help <command>${ChatColor.GRAY} - Detailed command help")
-        sender.sendMessage("${ChatColor.GOLD}========================")
+        sender.sendMiniMessage("")
+        sender.sendMiniMessage("<dark_aqua>Page $page/3")
+        sender.sendMiniMessage("<aqua>Usage: <white>/$prefix help [page]<gray> - View help page")
+        sender.sendMiniMessage("<aqua>Usage: <white>/$prefix help <command><gray> - Detailed command help")
+        sender.sendMiniMessage("<gold>========================")
     }
 
     private fun showDetailedHelp(sender: CommandSender, commandName: String) {
-        sender.sendMessage("${ChatColor.GOLD}=== Detailed Command Help ===")
-        sender.sendMessage("")
+        sender.sendMiniMessage("<gold>=== Detailed Command Help ===")
+        sender.sendMiniMessage("")
 
         when (commandName) {
             "help" -> {
-                sender.sendMessage("${ChatColor.YELLOW}Command: ${ChatColor.WHITE}/$prefix help")
-                sender.sendMessage("${ChatColor.GRAY}Display help information for ZoneRental commands.")
-                sender.sendMessage("")
-                sender.sendMessage("${ChatColor.AQUA}Syntax:")
-                sender.sendMessage("${ChatColor.WHITE}  /$prefix help [page]")
-                sender.sendMessage("${ChatColor.WHITE}  /$prefix help <command>")
-                sender.sendMessage("")
-                sender.sendMessage("${ChatColor.AQUA}Permission: ${ChatColor.WHITE}zonerental.user")
-                sender.sendMessage("")
-                sender.sendMessage("${ChatColor.AQUA}Examples:")
-                sender.sendMessage("${ChatColor.GREEN}  /$prefix help${ChatColor.GRAY} - Show page 1 of help")
-                sender.sendMessage("${ChatColor.GREEN}  /$prefix help 2${ChatColor.GRAY} - Show page 2 of help")
-                sender.sendMessage("${ChatColor.GREEN}  /$prefix help info${ChatColor.GRAY} - Show detailed help for /${prefix}info command")
+                sender.sendMiniMessage("<yellow>Command: <white>/$prefix help")
+                sender.sendMiniMessage("<gray>Display help information for ZoneRental commands.")
+                sender.sendMiniMessage("")
+                sender.sendMiniMessage("<aqua>Syntax:")
+                sender.sendMiniMessage("<white>  /$prefix help [page]")
+                sender.sendMiniMessage("<white>  /$prefix help <command>")
+                sender.sendMiniMessage("")
+                sender.sendMiniMessage("<aqua>Permission: <white>zonerental.user")
+                sender.sendMiniMessage("")
+                sender.sendMiniMessage("<aqua>Examples:")
+                sender.sendMiniMessage("<green>  /$prefix help<gray> - Show page 1 of help")
+                sender.sendMiniMessage("<green>  /$prefix help 2<gray> - Show page 2 of help")
+                sender.sendMiniMessage("<green>  /$prefix help info<gray> - Show detailed help for /${prefix}info command")
             }
 
             "info" -> {
-                sender.sendMessage("${ChatColor.YELLOW}Command: ${ChatColor.WHITE}/${prefix}info")
-                sender.sendMessage("${ChatColor.GRAY}View detailed information about a rental region including price, owner, and expiration time.")
-                sender.sendMessage("")
-                sender.sendMessage("${ChatColor.AQUA}Syntax:")
-                sender.sendMessage("${ChatColor.WHITE}  /${prefix}info <region>")
-                sender.sendMessage("")
-                sender.sendMessage("${ChatColor.AQUA}Permission: ${ChatColor.WHITE}zonerental.info")
-                sender.sendMessage("")
-                sender.sendMessage("${ChatColor.AQUA}Examples:")
-                sender.sendMessage("${ChatColor.GREEN}  /${prefix}info shop1${ChatColor.GRAY} - View info for region 'shop1'")
-                sender.sendMessage("${ChatColor.GREEN}  /${prefix}info apartment_5${ChatColor.GRAY} - Check if apartment_5 is available")
+                sender.sendMiniMessage("<yellow>Command: <white>/${prefix}info")
+                sender.sendMiniMessage("<gray>View detailed information about a rental region including price, owner, and expiration time.")
+                sender.sendMiniMessage("")
+                sender.sendMiniMessage("<aqua>Syntax:")
+                sender.sendMiniMessage("<white>  /${prefix}info <region>")
+                sender.sendMiniMessage("")
+                sender.sendMiniMessage("<aqua>Permission: <white>zonerental.info")
+                sender.sendMiniMessage("")
+                sender.sendMiniMessage("<aqua>Examples:")
+                sender.sendMiniMessage("<green>  /${prefix}info shop1<gray> - View info for region 'shop1'")
+                sender.sendMiniMessage("<green>  /${prefix}info apartment_5<gray> - Check if apartment_5 is available")
             }
 
             "list" -> {
-                sender.sendMessage("${ChatColor.YELLOW}Command: ${ChatColor.WHITE}/${prefix}list")
-                sender.sendMessage("${ChatColor.GRAY}List all your active rentals or view another player's rentals (admin only).")
-                sender.sendMessage("")
-                sender.sendMessage("${ChatColor.AQUA}Syntax:")
-                sender.sendMessage("${ChatColor.WHITE}  /${prefix}list [player]")
-                sender.sendMessage("")
-                sender.sendMessage("${ChatColor.AQUA}Permissions:")
-                sender.sendMessage("${ChatColor.WHITE}  zonerental.list ${ChatColor.GRAY}- View your own rentals")
-                sender.sendMessage("${ChatColor.WHITE}  zonerental.admin.list.others ${ChatColor.GRAY}- View other players' rentals")
-                sender.sendMessage("")
-                sender.sendMessage("${ChatColor.AQUA}Examples:")
-                sender.sendMessage("${ChatColor.GREEN}  /${prefix}list${ChatColor.GRAY} - List all your rentals")
-                sender.sendMessage("${ChatColor.GREEN}  /${prefix}list Notch${ChatColor.GRAY} - List Notch's rentals (admin only)")
+                sender.sendMiniMessage("<yellow>Command: <white>/${prefix}list")
+                sender.sendMiniMessage("<gray>List all your active rentals or view another player's rentals (admin only).")
+                sender.sendMiniMessage("")
+                sender.sendMiniMessage("<aqua>Syntax:")
+                sender.sendMiniMessage("<white>  /${prefix}list [player]")
+                sender.sendMiniMessage("")
+                sender.sendMiniMessage("<aqua>Permissions:")
+                sender.sendMiniMessage("<white>  zonerental.list <gray>- View your own rentals")
+                sender.sendMiniMessage("<white>  zonerental.admin.list.others <gray>- View other players' rentals")
+                sender.sendMiniMessage("")
+                sender.sendMiniMessage("<aqua>Examples:")
+                sender.sendMiniMessage("<green>  /${prefix}list<gray> - List all your rentals")
+                sender.sendMiniMessage("<green>  /${prefix}list Notch<gray> - List Notch's rentals (admin only)")
             }
 
             "extend" -> {
-                sender.sendMessage("${ChatColor.YELLOW}Command: ${ChatColor.WHITE}/${prefix}extend")
-                sender.sendMessage("${ChatColor.GRAY}Extend the duration of your rental. Costs money and has a maximum extension limit.")
-                sender.sendMessage("")
-                sender.sendMessage("${ChatColor.AQUA}Syntax:")
-                sender.sendMessage("${ChatColor.WHITE}  /${prefix}extend <region>")
-                sender.sendMessage("")
-                sender.sendMessage("${ChatColor.AQUA}Permission: ${ChatColor.WHITE}zonerental.extend")
-                sender.sendMessage("")
-                sender.sendMessage("${ChatColor.AQUA}Examples:")
-                sender.sendMessage("${ChatColor.GREEN}  /${prefix}extend shop1${ChatColor.GRAY} - Extend your rental for shop1")
-                sender.sendMessage("")
-                sender.sendMessage("${ChatColor.AQUA}Notes:")
-                sender.sendMessage("${ChatColor.GRAY}  - You can only extend rentals you own")
-                sender.sendMessage("${ChatColor.GRAY}  - Extensions have a cost (configurable per region)")
-                sender.sendMessage("${ChatColor.GRAY}  - Maximum extension limit applies (check config)")
+                sender.sendMiniMessage("<yellow>Command: <white>/${prefix}extend")
+                sender.sendMiniMessage("<gray>Extend the duration of your rental. Costs money and has a maximum extension limit.")
+                sender.sendMiniMessage("")
+                sender.sendMiniMessage("<aqua>Syntax:")
+                sender.sendMiniMessage("<white>  /${prefix}extend <region>")
+                sender.sendMiniMessage("")
+                sender.sendMiniMessage("<aqua>Permission: <white>zonerental.extend")
+                sender.sendMiniMessage("")
+                sender.sendMiniMessage("<aqua>Examples:")
+                sender.sendMiniMessage("<green>  /${prefix}extend shop1<gray> - Extend your rental for shop1")
+                sender.sendMiniMessage("")
+                sender.sendMiniMessage("<aqua>Notes:")
+                sender.sendMiniMessage("<gray>  - You can only extend rentals you own")
+                sender.sendMiniMessage("<gray>  - Extensions have a cost (configurable per region)")
+                sender.sendMiniMessage("<gray>  - Maximum extension limit applies (check config)")
             }
 
             "retrieve" -> {
-                sender.sendMessage("${ChatColor.YELLOW}Command: ${ChatColor.WHITE}/${prefix}retrieve")
-                sender.sendMessage("${ChatColor.GRAY}Open a GUI to retrieve items stored from your expired rentals.")
-                sender.sendMessage("")
-                sender.sendMessage("${ChatColor.AQUA}Syntax:")
-                sender.sendMessage("${ChatColor.WHITE}  /${prefix}retrieve")
-                sender.sendMessage("")
-                sender.sendMessage("${ChatColor.AQUA}Permission: ${ChatColor.WHITE}zonerental.retrieve")
-                sender.sendMessage("")
-                sender.sendMessage("${ChatColor.AQUA}Examples:")
-                sender.sendMessage("${ChatColor.GREEN}  /${prefix}retrieve${ChatColor.GRAY} - Open item retrieval GUI")
-                sender.sendMessage("")
-                sender.sendMessage("${ChatColor.AQUA}Notes:")
-                sender.sendMessage("${ChatColor.GRAY}  - Items are stored when your rental expires")
-                sender.sendMessage("${ChatColor.GRAY}  - Only shows items from your expired rentals")
+                sender.sendMiniMessage("<yellow>Command: <white>/${prefix}retrieve")
+                sender.sendMiniMessage("<gray>Open a GUI to retrieve items stored from your expired rentals.")
+                sender.sendMiniMessage("")
+                sender.sendMiniMessage("<aqua>Syntax:")
+                sender.sendMiniMessage("<white>  /${prefix}retrieve")
+                sender.sendMiniMessage("")
+                sender.sendMiniMessage("<aqua>Permission: <white>zonerental.retrieve")
+                sender.sendMiniMessage("")
+                sender.sendMiniMessage("<aqua>Examples:")
+                sender.sendMiniMessage("<green>  /${prefix}retrieve<gray> - Open item retrieval GUI")
+                sender.sendMiniMessage("")
+                sender.sendMiniMessage("<aqua>Notes:")
+                sender.sendMiniMessage("<gray>  - Items are stored when your rental expires")
+                sender.sendMiniMessage("<gray>  - Only shows items from your expired rentals")
             }
 
             "reload" -> {
                 if (!sender.hasPermission("zonerental.admin.reload")) {
-                    sender.sendMessage("${ChatColor.RED}You don't have permission to view this command's help.")
+                    sender.sendMiniMessage("<red>You don't have permission to view this command's help.")
                     return
                 }
-                sender.sendMessage("${ChatColor.YELLOW}Command: ${ChatColor.WHITE}/${prefix}reload")
-                sender.sendMessage("${ChatColor.GRAY}Reload all plugin configuration files without restarting the server.")
-                sender.sendMessage("")
-                sender.sendMessage("${ChatColor.AQUA}Syntax:")
-                sender.sendMessage("${ChatColor.WHITE}  /${prefix}reload")
-                sender.sendMessage("")
-                sender.sendMessage("${ChatColor.AQUA}Permission: ${ChatColor.WHITE}zonerental.admin.reload")
-                sender.sendMessage("")
-                sender.sendMessage("${ChatColor.AQUA}Examples:")
-                sender.sendMessage("${ChatColor.GREEN}  /${prefix}reload${ChatColor.GRAY} - Reload configuration")
-                sender.sendMessage("")
-                sender.sendMessage("${ChatColor.AQUA}Notes:")
-                sender.sendMessage("${ChatColor.GRAY}  - Reloads config.yml, regions.yml, signs.yml, and storage.yml")
-                sender.sendMessage("${ChatColor.GRAY}  - Active rentals are not affected")
+                sender.sendMiniMessage("<yellow>Command: <white>/${prefix}reload")
+                sender.sendMiniMessage("<gray>Reload all plugin configuration files without restarting the server.")
+                sender.sendMiniMessage("")
+                sender.sendMiniMessage("<aqua>Syntax:")
+                sender.sendMiniMessage("<white>  /${prefix}reload")
+                sender.sendMiniMessage("")
+                sender.sendMiniMessage("<aqua>Permission: <white>zonerental.admin.reload")
+                sender.sendMiniMessage("")
+                sender.sendMiniMessage("<aqua>Examples:")
+                sender.sendMiniMessage("<green>  /${prefix}reload<gray> - Reload configuration")
+                sender.sendMiniMessage("")
+                sender.sendMiniMessage("<aqua>Notes:")
+                sender.sendMiniMessage("<gray>  - Reloads config.yml, regions.yml, signs.yml, and storage.yml")
+                sender.sendMiniMessage("<gray>  - Active rentals are not affected")
             }
 
             "createsign" -> {
                 if (!sender.hasPermission("zonerental.admin.createsign")) {
-                    sender.sendMessage("${ChatColor.RED}You don't have permission to view this command's help.")
+                    sender.sendMiniMessage("<red>You don't have permission to view this command's help.")
                     return
                 }
-                sender.sendMessage("${ChatColor.YELLOW}Command: ${ChatColor.WHITE}/${prefix}createsign")
-                sender.sendMessage("${ChatColor.GRAY}Create a rental sign on the block you're looking at.")
-                sender.sendMessage("")
-                sender.sendMessage("${ChatColor.AQUA}Syntax:")
-                sender.sendMessage("${ChatColor.WHITE}  /${prefix}createsign <region>")
-                sender.sendMessage("")
-                sender.sendMessage("${ChatColor.AQUA}Permission: ${ChatColor.WHITE}zonerental.admin.createsign")
-                sender.sendMessage("")
-                sender.sendMessage("${ChatColor.AQUA}Examples:")
-                sender.sendMessage("${ChatColor.GREEN}  /${prefix}createsign shop1${ChatColor.GRAY} - Create rental sign for shop1")
-                sender.sendMessage("")
-                sender.sendMessage("${ChatColor.AQUA}Notes:")
-                sender.sendMessage("${ChatColor.GRAY}  - Look at an existing sign block before running")
-                sender.sendMessage("${ChatColor.GRAY}  - Sign will use default settings until overrides are set")
-                sender.sendMessage("${ChatColor.GRAY}  - Support block is automatically protected")
+                sender.sendMiniMessage("<yellow>Command: <white>/${prefix}createsign")
+                sender.sendMiniMessage("<gray>Create a rental sign on the block you're looking at.")
+                sender.sendMiniMessage("")
+                sender.sendMiniMessage("<aqua>Syntax:")
+                sender.sendMiniMessage("<white>  /${prefix}createsign <region>")
+                sender.sendMiniMessage("")
+                sender.sendMiniMessage("<aqua>Permission: <white>zonerental.admin.createsign")
+                sender.sendMiniMessage("")
+                sender.sendMiniMessage("<aqua>Examples:")
+                sender.sendMiniMessage("<green>  /${prefix}createsign shop1<gray> - Create rental sign for shop1")
+                sender.sendMiniMessage("")
+                sender.sendMiniMessage("<aqua>Notes:")
+                sender.sendMiniMessage("<gray>  - Look at an existing sign block before running")
+                sender.sendMiniMessage("<gray>  - Sign will use default settings until overrides are set")
+                sender.sendMiniMessage("<gray>  - Support block is automatically protected")
             }
 
             "reset" -> {
                 if (!sender.hasPermission("zonerental.admin.reset")) {
-                    sender.sendMessage("${ChatColor.RED}You don't have permission to view this command's help.")
+                    sender.sendMiniMessage("<red>You don't have permission to view this command's help.")
                     return
                 }
-                sender.sendMessage("${ChatColor.YELLOW}Command: ${ChatColor.WHITE}/${prefix}reset")
-                sender.sendMessage("${ChatColor.GRAY}Reset an active rental with full refund. Keeps rental setup intact.")
-                sender.sendMessage("")
-                sender.sendMessage("${ChatColor.AQUA}Syntax:")
-                sender.sendMessage("${ChatColor.WHITE}  /${prefix}reset <region>")
-                sender.sendMessage("")
-                sender.sendMessage("${ChatColor.AQUA}Permission: ${ChatColor.WHITE}zonerental.admin.reset")
-                sender.sendMessage("")
-                sender.sendMessage("${ChatColor.AQUA}Examples:")
-                sender.sendMessage("${ChatColor.GREEN}  /${prefix}reset shop1${ChatColor.GRAY} - Reset shop1 rental")
-                sender.sendMessage("")
-                sender.sendMessage("${ChatColor.AQUA}Notes:")
-                sender.sendMessage("${ChatColor.GRAY}  - Player receives 100% refund (initial + all extensions)")
-                sender.sendMessage("${ChatColor.GRAY}  - Player is removed from WorldGuard region")
-                sender.sendMessage("${ChatColor.GRAY}  - Region blocks are restored to original state")
-                sender.sendMessage("${ChatColor.GRAY}  - Sign, schematic, and configs remain (use /${prefix}remove to delete)")
+                sender.sendMiniMessage("<yellow>Command: <white>/${prefix}reset")
+                sender.sendMiniMessage("<gray>Reset an active rental with full refund. Keeps rental setup intact.")
+                sender.sendMiniMessage("")
+                sender.sendMiniMessage("<aqua>Syntax:")
+                sender.sendMiniMessage("<white>  /${prefix}reset <region>")
+                sender.sendMiniMessage("")
+                sender.sendMiniMessage("<aqua>Permission: <white>zonerental.admin.reset")
+                sender.sendMiniMessage("")
+                sender.sendMiniMessage("<aqua>Examples:")
+                sender.sendMiniMessage("<green>  /${prefix}reset shop1<gray> - Reset shop1 rental")
+                sender.sendMiniMessage("")
+                sender.sendMiniMessage("<aqua>Notes:")
+                sender.sendMiniMessage("<gray>  - Player receives 100% refund (initial + all extensions)")
+                sender.sendMiniMessage("<gray>  - Player is removed from WorldGuard region")
+                sender.sendMiniMessage("<gray>  - Region blocks are restored to original state")
+                sender.sendMiniMessage("<gray>  - Sign, schematic, and configs remain (use /${prefix}remove to delete)")
             }
 
             "remove" -> {
                 if (!sender.hasPermission("zonerental.admin.remove")) {
-                    sender.sendMessage("${ChatColor.RED}You don't have permission to view this command's help.")
+                    sender.sendMiniMessage("<red>You don't have permission to view this command's help.")
                     return
                 }
-                sender.sendMessage("${ChatColor.YELLOW}Command: ${ChatColor.WHITE}/${prefix}remove")
-                sender.sendMessage("${ChatColor.GRAY}Completely remove ZoneRental setup from a region.")
-                sender.sendMessage("")
-                sender.sendMessage("${ChatColor.AQUA}Syntax:")
-                sender.sendMessage("${ChatColor.WHITE}  /${prefix}remove <region>")
-                sender.sendMessage("")
-                sender.sendMessage("${ChatColor.AQUA}Permission: ${ChatColor.WHITE}zonerental.admin.remove")
-                sender.sendMessage("")
-                sender.sendMessage("${ChatColor.AQUA}Examples:")
-                sender.sendMessage("${ChatColor.GREEN}  /${prefix}remove shop1${ChatColor.GRAY} - Remove rental setup from shop1")
-                sender.sendMessage("")
-                sender.sendMessage("${ChatColor.AQUA}Notes:")
-                sender.sendMessage("${ChatColor.GRAY}  - Resets active rental with full refund")
-                sender.sendMessage("${ChatColor.GRAY}  - Removes sign configuration and restores support block")
-                sender.sendMessage("${ChatColor.GRAY}  - Deletes WorldEdit schematic")
-                sender.sendMessage("${ChatColor.GRAY}  - Removes region from regions.yml")
-                sender.sendMessage("${ChatColor.GRAY}  - Use this to completely repurpose a region")
+                sender.sendMiniMessage("<yellow>Command: <white>/${prefix}remove")
+                sender.sendMiniMessage("<gray>Completely remove ZoneRental setup from a region.")
+                sender.sendMiniMessage("")
+                sender.sendMiniMessage("<aqua>Syntax:")
+                sender.sendMiniMessage("<white>  /${prefix}remove <region>")
+                sender.sendMiniMessage("")
+                sender.sendMiniMessage("<aqua>Permission: <white>zonerental.admin.remove")
+                sender.sendMiniMessage("")
+                sender.sendMiniMessage("<aqua>Examples:")
+                sender.sendMiniMessage("<green>  /${prefix}remove shop1<gray> - Remove rental setup from shop1")
+                sender.sendMiniMessage("")
+                sender.sendMiniMessage("<aqua>Notes:")
+                sender.sendMiniMessage("<gray>  - Resets active rental with full refund")
+                sender.sendMiniMessage("<gray>  - Removes sign configuration and restores support block")
+                sender.sendMiniMessage("<gray>  - Deletes WorldEdit schematic")
+                sender.sendMiniMessage("<gray>  - Removes region from regions.yml")
+                sender.sendMiniMessage("<gray>  - Use this to completely repurpose a region")
             }
 
             "duration" -> {
                 if (!sender.hasPermission("zonerental.admin.duration")) {
-                    sender.sendMessage("${ChatColor.RED}You don't have permission to view this command's help.")
+                    sender.sendMiniMessage("<red>You don't have permission to view this command's help.")
                     return
                 }
-                sender.sendMessage("${ChatColor.YELLOW}Command: ${ChatColor.WHITE}/${prefix}duration")
-                sender.sendMessage("${ChatColor.GRAY}Modify the duration of an active rental.")
-                sender.sendMessage("")
-                sender.sendMessage("${ChatColor.AQUA}Syntax:")
-                sender.sendMessage("${ChatColor.WHITE}  /${prefix}duration add <region> <time> [--charge]")
-                sender.sendMessage("${ChatColor.WHITE}  /${prefix}duration remove <region> <time>")
-                sender.sendMessage("${ChatColor.WHITE}  /${prefix}duration set <region> <time>")
-                sender.sendMessage("${ChatColor.WHITE}  /${prefix}duration reset <region>")
-                sender.sendMessage("")
-                sender.sendMessage("${ChatColor.AQUA}Permission: ${ChatColor.WHITE}zonerental.admin.duration")
-                sender.sendMessage("")
-                sender.sendMessage("${ChatColor.AQUA}Examples:")
-                sender.sendMessage("${ChatColor.GREEN}  /${prefix}duration add shop1 7d${ChatColor.GRAY} - Add 7 days (free)")
-                sender.sendMessage("${ChatColor.GREEN}  /${prefix}duration add shop1 3d --charge${ChatColor.GRAY} - Add 3 days (charge player)")
-                sender.sendMessage("${ChatColor.GREEN}  /${prefix}duration remove shop1 2d${ChatColor.GRAY} - Remove 2 days (auto-refund)")
-                sender.sendMessage("${ChatColor.GREEN}  /${prefix}duration set shop1 14d${ChatColor.GRAY} - Set to exactly 14 days remaining")
-                sender.sendMessage("${ChatColor.GREEN}  /${prefix}duration reset shop1${ChatColor.GRAY} - Reset to default duration")
-                sender.sendMessage("")
-                sender.sendMessage("${ChatColor.AQUA}Time Format:")
-                sender.sendMessage("${ChatColor.GRAY}  Use 'd' for days, 'h' for hours, 'm' for minutes")
-                sender.sendMessage("${ChatColor.GRAY}  Examples: 7d, 12h, 30m, 1d12h")
-                sender.sendMessage("")
-                sender.sendMessage("${ChatColor.AQUA}Notes:")
-                sender.sendMessage("${ChatColor.GRAY}  - 'reset' refunds extension costs if configured")
-                sender.sendMessage("${ChatColor.GRAY}  - 'remove' provides automatic refund if configured")
-                sender.sendMessage("${ChatColor.GRAY}  - '--charge' flag charges player for added time")
+                sender.sendMiniMessage("<yellow>Command: <white>/${prefix}duration")
+                sender.sendMiniMessage("<gray>Modify the duration of an active rental.")
+                sender.sendMiniMessage("")
+                sender.sendMiniMessage("<aqua>Syntax:")
+                sender.sendMiniMessage("<white>  /${prefix}duration add <region> <time> [--charge]")
+                sender.sendMiniMessage("<white>  /${prefix}duration remove <region> <time>")
+                sender.sendMiniMessage("<white>  /${prefix}duration set <region> <time>")
+                sender.sendMiniMessage("<white>  /${prefix}duration reset <region>")
+                sender.sendMiniMessage("")
+                sender.sendMiniMessage("<aqua>Permission: <white>zonerental.admin.duration")
+                sender.sendMiniMessage("")
+                sender.sendMiniMessage("<aqua>Examples:")
+                sender.sendMiniMessage("<green>  /${prefix}duration add shop1 7d<gray> - Add 7 days (free)")
+                sender.sendMiniMessage("<green>  /${prefix}duration add shop1 3d --charge<gray> - Add 3 days (charge player)")
+                sender.sendMiniMessage("<green>  /${prefix}duration remove shop1 2d<gray> - Remove 2 days (auto-refund)")
+                sender.sendMiniMessage("<green>  /${prefix}duration set shop1 14d<gray> - Set to exactly 14 days remaining")
+                sender.sendMiniMessage("<green>  /${prefix}duration reset shop1<gray> - Reset to default duration")
+                sender.sendMiniMessage("")
+                sender.sendMiniMessage("<aqua>Time Format:")
+                sender.sendMiniMessage("<gray>  Use 'd' for days, 'h' for hours, 'm' for minutes")
+                sender.sendMiniMessage("<gray>  Examples: 7d, 12h, 30m, 1d12h")
+                sender.sendMiniMessage("")
+                sender.sendMiniMessage("<aqua>Notes:")
+                sender.sendMiniMessage("<gray>  - 'reset' refunds extension costs if configured")
+                sender.sendMiniMessage("<gray>  - 'remove' provides automatic refund if configured")
+                sender.sendMiniMessage("<gray>  - '--charge' flag charges player for added time")
             }
 
             "override" -> {
                 if (!sender.hasPermission("zonerental.admin.override")) {
-                    sender.sendMessage("${ChatColor.RED}You don't have permission to view this command's help.")
+                    sender.sendMiniMessage("<red>You don't have permission to view this command's help.")
                     return
                 }
-                sender.sendMessage("${ChatColor.YELLOW}Command: ${ChatColor.WHITE}/${prefix}override")
-                sender.sendMessage("${ChatColor.GRAY}Set per-region custom settings (price, duration, extensions, etc.)")
-                sender.sendMessage("")
-                sender.sendMessage("${ChatColor.AQUA}Syntax:")
-                sender.sendMessage("${ChatColor.WHITE}  /${prefix}override price <region> <amount>")
-                sender.sendMessage("${ChatColor.WHITE}  /${prefix}override duration <region> <days>")
-                sender.sendMessage("${ChatColor.WHITE}  /${prefix}override maxextensions <region> <count>")
-                sender.sendMessage("${ChatColor.WHITE}  /${prefix}override extensionprice <region> <amount>")
-                sender.sendMessage("${ChatColor.WHITE}  /${prefix}override allowextensions <region> <true|false>")
-                sender.sendMessage("${ChatColor.WHITE}  /${prefix}override extensionduration <region> <days>")
-                sender.sendMessage("${ChatColor.WHITE}  /${prefix}override remove <region>")
-                sender.sendMessage("${ChatColor.WHITE}  /${prefix}override list [region]")
-                sender.sendMessage("")
-                sender.sendMessage("${ChatColor.AQUA}Permission: ${ChatColor.WHITE}zonerental.admin.override")
-                sender.sendMessage("")
-                sender.sendMessage("${ChatColor.AQUA}Examples:")
-                sender.sendMessage("${ChatColor.GREEN}  /${prefix}override price shop1 500${ChatColor.GRAY} - Set custom price")
-                sender.sendMessage("${ChatColor.GREEN}  /${prefix}override duration shop1 14${ChatColor.GRAY} - Set custom duration")
-                sender.sendMessage("${ChatColor.GREEN}  /${prefix}override maxextensions shop1 20${ChatColor.GRAY} - Set max extensions")
-                sender.sendMessage("${ChatColor.GREEN}  /${prefix}override extensionprice shop1 0${ChatColor.GRAY} - Auto-calculate price")
-                sender.sendMessage("${ChatColor.GREEN}  /${prefix}override allowextensions shop1 false${ChatColor.GRAY} - Disable extensions")
-                sender.sendMessage("${ChatColor.GREEN}  /${prefix}override remove shop1${ChatColor.GRAY} - Remove all overrides")
-                sender.sendMessage("${ChatColor.GREEN}  /${prefix}override list shop1${ChatColor.GRAY} - View shop1 settings")
-                sender.sendMessage("")
-                sender.sendMessage("${ChatColor.AQUA}Notes:")
-                sender.sendMessage("${ChatColor.GRAY}  - Overrides saved to regions.yml")
-                sender.sendMessage("${ChatColor.GRAY}  - Signs without overrides use config.yml defaults")
-                sender.sendMessage("${ChatColor.GRAY}  - Sign updates automatically when override is set")
+                sender.sendMiniMessage("<yellow>Command: <white>/${prefix}override")
+                sender.sendMiniMessage("<gray>Set per-region custom settings (price, duration, extensions, etc.)")
+                sender.sendMiniMessage("")
+                sender.sendMiniMessage("<aqua>Syntax:")
+                sender.sendMiniMessage("<white>  /${prefix}override price <region> <amount>")
+                sender.sendMiniMessage("<white>  /${prefix}override duration <region> <days>")
+                sender.sendMiniMessage("<white>  /${prefix}override maxextensions <region> <count>")
+                sender.sendMiniMessage("<white>  /${prefix}override extensionprice <region> <amount>")
+                sender.sendMiniMessage("<white>  /${prefix}override allowextensions <region> <true|false>")
+                sender.sendMiniMessage("<white>  /${prefix}override extensionduration <region> <days>")
+                sender.sendMiniMessage("<white>  /${prefix}override remove <region>")
+                sender.sendMiniMessage("<white>  /${prefix}override list [region]")
+                sender.sendMiniMessage("")
+                sender.sendMiniMessage("<aqua>Permission: <white>zonerental.admin.override")
+                sender.sendMiniMessage("")
+                sender.sendMiniMessage("<aqua>Examples:")
+                sender.sendMiniMessage("<green>  /${prefix}override price shop1 500<gray> - Set custom price")
+                sender.sendMiniMessage("<green>  /${prefix}override duration shop1 14<gray> - Set custom duration")
+                sender.sendMiniMessage("<green>  /${prefix}override maxextensions shop1 20<gray> - Set max extensions")
+                sender.sendMiniMessage("<green>  /${prefix}override extensionprice shop1 0<gray> - Auto-calculate price")
+                sender.sendMiniMessage("<green>  /${prefix}override allowextensions shop1 false<gray> - Disable extensions")
+                sender.sendMiniMessage("<green>  /${prefix}override remove shop1<gray> - Remove all overrides")
+                sender.sendMiniMessage("<green>  /${prefix}override list shop1<gray> - View shop1 settings")
+                sender.sendMiniMessage("")
+                sender.sendMiniMessage("<aqua>Notes:")
+                sender.sendMiniMessage("<gray>  - Overrides saved to regions.yml")
+                sender.sendMiniMessage("<gray>  - Signs without overrides use config.yml defaults")
+                sender.sendMiniMessage("<gray>  - Sign updates automatically when override is set")
             }
 
             "verify" -> {
                 if (!sender.hasPermission("zonerental.admin.verify")) {
-                    sender.sendMessage("${ChatColor.RED}You don't have permission to view this command's help.")
+                    sender.sendMiniMessage("<red>You don't have permission to view this command's help.")
                     return
                 }
-                sender.sendMessage("${ChatColor.YELLOW}Command: ${ChatColor.WHITE}/${prefix}verify")
-                sender.sendMessage("${ChatColor.GRAY}Verify region configurations and check for orphaned configs.")
-                sender.sendMessage("")
-                sender.sendMessage("${ChatColor.AQUA}Syntax:")
-                sender.sendMessage("${ChatColor.WHITE}  /${prefix}verify")
-                sender.sendMessage("")
-                sender.sendMessage("${ChatColor.AQUA}Permission: ${ChatColor.WHITE}zonerental.admin.verify")
-                sender.sendMessage("")
-                sender.sendMessage("${ChatColor.AQUA}Examples:")
-                sender.sendMessage("${ChatColor.GREEN}  /${prefix}verify${ChatColor.GRAY} - Run configuration verification")
-                sender.sendMessage("")
-                sender.sendMessage("${ChatColor.AQUA}Notes:")
-                sender.sendMessage("${ChatColor.GRAY}  - Reports regions using default vs custom settings")
-                sender.sendMessage("${ChatColor.GRAY}  - Identifies orphaned configs (no sign exists)")
-                sender.sendMessage("${ChatColor.GRAY}  - Helps maintain clean configuration")
+                sender.sendMiniMessage("<yellow>Command: <white>/${prefix}verify")
+                sender.sendMiniMessage("<gray>Verify region configurations and check for orphaned configs.")
+                sender.sendMiniMessage("")
+                sender.sendMiniMessage("<aqua>Syntax:")
+                sender.sendMiniMessage("<white>  /${prefix}verify")
+                sender.sendMiniMessage("")
+                sender.sendMiniMessage("<aqua>Permission: <white>zonerental.admin.verify")
+                sender.sendMiniMessage("")
+                sender.sendMiniMessage("<aqua>Examples:")
+                sender.sendMiniMessage("<green>  /${prefix}verify<gray> - Run configuration verification")
+                sender.sendMiniMessage("")
+                sender.sendMiniMessage("<aqua>Notes:")
+                sender.sendMiniMessage("<gray>  - Reports regions using default vs custom settings")
+                sender.sendMiniMessage("<gray>  - Identifies orphaned configs (no sign exists)")
+                sender.sendMiniMessage("<gray>  - Helps maintain clean configuration")
             }
 
             "refundhistory" -> {
                 if (!sender.hasPermission("zonerental.admin.refundhistory")) {
-                    sender.sendMessage("${ChatColor.RED}You don't have permission to view this command's help.")
+                    sender.sendMiniMessage("<red>You don't have permission to view this command's help.")
                     return
                 }
-                sender.sendMessage("${ChatColor.YELLOW}Command: ${ChatColor.WHITE}/${prefix}refundhistory")
-                sender.sendMessage("${ChatColor.GRAY}View all refund transactions for a rental.")
-                sender.sendMessage("")
-                sender.sendMessage("${ChatColor.AQUA}Syntax:")
-                sender.sendMessage("${ChatColor.WHITE}  /${prefix}refundhistory <region>")
-                sender.sendMessage("")
-                sender.sendMessage("${ChatColor.AQUA}Permission: ${ChatColor.WHITE}zonerental.admin.refundhistory")
-                sender.sendMessage("")
-                sender.sendMessage("${ChatColor.AQUA}Examples:")
-                sender.sendMessage("${ChatColor.GREEN}  /${prefix}refundhistory shop1${ChatColor.GRAY} - View refund history for shop1")
-                sender.sendMessage("")
-                sender.sendMessage("${ChatColor.AQUA}Notes:")
-                sender.sendMessage("${ChatColor.GRAY}  - Shows refund amounts, timestamps, and reasons")
-                sender.sendMessage("${ChatColor.GRAY}  - Useful for tracking admin actions")
+                sender.sendMiniMessage("<yellow>Command: <white>/${prefix}refundhistory")
+                sender.sendMiniMessage("<gray>View all refund transactions for a rental.")
+                sender.sendMiniMessage("")
+                sender.sendMiniMessage("<aqua>Syntax:")
+                sender.sendMiniMessage("<white>  /${prefix}refundhistory <region>")
+                sender.sendMiniMessage("")
+                sender.sendMiniMessage("<aqua>Permission: <white>zonerental.admin.refundhistory")
+                sender.sendMiniMessage("")
+                sender.sendMiniMessage("<aqua>Examples:")
+                sender.sendMiniMessage("<green>  /${prefix}refundhistory shop1<gray> - View refund history for shop1")
+                sender.sendMiniMessage("")
+                sender.sendMiniMessage("<aqua>Notes:")
+                sender.sendMiniMessage("<gray>  - Shows refund amounts, timestamps, and reasons")
+                sender.sendMiniMessage("<gray>  - Useful for tracking admin actions")
             }
 
             else -> {
-                sender.sendMessage("${ChatColor.RED}Unknown command: $commandName")
-                sender.sendMessage("${ChatColor.GRAY}Use ${ChatColor.YELLOW}/$prefix help${ChatColor.GRAY} to see available commands.")
+                sender.sendMiniMessage("<red>Unknown command: $commandName")
+                sender.sendMiniMessage("<gray>Use <yellow>/$prefix help<gray> to see available commands.")
                 return
             }
         }
 
-        sender.sendMessage("")
-        sender.sendMessage("${ChatColor.GOLD}========================")
+        sender.sendMiniMessage("")
+        sender.sendMiniMessage("<gold>========================")
     }
 
     override fun onTabComplete(sender: CommandSender, command: Command, alias: String, args: Array<String>): List<String> {
