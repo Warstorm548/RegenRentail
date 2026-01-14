@@ -448,16 +448,6 @@ class StorageManager(private val plugin: ZoneRental) : Listener {
         return allItems
     }
 
-    @Deprecated("Use world-aware version", ReplaceWith("collectItemsFromRegion(regionName, world)"))
-    fun collectItemsFromRegion(regionName: String): List<ItemStack> {
-        val world = findWorldForRegion(regionName)
-        if (world == null) {
-            plugin.logger.warning("Could not find world for region $regionName")
-            return emptyList()
-        }
-        return collectItemsFromRegion(regionName, world)
-    }
-
     /**
      * Stores items from containers in a region.
      */

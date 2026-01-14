@@ -491,7 +491,7 @@ plugins/ZoneRental/
 
 **Output:**
 ```
-build/libs/ZoneRental-3.1.1.jar
+build/libs/ZoneRental-3.1.3.jar
 ```
 
 ## Dependencies
@@ -538,7 +538,13 @@ See [In_Game_Testing_Checklist.md](In_Game_Testing_Checklist.md) for comprehensi
 
 See [CHANGELOG.md](CHANGELOG.md) for detailed version history.
 
-**v3.1.1** - Current
+**v3.1.3** - Current
+- Deprecated code cleanup (removed ~145 lines of dead/unused code)
+
+**v3.1.2**
+- Fixed /zrremove not removing regions from groups
+
+**v3.1.1**
 - Fixed storage retrieval GUI pagination bug (buttons became moveable on page 2+)
 
 ---

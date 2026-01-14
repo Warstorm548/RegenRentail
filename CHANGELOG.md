@@ -24,6 +24,33 @@ Going forward, all references use the new name "ZoneRental".
 
 ---
 
+## [3.1.3] - Deprecated Code Cleanup
+
+### Removed
+
+- **Unused Rental factory methods** - Removed `fromLegacyStorage()` and `fromMigration()` from Rental.kt (never called, migration handled inline)
+- **Deprecated non-world-aware methods** - Removed 7 methods that were replaced by world-aware versions:
+  - `SignManager.updateSign(String)`
+  - `WorldEditManager.captureRegion(String)`
+  - `WorldEditManager.restoreRegion(String)`
+  - `WorldEditManager.hasCapture(String)`
+  - `WorldEditManager.deleteCapture(String)`
+  - `StorageManager.collectItemsFromRegion(String)`
+  - `EzChestShopManager.removeShopsInRegion(String)`
+- **Deprecated permission** - Removed `zonerental.admin.retime` (replaced by `zonerental.admin.duration`)
+
+### Fixed
+
+- **Dead code conditions** - Removed 3 conditions that were always true/false:
+  - `CreateSignCommand.kt`: Redundant null check (getTargetBlock never returns null)
+  - `SignManager.kt`: Two null checks in for loops (List<String> elements cannot be null)
+
+### Changed
+
+- **Documentation** - Updated CLAUDE.md WorldEdit Integration examples to use world-aware method signatures
+
+---
+
 ## [3.1.2] - /zrremove Group Cleanup Fix
 
 ### Fixed

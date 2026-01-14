@@ -1,5 +1,5 @@
 name: ZoneRental
-version: 3.1.2
+version: 3.1.3
 main: com.zonerental.ZoneRental
 api-version: '1.21'
 author: Jean-Luc
@@ -106,10 +106,6 @@ permissions:
 
   zonerental.admin.reset:
     description: Reset rentals
-    default: op
-
-  zonerental.admin.retime:
-    description: (DEPRECATED - use zonerental.admin.duration) Reset rental time
     default: op
 
   zonerental.admin.duration:
