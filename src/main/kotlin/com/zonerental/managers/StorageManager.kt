@@ -696,14 +696,14 @@ class StorageManager(private val plugin: ZoneRental) : Listener {
             // Always show page indicator and close button
             gui.setItem(49, createNavigationButton(
                 Material.PAPER,
-                "&ePage ${currentPage + 1} of $totalPages",
-                "&7Total items: ${session.items.size}"
+                "<yellow>Page ${currentPage + 1} of $totalPages",
+                "<gray>Total items: ${session.items.size}"
             ))
 
             gui.setItem(50, createNavigationButton(
                 Material.BARRIER,
-                "&cClose",
-                "&7Click to close and save items"
+                "<red>Close",
+                "<gray>Click to close and save items"
             ))
 
             // Only show navigation arrows if multiple pages exist
@@ -711,16 +711,16 @@ class StorageManager(private val plugin: ZoneRental) : Listener {
                 if (currentPage > 0) {
                     gui.setItem(45, createNavigationButton(
                         Material.ARROW,
-                        "&a« Previous Page",
-                        "&7Click to go to page $currentPage"
+                        "<green>« Previous Page",
+                        "<gray>Click to go to page $currentPage"
                     ))
                 }
 
                 if (currentPage < totalPages - 1) {
                     gui.setItem(53, createNavigationButton(
                         Material.ARROW,
-                        "&aNext Page »",
-                        "&7Click to go to page ${currentPage + 2}"
+                        "<green>Next Page »",
+                        "<gray>Click to go to page ${currentPage + 2}"
                     ))
                 }
             }
@@ -737,8 +737,8 @@ class StorageManager(private val plugin: ZoneRental) : Listener {
     private fun createNavigationButton(material: Material, name: String, lore: String): ItemStack {
         val button = ItemStack(material)
         val meta = button.itemMeta
-        meta?.displayName(name.legacyToComponent())
-        meta?.lore(listOf(lore.legacyToComponent()))
+        meta?.displayName(name.toComponent())
+        meta?.lore(listOf(lore.toComponent()))
         button.itemMeta = meta
         return button
     }
