@@ -251,7 +251,6 @@ class SignManager(private val plugin: ZoneRental) {
         var line = 0
         for (format in formatList) {
             if (line >= 4) break
-            if (format == null) continue
 
             val text = format
                 .replace("{region}", regionName)
@@ -275,7 +274,6 @@ class SignManager(private val plugin: ZoneRental) {
         var line = 0
         for (format in formatList) {
             if (line >= 4) break
-            if (format == null) continue
 
             val text = format
                 .replace("{region}", rental.regionName)
