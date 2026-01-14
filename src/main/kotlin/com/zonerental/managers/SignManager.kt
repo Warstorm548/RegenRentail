@@ -234,14 +234,6 @@ class SignManager(private val plugin: ZoneRental) {
         sign.update(true)
     }
 
-    @Deprecated("Use world-aware version instead")
-    fun updateSign(regionName: String) {
-        plugin.logger.warning(
-            "Deprecated updateSign(regionName) called for: $regionName - " +
-            "Please update to use updateSign(regionName, world)"
-        )
-    }
-
     private fun updateAvailableSign(sign: Sign, regionName: String) {
         val world = sign.world
         val price = plugin.configManager.getPriceForRegion(regionName, world)
@@ -259,7 +251,6 @@ class SignManager(private val plugin: ZoneRental) {
         var line = 0
         for (format in formatList) {
             if (line >= 4) break
-            if (format == null) continue
 
             val text = format
                 .replace("{region}", regionName)
@@ -283,7 +274,6 @@ class SignManager(private val plugin: ZoneRental) {
         var line = 0
         for (format in formatList) {
             if (line >= 4) break
-            if (format == null) continue
 
             val text = format
                 .replace("{region}", rental.regionName)
