@@ -230,7 +230,9 @@ class ConfigManager(private val plugin: ZoneRental) {
             "duration-remove-refunded" to "<green>Removed <yellow>{days}<green> days from <yellow>{region}<green>. Player <yellow>{player}<green> was refunded <yellow>{amount}<green>.",
             "duration-remove-no-refund" to "<green>Removed <yellow>{days}<green> days from <yellow>{region}<green> (no refund issued).",
             // Region size messages
-            "region-too-large" to "<red>Region <yellow>{region}<red> is too large to rent! (<yellow>{chunks}<red> chunks, max: <yellow>{max}<red>)"
+            "region-too-large" to "<red>Region <yellow>{region}<red> is too large to rent! (<yellow>{chunks}<red> chunks, max: <yellow>{max}<red>)",
+            // EzChestShop integration messages
+            "ezchestshop-removed" to "<yellow>Chest shops in <gold>{region}<yellow> have been removed due to rental expiration."
         )
 
         // Override with config values

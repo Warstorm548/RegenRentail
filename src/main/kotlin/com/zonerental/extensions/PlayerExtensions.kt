@@ -23,9 +23,9 @@ fun CommandSender.asPlayer(): Player = this as? Player
 /**
  * Checks if sender is a player and returns it, or sends a message and returns null.
  */
-fun CommandSender.requirePlayer(message: String = "&cThis command can only be used by players."): Player? {
+fun CommandSender.requirePlayer(message: String = "<red>This command can only be used by players."): Player? {
     return asPlayerOrNull() ?: run {
-        sendMessage(message.color())
+        sendMessage(message.toComponent())
         null
     }
 }
@@ -35,12 +35,12 @@ fun CommandSender.requirePlayer(message: String = "&cThis command can only be us
  */
 fun CommandSender.requirePermission(
     permission: String,
-    message: String = "&cYou don't have permission to use this command."
+    message: String = "<red>You don't have permission to use this command."
 ): Boolean {
     return if (hasPermission(permission)) {
         true
     } else {
-        sendMessage(message.color())
+        sendMessage(message.toComponent())
         false
     }
 }
@@ -51,10 +51,10 @@ fun CommandSender.requirePermission(
  */
 fun CommandSender.checkPermission(
     permission: String,
-    message: String = "&cYou don't have permission to use this command."
+    message: String = "<red>You don't have permission to use this command."
 ): CommandSender? {
     return if (hasPermission(permission)) this else {
-        sendMessage(message.color())
+        sendMessage(message.toComponent())
         null
     }
 }
@@ -75,14 +75,26 @@ fun CommandSender.checkPermission(
 
 /**
  * Sends a colored message to the sender.
+ * @deprecated Use [sendMiniMessage] with MiniMessage format instead.
  */
+@Deprecated(
+    message = "Use sendMiniMessage() with MiniMessage format",
+    replaceWith = ReplaceWith("sendMiniMessage(message)", "com.zonerental.extensions.sendMiniMessage")
+)
+@Suppress("DEPRECATION")
 fun CommandSender.sendColoredMessage(message: String) {
     sendMessage(message.color())
 }
 
 /**
  * Sends a colored message with placeholders to the sender.
+ * @deprecated Use [sendMiniMessage] with MiniMessage format instead.
  */
+@Deprecated(
+    message = "Use sendMiniMessage() with MiniMessage format",
+    replaceWith = ReplaceWith("sendMiniMessage(message, *placeholders)", "com.zonerental.extensions.sendMiniMessage")
+)
+@Suppress("DEPRECATION")
 fun CommandSender.sendColoredMessage(message: String, vararg placeholders: Pair<String, String>) {
     sendMessage(message.formatMessage(*placeholders))
 }
