@@ -11,6 +11,8 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
+import com.zonerental.extensions.legacyToComponent
+import net.kyori.adventure.text.Component
 import org.bukkit.Bukkit
 import org.bukkit.ChatColor
 import org.bukkit.ChunkSnapshot
@@ -609,8 +611,8 @@ class StorageManager(private val plugin: ZoneRental) : Listener {
             itemMeta.blockState = container
         }
 
-        container.customName?.let { name ->
-            itemMeta.setDisplayName(name)
+        container.customName()?.let { name ->
+            itemMeta.displayName(name)
         }
 
         item.itemMeta = itemMeta
@@ -735,8 +737,8 @@ class StorageManager(private val plugin: ZoneRental) : Listener {
     private fun createNavigationButton(material: Material, name: String, lore: String): ItemStack {
         val button = ItemStack(material)
         val meta = button.itemMeta
-        meta?.setDisplayName(name)
-        meta?.lore = listOf(lore)
+        meta?.displayName(name.legacyToComponent())
+        meta?.lore(listOf(lore.legacyToComponent()))
         button.itemMeta = meta
         return button
     }
