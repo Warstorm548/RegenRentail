@@ -2,11 +2,10 @@ package com.zonerental.commands
 
 import com.zonerental.ZoneRental
 import com.zonerental.extensions.checkPermission
-import com.zonerental.extensions.color
+import com.zonerental.extensions.sendMiniMessage
 import com.zonerental.managers.Rental
 import com.zonerental.util.TimeUtils
 import com.zonerental.util.WorldRegionParser
-import org.bukkit.ChatColor
 import org.bukkit.World
 import org.bukkit.command.Command
 import org.bukkit.command.CommandExecutor
@@ -39,19 +38,19 @@ class DurationCommand(private val plugin: ZoneRental) : CommandExecutor, TabComp
 
         // Parse region with world inference
         val parsed = WorldRegionParser.parse(args[1], sender) ?: run {
-            sender.sendMessage("${ChatColor.RED}Invalid format! Console must use world:region format (e.g., world:shop1)")
+            sender.sendMiniMessage("<red>Invalid format! Console must use world:region format (e.g., world:shop1)")
             return true
         }
 
         val world = parsed.getWorld() ?: run {
-            sender.sendMessage("${ChatColor.RED}World '${parsed.worldName}' is not loaded!")
+            sender.sendMiniMessage("<red>World '${parsed.worldName}' is not loaded!")
             return true
         }
         val regionName = parsed.regionName
 
         // Check if region is rented
         val rental = plugin.rentalManager.getRental(regionName, world) ?: run {
-            sender.sendMessage("${ChatColor.RED}Region ${parsed.getCompositeKey()} is not currently rented!")
+            sender.sendMiniMessage("<red>Region ${parsed.getCompositeKey()} is not currently rented!")
             return true
         }
 
@@ -63,8 +62,8 @@ class DurationCommand(private val plugin: ZoneRental) : CommandExecutor, TabComp
 
         // Other actions require time parameter
         if (args.size < 3) {
-            sender.sendMessage("${ChatColor.RED}Usage: /zrduration $action <region> <time>")
-            sender.sendMessage("${ChatColor.GRAY}Example: /zrduration $action shop1 7d")
+            sender.sendMiniMessage("<red>Usage: /zrduration $action <region> <time>")
+            sender.sendMiniMessage("<gray>Example: /zrduration $action shop1 7d")
             return true
         }
 
@@ -73,7 +72,7 @@ class DurationCommand(private val plugin: ZoneRental) : CommandExecutor, TabComp
         val timeArgs = args.drop(2).filterNot { it.equals("--charge", ignoreCase = true) }
 
         if (timeArgs.isEmpty()) {
-            sender.sendMessage("${ChatColor.RED}No time specified!")
+            sender.sendMiniMessage("<red>No time specified!")
             showUsage(sender)
             return true
         }
@@ -82,8 +81,8 @@ class DurationCommand(private val plugin: ZoneRental) : CommandExecutor, TabComp
         val millisToModify = parseTimeString(timeString)
 
         if (millisToModify <= 0) {
-            sender.sendMessage("${ChatColor.RED}Invalid time format! Use: <number> <days|hours|minutes>")
-            sender.sendMessage("${ChatColor.YELLOW}Example: 2 days 3 hours 30 minutes")
+            sender.sendMiniMessage("<red>Invalid time format! Use: <number> <days|hours|minutes>")
+            sender.sendMiniMessage("<yellow>Example: 2 days 3 hours 30 minutes")
             return true
         }
 
@@ -106,7 +105,7 @@ class DurationCommand(private val plugin: ZoneRental) : CommandExecutor, TabComp
             val player = plugin.server.getPlayer(rental.playerUUID)
 
             if (player == null || !player.isOnline) {
-                sender.sendMessage("${ChatColor.RED}Player must be online to charge for time addition!")
+                sender.sendMiniMessage("<red>Player must be online to charge for time addition!")
                 return
             }
 
@@ -114,7 +113,7 @@ class DurationCommand(private val plugin: ZoneRental) : CommandExecutor, TabComp
             val charged = plugin.rentalManager.chargeDurationAdd(rental, days, player)
 
             if (!charged) {
-                sender.sendMessage("${ChatColor.RED}Failed to charge player! They may not have enough money.")
+                sender.sendMiniMessage("<red>Failed to charge player! They may not have enough money.")
                 return
             }
 
@@ -129,11 +128,11 @@ class DurationCommand(private val plugin: ZoneRental) : CommandExecutor, TabComp
                 "{player}", rental.playerName,
                 "{amount}", formattedAmount))
 
-            sender.sendMessage("${ChatColor.YELLOW}New expiration: ${rental.formattedEndDate}")
+            sender.sendMiniMessage("<yellow>New expiration: ${rental.formattedEndDate}")
 
             // Notify player
-            player.sendMessage("${ChatColor.GREEN}Admin ${sender.name} added $timeAdded to your rental of ${ChatColor.YELLOW}${rental.regionName}")
-            player.sendMessage("${ChatColor.GREEN}You were charged: ${ChatColor.GOLD}$formattedAmount")
+            player.sendMiniMessage("<green>Admin ${sender.name} added $timeAdded to your rental of <yellow>${rental.regionName}")
+            player.sendMiniMessage("<green>You were charged: <gold>$formattedAmount")
 
             plugin.logger.info("${sender.name} added $timeAdded to rental ${rental.regionName} (charged $formattedAmount)")
         } else {
@@ -147,7 +146,7 @@ class DurationCommand(private val plugin: ZoneRental) : CommandExecutor, TabComp
                 "{days}", timeAdded,
                 "{region}", rental.regionName))
 
-            sender.sendMessage("${ChatColor.YELLOW}New expiration: ${rental.formattedEndDate}")
+            sender.sendMiniMessage("<yellow>New expiration: ${rental.formattedEndDate}")
 
             plugin.logger.info("${sender.name} added $timeAdded to rental ${rental.regionName} (free)")
         }
@@ -159,8 +158,8 @@ class DurationCommand(private val plugin: ZoneRental) : CommandExecutor, TabComp
 
         // Don't allow setting time in the past
         if (newEndDate <= currentTime) {
-            sender.sendMessage("${ChatColor.RED}Cannot remove that much time - would expire the rental!")
-            sender.sendMessage("${ChatColor.YELLOW}Time remaining: ${TimeUtils.formatDuration(rental.timeRemaining)}")
+            sender.sendMiniMessage("<red>Cannot remove that much time - would expire the rental!")
+            sender.sendMiniMessage("<yellow>Time remaining: ${TimeUtils.formatDuration(rental.timeRemaining)}")
             return
         }
 
@@ -200,7 +199,7 @@ class DurationCommand(private val plugin: ZoneRental) : CommandExecutor, TabComp
                 "{region}", rental.regionName))
         }
 
-        sender.sendMessage("${ChatColor.YELLOW}New expiration: ${rental.formattedEndDate}")
+        sender.sendMiniMessage("<yellow>New expiration: ${rental.formattedEndDate}")
 
         val refundLog = if (refundAmount > 0) " (refunded: \$${String.format("%.2f", refundAmount)})" else " (no refund)"
         plugin.logger.info("${sender.name} removed $timeRemoved from rental ${rental.regionName}$refundLog")
@@ -213,8 +212,8 @@ class DurationCommand(private val plugin: ZoneRental) : CommandExecutor, TabComp
         plugin.rentalManager.saveAllRentals()
 
         val newDuration = TimeUtils.formatDuration(millis)
-        sender.sendMessage("${ChatColor.GREEN}Set rental duration for ${rental.regionName} to $newDuration")
-        sender.sendMessage("${ChatColor.YELLOW}New expiration: ${rental.formattedEndDate}")
+        sender.sendMiniMessage("<green>Set rental duration for ${rental.regionName} to $newDuration")
+        sender.sendMiniMessage("<yellow>New expiration: ${rental.formattedEndDate}")
 
         if (plugin.configManager.isDebug) {
             plugin.logger.info("${sender.name} set duration of ${rental.regionName} to $newDuration")
@@ -236,11 +235,11 @@ class DurationCommand(private val plugin: ZoneRental) : CommandExecutor, TabComp
                     val actualRefund = refundResult["actualAmount"] as Double
                     val formattedAmount = String.format(plugin.configManager.currencyFormat, actualRefund)
 
-                    sender.sendMessage("${ChatColor.GREEN}Refunded extension costs: ${ChatColor.GOLD}$formattedAmount")
+                    sender.sendMiniMessage("<green>Refunded extension costs: <gold>$formattedAmount")
 
                     // Notify player if online
                     plugin.server.getPlayer(rental.playerUUID)?.let { player ->
-                        player.sendMessage("${ChatColor.GREEN}Your extension costs for ${ChatColor.YELLOW}${rental.regionName}${ChatColor.GREEN} have been refunded: ${ChatColor.GOLD}$formattedAmount")
+                        player.sendMiniMessage("<green>Your extension costs for <yellow>${rental.regionName}<green> have been refunded: <gold>$formattedAmount")
                     }
                 }
             }
@@ -252,8 +251,8 @@ class DurationCommand(private val plugin: ZoneRental) : CommandExecutor, TabComp
         plugin.signManager.updateSign(rental.regionName, world)
         plugin.rentalManager.saveAllRentals()
 
-        sender.sendMessage("${ChatColor.GREEN}Reset duration for ${ChatColor.YELLOW}${rental.regionName}${ChatColor.GREEN} to default: ${ChatColor.GOLD}$defaultDays days")
-        sender.sendMessage("${ChatColor.YELLOW}New expiration: ${rental.formattedEndDate}")
+        sender.sendMiniMessage("<green>Reset duration for <yellow>${rental.regionName}<green> to default: <gold>$defaultDays days")
+        sender.sendMiniMessage("<yellow>New expiration: ${rental.formattedEndDate}")
 
         val refundLog = if (refundAmount > 0) " with refund: \$${String.format("%.2f", refundAmount)}" else ""
         plugin.logger.info("${sender.name} reset duration of ${rental.regionName} to default ($defaultDays days)$refundLog")
@@ -289,21 +288,21 @@ class DurationCommand(private val plugin: ZoneRental) : CommandExecutor, TabComp
     }
 
     private fun showUsage(sender: CommandSender) {
-        sender.sendMessage("${ChatColor.GOLD}=== Duration Command Usage ===")
-        sender.sendMessage("${ChatColor.YELLOW}/zrduration add <region> <time> [--charge]")
-        sender.sendMessage("${ChatColor.GRAY}  Example: /zrduration add shop1 2 days 3 hours 30 minutes")
-        sender.sendMessage("${ChatColor.GRAY}  Add --charge to charge the player for the time added")
-        sender.sendMessage("${ChatColor.YELLOW}/zrduration remove <region> <time>")
-        sender.sendMessage("${ChatColor.GRAY}  Example: /zrduration remove shop1 1 hour 30 mins")
-        sender.sendMessage("${ChatColor.GRAY}  Automatically refunds proportionally if configured")
-        sender.sendMessage("${ChatColor.YELLOW}/zrduration set <region> <time>")
-        sender.sendMessage("${ChatColor.GRAY}  Example: /zrduration set shop1 7 days")
-        sender.sendMessage("${ChatColor.YELLOW}/zrduration reset <region>")
-        sender.sendMessage("${ChatColor.GRAY}  Example: /zrduration reset shop1")
-        sender.sendMessage("${ChatColor.GRAY}  Resets to default duration, refunds extensions if configured")
-        sender.sendMessage("")
-        sender.sendMessage("${ChatColor.AQUA}Time formats: days, hours, minutes")
-        sender.sendMessage("${ChatColor.AQUA}Short forms: d, h, m (e.g., 2d 3h 30m)")
+        sender.sendMiniMessage("<gold>=== Duration Command Usage ===")
+        sender.sendMiniMessage("<yellow>/zrduration add <region> <time> [--charge]")
+        sender.sendMiniMessage("<gray>  Example: /zrduration add shop1 2 days 3 hours 30 minutes")
+        sender.sendMiniMessage("<gray>  Add --charge to charge the player for the time added")
+        sender.sendMiniMessage("<yellow>/zrduration remove <region> <time>")
+        sender.sendMiniMessage("<gray>  Example: /zrduration remove shop1 1 hour 30 mins")
+        sender.sendMiniMessage("<gray>  Automatically refunds proportionally if configured")
+        sender.sendMiniMessage("<yellow>/zrduration set <region> <time>")
+        sender.sendMiniMessage("<gray>  Example: /zrduration set shop1 7 days")
+        sender.sendMiniMessage("<yellow>/zrduration reset <region>")
+        sender.sendMiniMessage("<gray>  Example: /zrduration reset shop1")
+        sender.sendMiniMessage("<gray>  Resets to default duration, refunds extensions if configured")
+        sender.sendMiniMessage("")
+        sender.sendMiniMessage("<aqua>Time formats: days, hours, minutes")
+        sender.sendMiniMessage("<aqua>Short forms: d, h, m (e.g., 2d 3h 30m)")
     }
 
     override fun onTabComplete(sender: CommandSender, command: Command, alias: String, args: Array<String>): List<String> {

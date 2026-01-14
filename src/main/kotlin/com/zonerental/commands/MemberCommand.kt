@@ -1,9 +1,9 @@
 package com.zonerental.commands
 
 import com.zonerental.ZoneRental
+import com.zonerental.extensions.sendMiniMessage
 import com.zonerental.util.WorldRegionParser
 import org.bukkit.Bukkit
-import org.bukkit.ChatColor
 import org.bukkit.command.Command
 import org.bukkit.command.CommandExecutor
 import org.bukkit.command.CommandSender
@@ -18,7 +18,7 @@ class MemberCommand(private val plugin: ZoneRental) : CommandExecutor, TabComple
 
     override fun onCommand(sender: CommandSender, command: Command, label: String, args: Array<String>): Boolean {
         if (sender !is Player) {
-            sender.sendMessage("${ChatColor.RED}This command can only be used by players!")
+            sender.sendMiniMessage("<red>This command can only be used by players!")
             return true
         }
 
@@ -39,10 +39,10 @@ class MemberCommand(private val plugin: ZoneRental) : CommandExecutor, TabComple
     }
 
     private fun sendUsage(player: Player) {
-        player.sendMessage("${ChatColor.RED}Usage: /zrmember <add|remove|list> ...")
-        player.sendMessage("${ChatColor.YELLOW}  add <region> <username>    - Add a member to your rental")
-        player.sendMessage("${ChatColor.YELLOW}  remove <region> <username> - Remove a member from your rental")
-        player.sendMessage("${ChatColor.YELLOW}  list <region>              - View members of a rental")
+        player.sendMiniMessage("<red>Usage: /zrmember <add|remove|list> ...")
+        player.sendMiniMessage("<yellow>  add <region> <username>    - Add a member to your rental")
+        player.sendMiniMessage("<yellow>  remove <region> <username> - Remove a member from your rental")
+        player.sendMiniMessage("<yellow>  list <region>              - View members of a rental")
     }
 
     private fun handleAdd(player: Player, args: Array<String>): Boolean {
@@ -57,19 +57,19 @@ class MemberCommand(private val plugin: ZoneRental) : CommandExecutor, TabComple
         }
 
         if (args.size < 3) {
-            player.sendMessage("${ChatColor.RED}Usage: /zrmember add <region> <username>")
-            player.sendMessage("${ChatColor.YELLOW}Example: /zrmember add shop1 PlayerName")
-            player.sendMessage("${ChatColor.YELLOW}Example: /zrmember add world:shop1 PlayerName")
+            player.sendMiniMessage("<red>Usage: /zrmember add <region> <username>")
+            player.sendMiniMessage("<yellow>Example: /zrmember add shop1 PlayerName")
+            player.sendMiniMessage("<yellow>Example: /zrmember add world:shop1 PlayerName")
             return true
         }
 
         val parsed = WorldRegionParser.parse(args[1], player) ?: run {
-            player.sendMessage("${ChatColor.RED}Invalid region format!")
+            player.sendMiniMessage("<red>Invalid region format!")
             return true
         }
 
         val world = parsed.getWorld() ?: run {
-            player.sendMessage("${ChatColor.RED}World not found!")
+            player.sendMiniMessage("<red>World not found!")
             return true
         }
         val regionName = parsed.regionName
@@ -82,7 +82,7 @@ class MemberCommand(private val plugin: ZoneRental) : CommandExecutor, TabComple
 
         val rental = plugin.rentalManager.getRental(regionName, world)
         if (rental == null) {
-            player.sendMessage("${ChatColor.RED}Region ${parsed.getCompositeKey()} is not currently rented!")
+            player.sendMiniMessage("<red>Region ${parsed.getCompositeKey()} is not currently rented!")
             return true
         }
 
@@ -121,7 +121,7 @@ class MemberCommand(private val plugin: ZoneRental) : CommandExecutor, TabComple
                 "{region}", parsed.getCompositeKey(),
                 "{owner}", player.name))
         } else {
-            player.sendMessage("${ChatColor.RED}Failed to add member!")
+            player.sendMiniMessage("<red>Failed to add member!")
         }
 
         return true
@@ -139,19 +139,19 @@ class MemberCommand(private val plugin: ZoneRental) : CommandExecutor, TabComple
         }
 
         if (args.size < 3) {
-            player.sendMessage("${ChatColor.RED}Usage: /zrmember remove <region> <username>")
-            player.sendMessage("${ChatColor.YELLOW}Example: /zrmember remove shop1 PlayerName")
-            player.sendMessage("${ChatColor.YELLOW}Example: /zrmember remove world:shop1 PlayerName")
+            player.sendMiniMessage("<red>Usage: /zrmember remove <region> <username>")
+            player.sendMiniMessage("<yellow>Example: /zrmember remove shop1 PlayerName")
+            player.sendMiniMessage("<yellow>Example: /zrmember remove world:shop1 PlayerName")
             return true
         }
 
         val parsed = WorldRegionParser.parse(args[1], player) ?: run {
-            player.sendMessage("${ChatColor.RED}Invalid region format!")
+            player.sendMiniMessage("<red>Invalid region format!")
             return true
         }
 
         val world = parsed.getWorld() ?: run {
-            player.sendMessage("${ChatColor.RED}World not found!")
+            player.sendMiniMessage("<red>World not found!")
             return true
         }
         val regionName = parsed.regionName
@@ -164,7 +164,7 @@ class MemberCommand(private val plugin: ZoneRental) : CommandExecutor, TabComple
 
         val rental = plugin.rentalManager.getRental(regionName, world)
         if (rental == null) {
-            player.sendMessage("${ChatColor.RED}Region ${parsed.getCompositeKey()} is not currently rented!")
+            player.sendMiniMessage("<red>Region ${parsed.getCompositeKey()} is not currently rented!")
             return true
         }
 
@@ -190,7 +190,7 @@ class MemberCommand(private val plugin: ZoneRental) : CommandExecutor, TabComple
                 "{region}", parsed.getCompositeKey(),
                 "{owner}", player.name))
         } else {
-            player.sendMessage("${ChatColor.RED}Failed to remove member!")
+            player.sendMiniMessage("<red>Failed to remove member!")
         }
 
         return true
@@ -203,19 +203,19 @@ class MemberCommand(private val plugin: ZoneRental) : CommandExecutor, TabComple
         }
 
         if (args.size < 2) {
-            player.sendMessage("${ChatColor.RED}Usage: /zrmember list <region>")
-            player.sendMessage("${ChatColor.YELLOW}Example: /zrmember list shop1")
-            player.sendMessage("${ChatColor.YELLOW}Example: /zrmember list world:shop1")
+            player.sendMiniMessage("<red>Usage: /zrmember list <region>")
+            player.sendMiniMessage("<yellow>Example: /zrmember list shop1")
+            player.sendMiniMessage("<yellow>Example: /zrmember list world:shop1")
             return true
         }
 
         val parsed = WorldRegionParser.parse(args[1], player) ?: run {
-            player.sendMessage("${ChatColor.RED}Invalid region format!")
+            player.sendMiniMessage("<red>Invalid region format!")
             return true
         }
 
         val world = parsed.getWorld() ?: run {
-            player.sendMessage("${ChatColor.RED}World not found!")
+            player.sendMiniMessage("<red>World not found!")
             return true
         }
         val regionName = parsed.regionName
@@ -227,7 +227,7 @@ class MemberCommand(private val plugin: ZoneRental) : CommandExecutor, TabComple
 
         val rental = plugin.rentalManager.getRental(regionName, world)
         if (rental == null) {
-            player.sendMessage("${ChatColor.RED}Region ${parsed.getCompositeKey()} is not currently rented!")
+            player.sendMiniMessage("<red>Region ${parsed.getCompositeKey()} is not currently rented!")
             return true
         }
 
@@ -242,9 +242,9 @@ class MemberCommand(private val plugin: ZoneRental) : CommandExecutor, TabComple
                 val memberName = memberPlayer.name ?: memberUUID.toString()
 
                 val status = if (memberPlayer.isOnline) {
-                    "${ChatColor.GREEN} (Online)"
+                    "<green> (Online)"
                 } else {
-                    "${ChatColor.GRAY} (Offline)"
+                    "<gray> (Offline)"
                 }
 
                 player.sendMessage(plugin.configManager.getMessage("members-list-entry", "{member}", memberName + status))

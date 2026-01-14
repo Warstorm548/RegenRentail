@@ -1,8 +1,8 @@
 package com.zonerental.commands
 
 import com.zonerental.ZoneRental
+import com.zonerental.extensions.sendMiniMessage
 import org.bukkit.Bukkit
-import org.bukkit.ChatColor
 import org.bukkit.command.Command
 import org.bukkit.command.CommandExecutor
 import org.bukkit.command.CommandSender
@@ -25,7 +25,7 @@ class ListCommand(private val plugin: ZoneRental) : CommandExecutor {
             args.isNotEmpty() -> {
                 // Viewing another player's rentals - requires admin permission
                 if (!sender.hasPermission("zonerental.admin.list.others")) {
-                    sender.sendMessage("${ChatColor.RED}You don't have permission to view other players' rentals!")
+                    sender.sendMiniMessage("<red>You don't have permission to view other players' rentals!")
                     return true
                 }
 
@@ -33,7 +33,7 @@ class ListCommand(private val plugin: ZoneRental) : CommandExecutor {
                 val targetPlayer = Bukkit.getOfflinePlayer(args[0])
 
                 if (!targetPlayer.hasPlayedBefore()) {
-                    sender.sendMessage("${ChatColor.RED}Player ${args[0]} not found!")
+                    sender.sendMiniMessage("<red>Player ${args[0]} not found!")
                     return true
                 }
 
@@ -45,7 +45,7 @@ class ListCommand(private val plugin: ZoneRental) : CommandExecutor {
             }
             else -> {
                 // Console without player argument
-                sender.sendMessage("${ChatColor.RED}Console must specify a player: /zrlist <player>")
+                sender.sendMiniMessage("<red>Console must specify a player: /zrlist <player>")
                 return true
             }
         }
@@ -53,22 +53,22 @@ class ListCommand(private val plugin: ZoneRental) : CommandExecutor {
         val rentals = plugin.rentalManager.getPlayerRentals(targetUUID)
 
         if (rentals.isEmpty()) {
-            sender.sendMessage("${ChatColor.YELLOW}$targetName active rentals: ${ChatColor.WHITE}None")
+            sender.sendMiniMessage("<yellow>$targetName active rentals: <white>None")
             return true
         }
 
-        sender.sendMessage("${ChatColor.GOLD}=== $targetName Active Rentals ===")
+        sender.sendMiniMessage("<gold>=== $targetName Active Rentals ===")
 
         for (rental in rentals) {
-            val status = if (rental.isExpired) "${ChatColor.RED}EXPIRED" else "${ChatColor.GREEN}ACTIVE"
-            sender.sendMessage(
-                "${ChatColor.YELLOW}• ${rental.regionName} - $status${ChatColor.WHITE}" +
+            val status = if (rental.isExpired) "<red>EXPIRED" else "<green>ACTIVE"
+            sender.sendMiniMessage(
+                "<yellow>• ${rental.regionName} - $status<white>" +
                 " - Expires: ${rental.formattedEndDate} (${rental.daysRemaining} days remaining)"
             )
         }
 
-        sender.sendMessage(
-            "${ChatColor.GRAY}Total rentals: ${rentals.size}/${plugin.configManager.maxRentalsPerPlayer}"
+        sender.sendMiniMessage(
+            "<gray>Total rentals: ${rentals.size}/${plugin.configManager.maxRentalsPerPlayer}"
         )
 
         return true

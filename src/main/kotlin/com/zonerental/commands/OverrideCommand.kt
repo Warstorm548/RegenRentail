@@ -1,8 +1,8 @@
 package com.zonerental.commands
 
 import com.zonerental.ZoneRental
+import com.zonerental.extensions.sendMiniMessage
 import com.zonerental.models.ParsedRegion
-import org.bukkit.ChatColor
 import org.bukkit.World
 import org.bukkit.command.Command
 import org.bukkit.command.CommandExecutor
@@ -54,7 +54,7 @@ sealed class OverrideSetting<T> {
 
         override fun formatSuccess(value: Double, plugin: ZoneRental): String {
             val formatted = String.format(plugin.configManager.currencyFormat, value)
-            return "rental price to ${ChatColor.GOLD}$formatted"
+            return "rental price to <gold>$formatted"
         }
     }
 
@@ -79,7 +79,7 @@ sealed class OverrideSetting<T> {
         }
 
         override fun formatSuccess(value: Int, plugin: ZoneRental): String =
-            "rental duration to ${ChatColor.GOLD}$value days"
+            "rental duration to <gold>$value days"
     }
 
     data object MaxExtensions : OverrideSetting<Int>() {
@@ -103,7 +103,7 @@ sealed class OverrideSetting<T> {
         }
 
         override fun formatSuccess(value: Int, plugin: ZoneRental): String =
-            "max extensions to ${ChatColor.GOLD}$value"
+            "max extensions to <gold>$value"
     }
 
     data object ExtensionPrice : OverrideSetting<Double>() {
@@ -129,7 +129,7 @@ sealed class OverrideSetting<T> {
         override fun formatSuccess(value: Double, plugin: ZoneRental): String {
             val formatted = if (value == 0.0) "auto-calculated"
                 else String.format(plugin.configManager.currencyFormat, value)
-            return "extension price to ${ChatColor.GOLD}$formatted"
+            return "extension price to <gold>$formatted"
         }
     }
 
@@ -155,7 +155,7 @@ sealed class OverrideSetting<T> {
         }
 
         override fun formatSuccess(value: Boolean, plugin: ZoneRental): String =
-            "allow extensions to ${ChatColor.GOLD}$value"
+            "allow extensions to <gold>$value"
     }
 
     data object ExtensionDuration : OverrideSetting<Int>() {
@@ -179,7 +179,7 @@ sealed class OverrideSetting<T> {
         }
 
         override fun formatSuccess(value: Int, plugin: ZoneRental): String =
-            "extension duration to ${ChatColor.GOLD}$value days"
+            "extension duration to <gold>$value days"
     }
 
     companion object {
@@ -258,8 +258,8 @@ class OverrideCommand(private val plugin: ZoneRental) : CommandExecutor, TabComp
      */
     private fun <T> handleSetting(sender: CommandSender, args: Array<String>, setting: OverrideSetting<T>): Boolean {
         if (args.size != 3) {
-            sender.sendMessage("${ChatColor.RED}Usage: ${setting.usage}")
-            setting.examples.forEach { sender.sendMessage("${ChatColor.YELLOW}$it") }
+            sender.sendMiniMessage("<red>Usage: ${setting.usage}")
+            setting.examples.forEach { sender.sendMiniMessage("<yellow>$it") }
             return true
         }
 
@@ -269,7 +269,7 @@ class OverrideCommand(private val plugin: ZoneRental) : CommandExecutor, TabComp
         // Parse the value using the setting's parser
         val parseResult = setting.parseValue(valueInput)
         if (parseResult is OverrideSetting.ParseResult.Error) {
-            sender.sendMessage("${ChatColor.RED}${parseResult.message}")
+            sender.sendMiniMessage("<red>${parseResult.message}")
             return true
         }
         val value = (parseResult as OverrideSetting.ParseResult.Success<T>).value
@@ -292,10 +292,10 @@ class OverrideCommand(private val plugin: ZoneRental) : CommandExecutor, TabComp
     ): Boolean {
         // Validate group exists
         if (!plugin.groupsConfig.groupExists(groupName)) {
-            sender.sendMessage("${ChatColor.RED}Group '${ChatColor.YELLOW}$groupName${ChatColor.RED}' does not exist!")
+            sender.sendMiniMessage("<red>Group '<yellow>$groupName<red>' does not exist!")
             val allGroups = plugin.groupsConfig.allGroups
             if (allGroups.isNotEmpty()) {
-                sender.sendMessage("${ChatColor.YELLOW}Available groups: ${allGroups.joinToString(", ")}")
+                sender.sendMiniMessage("<yellow>Available groups: ${allGroups.joinToString(", ")}")
             }
             return true
         }
@@ -309,8 +309,8 @@ class OverrideCommand(private val plugin: ZoneRental) : CommandExecutor, TabComp
 
         // Success message
         val successDesc = setting.formatSuccess(value, plugin)
-        sender.sendMessage("${ChatColor.GREEN}Set $successDesc for group ${ChatColor.YELLOW}$groupName")
-        sender.sendMessage("${ChatColor.GRAY}Updated ${groupRegions.size} region(s) in group")
+        sender.sendMiniMessage("<green>Set $successDesc for group <yellow>$groupName")
+        sender.sendMiniMessage("<gray>Updated ${groupRegions.size} region(s) in group")
 
         plugin.logger.info("${sender.name} set ${setting.name} override for group $groupName to $rawValue")
         return true
@@ -325,19 +325,19 @@ class OverrideCommand(private val plugin: ZoneRental) : CommandExecutor, TabComp
     ): Boolean {
         // Parse region
         val parsed = ParsedRegion.parse(target, sender) ?: run {
-            sender.sendMessage("${ChatColor.RED}Invalid target! Use format: world:region or group:group_name")
+            sender.sendMiniMessage("<red>Invalid target! Use format: world:region or group:group_name")
             return true
         }
 
         val world = parsed.world ?: run {
-            sender.sendMessage("${ChatColor.RED}World '${parsed.worldName}' does not exist!")
+            sender.sendMiniMessage("<red>World '${parsed.worldName}' does not exist!")
             return true
         }
         val regionName = parsed.regionName
 
         // Validate region exists in WorldGuard
         if (!plugin.worldGuardManager.regionExists(regionName, world)) {
-            sender.sendMessage("${ChatColor.RED}Region '$regionName' does not exist in world '${world.name}'!")
+            sender.sendMiniMessage("<red>Region '$regionName' does not exist in world '${world.name}'!")
             return true
         }
 
@@ -345,8 +345,8 @@ class OverrideCommand(private val plugin: ZoneRental) : CommandExecutor, TabComp
         val compositeKey = parsed.compositeKey
         if (plugin.groupsConfig.isRegionInGroup(compositeKey)) {
             val groupName = plugin.groupsConfig.getRegionGroup(compositeKey)
-            sender.sendMessage("${ChatColor.RED}Region ${ChatColor.YELLOW}$compositeKey${ChatColor.RED} is in group ${ChatColor.YELLOW}$groupName")
-            sender.sendMessage("${ChatColor.YELLOW}Use: /zroverride ${setting.name} group:$groupName $rawValue")
+            sender.sendMiniMessage("<red>Region <yellow>$compositeKey<red> is in group <yellow>$groupName")
+            sender.sendMiniMessage("<yellow>Use: /zroverride ${setting.name} group:$groupName $rawValue")
             return true
         }
 
@@ -358,7 +358,7 @@ class OverrideCommand(private val plugin: ZoneRental) : CommandExecutor, TabComp
 
         // Success message
         val successDesc = setting.formatSuccess(value, plugin)
-        sender.sendMessage("${ChatColor.GREEN}Set $successDesc for ${ChatColor.YELLOW}$compositeKey")
+        sender.sendMiniMessage("<green>Set $successDesc for <yellow>$compositeKey")
 
         plugin.logger.info("${sender.name} set ${setting.name} override for region $compositeKey to $rawValue")
         return true
@@ -366,7 +366,7 @@ class OverrideCommand(private val plugin: ZoneRental) : CommandExecutor, TabComp
 
     private fun handleRemove(sender: CommandSender, args: Array<String>): Boolean {
         if (args.size != 2) {
-            sender.sendMessage("${ChatColor.RED}Usage: /zroverride remove <group:group_name|world:region>")
+            sender.sendMiniMessage("<red>Usage: /zroverride remove <group:group_name|world:region>")
             return true
         }
 
@@ -377,12 +377,12 @@ class OverrideCommand(private val plugin: ZoneRental) : CommandExecutor, TabComp
             val groupName = target.substring(6)
 
             if (!plugin.groupsConfig.groupExists(groupName)) {
-                sender.sendMessage("${ChatColor.RED}Group '${ChatColor.YELLOW}$groupName${ChatColor.RED}' does not exist!")
+                sender.sendMiniMessage("<red>Group '<yellow>$groupName<red>' does not exist!")
                 return true
             }
 
             if (!plugin.regionsConfig.hasGroupOverrides(groupName)) {
-                sender.sendMessage("${ChatColor.RED}Group '$groupName' has no custom overrides!")
+                sender.sendMiniMessage("<red>Group '$groupName' has no custom overrides!")
                 return true
             }
 
@@ -391,9 +391,9 @@ class OverrideCommand(private val plugin: ZoneRental) : CommandExecutor, TabComp
             val groupRegions = plugin.groupsConfig.getGroupRegions(groupName)
             plugin.signManager.bulkMarkSignsDirty(groupRegions)
 
-            sender.sendMessage("${ChatColor.GREEN}Removed all custom overrides for group ${ChatColor.YELLOW}$groupName")
-            sender.sendMessage("${ChatColor.YELLOW}Group will now use default settings from config.yml")
-            sender.sendMessage("${ChatColor.GRAY}Updated ${groupRegions.size} region(s) in group")
+            sender.sendMiniMessage("<green>Removed all custom overrides for group <yellow>$groupName")
+            sender.sendMiniMessage("<yellow>Group will now use default settings from config.yml")
+            sender.sendMiniMessage("<gray>Updated ${groupRegions.size} region(s) in group")
 
             plugin.logger.info("${sender.name} removed overrides for group $groupName")
             return true
@@ -401,26 +401,26 @@ class OverrideCommand(private val plugin: ZoneRental) : CommandExecutor, TabComp
 
         // Handle region target
         val parsed = ParsedRegion.parse(target, sender) ?: run {
-            sender.sendMessage("${ChatColor.RED}Invalid target! Use format: world:region or group:group_name")
+            sender.sendMiniMessage("<red>Invalid target! Use format: world:region or group:group_name")
             return true
         }
 
         val world = parsed.world ?: run {
-            sender.sendMessage("${ChatColor.RED}World '${parsed.worldName}' does not exist!")
+            sender.sendMiniMessage("<red>World '${parsed.worldName}' does not exist!")
             return true
         }
         val regionName = parsed.regionName
 
         if (!plugin.regionsConfig.hasRegion(regionName, world)) {
-            sender.sendMessage("${ChatColor.RED}Region '${parsed.compositeKey}' has no custom overrides!")
+            sender.sendMiniMessage("<red>Region '${parsed.compositeKey}' has no custom overrides!")
             return true
         }
 
         plugin.regionsConfig.removeRegion(regionName, world)
         plugin.signManager.markSignDirty(regionName, world)
 
-        sender.sendMessage("${ChatColor.GREEN}Removed all custom overrides for ${ChatColor.YELLOW}${parsed.compositeKey}")
-        sender.sendMessage("${ChatColor.YELLOW}Region will now use default settings from config.yml")
+        sender.sendMiniMessage("<green>Removed all custom overrides for <yellow>${parsed.compositeKey}")
+        sender.sendMiniMessage("<yellow>Region will now use default settings from config.yml")
 
         plugin.logger.info("${sender.name} removed overrides for region ${parsed.compositeKey}")
         return true
@@ -433,27 +433,27 @@ class OverrideCommand(private val plugin: ZoneRental) : CommandExecutor, TabComp
             val regions = plugin.regionsConfig.allRegions
 
             if (groups.isEmpty() && regions.isEmpty()) {
-                sender.sendMessage("${ChatColor.YELLOW}No groups or regions have custom overrides configured")
-                sender.sendMessage("${ChatColor.GRAY}Use /zroverride <setting> <group|world:region> <value> to set overrides")
+                sender.sendMiniMessage("<yellow>No groups or regions have custom overrides configured")
+                sender.sendMiniMessage("<gray>Use /zroverride <setting> <group|world:region> <value> to set overrides")
                 return true
             }
 
             if (groups.isNotEmpty()) {
-                sender.sendMessage("${ChatColor.GOLD}=== Groups with Custom Overrides ===")
+                sender.sendMiniMessage("<gold>=== Groups with Custom Overrides ===")
                 groups.forEach { group ->
                     val regionCount = plugin.groupsConfig.getGroupSize(group)
-                    sender.sendMessage("${ChatColor.YELLOW}  - $group${ChatColor.GRAY} ($regionCount regions) ${ChatColor.DARK_GRAY}(/zroverride list group:$group)")
+                    sender.sendMiniMessage("<yellow>  - $group<gray> ($regionCount regions) <dark_gray>(/zroverride list group:$group)")
                 }
             }
 
             if (regions.isNotEmpty()) {
-                sender.sendMessage("${ChatColor.GOLD}=== Regions with Custom Overrides ===")
+                sender.sendMiniMessage("<gold>=== Regions with Custom Overrides ===")
                 regions.forEach { compositeKey ->
-                    sender.sendMessage("${ChatColor.YELLOW}  - $compositeKey${ChatColor.DARK_GRAY} (/zroverride list $compositeKey)")
+                    sender.sendMiniMessage("<yellow>  - $compositeKey<dark_gray> (/zroverride list $compositeKey)")
                 }
             }
 
-            sender.sendMessage("${ChatColor.GRAY}Total: ${groups.size} group(s), ${regions.size} region(s)")
+            sender.sendMiniMessage("<gray>Total: ${groups.size} group(s), ${regions.size} region(s)")
             return true
         }
 
@@ -465,88 +465,88 @@ class OverrideCommand(private val plugin: ZoneRental) : CommandExecutor, TabComp
                 val groupName = target.substring(6)
 
                 if (!plugin.groupsConfig.groupExists(groupName)) {
-                    sender.sendMessage("${ChatColor.RED}Group '${ChatColor.YELLOW}$groupName${ChatColor.RED}' does not exist!")
+                    sender.sendMiniMessage("<red>Group '<yellow>$groupName<red>' does not exist!")
                     return true
                 }
 
                 if (!plugin.regionsConfig.hasGroupOverrides(groupName)) {
-                    sender.sendMessage("${ChatColor.RED}Group '$groupName' has no custom overrides")
-                    sender.sendMessage("${ChatColor.YELLOW}Using default values from config.yml")
+                    sender.sendMiniMessage("<red>Group '$groupName' has no custom overrides")
+                    sender.sendMiniMessage("<yellow>Using default values from config.yml")
                     return true
                 }
 
-                sender.sendMessage("${ChatColor.GOLD}=== Custom Overrides for Group: $groupName ===")
+                sender.sendMiniMessage("<gold>=== Custom Overrides for Group: $groupName ===")
 
                 val overrides = plugin.regionsConfig.getGroupOverrides(groupName)
                 if (overrides.isEmpty()) {
-                    sender.sendMessage("${ChatColor.YELLOW}No overrides set (using defaults)")
+                    sender.sendMiniMessage("<yellow>No overrides set (using defaults)")
                     return true
                 }
 
                 overrides.forEach { (key, value) ->
-                    sender.sendMessage("${ChatColor.YELLOW}  $key: ${ChatColor.WHITE}$value")
+                    sender.sendMiniMessage("<yellow>  $key: <white>$value")
                 }
 
                 val regionCount = plugin.groupsConfig.getGroupSize(groupName)
-                sender.sendMessage("${ChatColor.GRAY}Applies to $regionCount region(s) in group")
+                sender.sendMiniMessage("<gray>Applies to $regionCount region(s) in group")
                 return true
             }
 
             // Handle region target
             val parsed = ParsedRegion.parse(target, sender) ?: run {
-                sender.sendMessage("${ChatColor.RED}Invalid target! Use format: world:region or group:group_name")
+                sender.sendMiniMessage("<red>Invalid target! Use format: world:region or group:group_name")
                 return true
             }
 
             val world = parsed.world ?: run {
-                sender.sendMessage("${ChatColor.RED}World '${parsed.worldName}' does not exist!")
+                sender.sendMiniMessage("<red>World '${parsed.worldName}' does not exist!")
                 return true
             }
             val regionName = parsed.regionName
 
             if (!plugin.regionsConfig.hasRegion(regionName, world)) {
-                sender.sendMessage("${ChatColor.RED}Region '${parsed.compositeKey}' has no custom overrides")
-                sender.sendMessage("${ChatColor.YELLOW}Using default values from config.yml")
+                sender.sendMiniMessage("<red>Region '${parsed.compositeKey}' has no custom overrides")
+                sender.sendMiniMessage("<yellow>Using default values from config.yml")
                 return true
             }
 
-            sender.sendMessage("${ChatColor.GOLD}=== Custom Overrides for ${parsed.compositeKey} ===")
+            sender.sendMiniMessage("<gold>=== Custom Overrides for ${parsed.compositeKey} ===")
 
             val overrides = plugin.regionsConfig.getRegionOverrides(regionName, world)
             if (overrides.isEmpty()) {
-                sender.sendMessage("${ChatColor.YELLOW}No overrides set (using defaults)")
+                sender.sendMiniMessage("<yellow>No overrides set (using defaults)")
                 return true
             }
 
             overrides.filterKeys { it != "_comment" }.forEach { (key, value) ->
-                sender.sendMessage("${ChatColor.YELLOW}  $key: ${ChatColor.WHITE}$value")
+                sender.sendMiniMessage("<yellow>  $key: <white>$value")
             }
             return true
         }
 
-        sender.sendMessage("${ChatColor.RED}Usage: /zroverride list [group:group_name|world:region]")
+        sender.sendMiniMessage("<red>Usage: /zroverride list [group:group_name|world:region]")
         return true
     }
 
     private fun showUsage(sender: CommandSender) {
-        sender.sendMessage("${ChatColor.GOLD}=== ZoneRental Override Commands ===")
-        sender.sendMessage("${ChatColor.YELLOW}/zroverride price <group|region> <amount>")
-        sender.sendMessage("${ChatColor.GRAY}  Set custom rental price for group or region")
-        sender.sendMessage("${ChatColor.YELLOW}/zroverride duration <group|region> <days>")
-        sender.sendMessage("${ChatColor.GRAY}  Set custom rental duration")
-        sender.sendMessage("${ChatColor.YELLOW}/zroverride maxextensions <group|region> <count>")
-        sender.sendMessage("${ChatColor.GRAY}  Set max number of extensions allowed")
-        sender.sendMessage("${ChatColor.YELLOW}/zroverride extensionprice <group|region> <amount>")
-        sender.sendMessage("${ChatColor.GRAY}  Set extension price (0 for auto-calculate)")
-        sender.sendMessage("${ChatColor.YELLOW}/zroverride allowextensions <group|region> <true|false>")
-        sender.sendMessage("${ChatColor.GRAY}  Enable or disable extensions")
-        sender.sendMessage("${ChatColor.YELLOW}/zroverride extensionduration <group|region> <days>")
-        sender.sendMessage("${ChatColor.GRAY}  Set extension duration in days")
-        sender.sendMessage("${ChatColor.YELLOW}/zroverride remove <region>")
-        sender.sendMessage("${ChatColor.GRAY}  Remove all region overrides (use defaults)")
-        sender.sendMessage("${ChatColor.YELLOW}/zroverride list [group|region]")
-        sender.sendMessage("${ChatColor.GRAY}  List all overrides or show details")
-        sender.sendMessage("${ChatColor.GRAY}Note: Regions in groups must use group overrides")
+        sender.sendMiniMessage("<gold>=== ZoneRental Override Commands ===")
+        sender.sendMiniMessage("<yellow>/zroverride price <group|region> <amount>")
+        sender.sendMiniMessage("<gray>  Set custom rental price for group or region")
+        sender.sendMiniMessage("<yellow>/zroverride duration <group|region> <days>")
+        sender.sendMiniMessage("<gray>  Set custom rental duration")
+        sender.sendMiniMessage("<yellow>/zroverride maxextensions <group|region> <count>")
+        sender.sendMiniMessage("<gray>  Set max number of extensions allowed")
+        sender.sendMiniMessage("<yellow>/zroverride extensionprice <group|region> <amount>")
+        sender.sendMiniMessage("<gray>  Set extension price (0 for auto-calculate)")
+        sender.sendMiniMessage("<yellow>/zroverride allowextensions <group|region> <true|false>")
+        sender.sendMiniMessage("<gray>  Enable or disable extensions")
+        sender.sendMiniMessage("<yellow>/zroverride extensionduration <group|region> <days>")
+        sender.sendMiniMessage("<gray>  Set extension duration in days")
+        sender.sendMiniMessage("<yellow>/zroverride remove <region>")
+        sender.sendMiniMessage("<gray>  Remove all region overrides (use defaults)")
+        sender.sendMiniMessage("<yellow>/zroverride list [group|region]")
+        sender.sendMiniMessage("<gray>  List all overrides or show details")
+        sender.sendMiniMessage("<gray>Note: Regions in groups must use group overrides")
     }
 
     override fun onTabComplete(sender: CommandSender, command: Command, alias: String, args: Array<String>): List<String> {

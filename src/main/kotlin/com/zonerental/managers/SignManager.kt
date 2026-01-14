@@ -1,9 +1,8 @@
 package com.zonerental.managers
 
 import com.zonerental.ZoneRental
-import com.zonerental.extensions.color
+import com.zonerental.extensions.toComponent
 import com.zonerental.util.WorldRegionParser
-import net.kyori.adventure.text.Component
 import org.bukkit.Location
 import org.bukkit.Material
 import org.bukkit.World
@@ -257,7 +256,7 @@ class SignManager(private val plugin: ZoneRental) {
                 .replace("{price}", formattedPrice)
                 .replace("{duration}", duration.toString())
 
-            sign.line(line, Component.text(text.color()))
+            sign.line(line, text.toComponent())
             line++
         }
     }
@@ -282,7 +281,7 @@ class SignManager(private val plugin: ZoneRental) {
                 .replace("{days}", rental.daysRemaining.toString())
                 .replace("{hours}", rental.hoursRemaining.toString())
 
-            sign.line(line, Component.text(text.color()))
+            sign.line(line, text.toComponent())
             line++
         }
     }

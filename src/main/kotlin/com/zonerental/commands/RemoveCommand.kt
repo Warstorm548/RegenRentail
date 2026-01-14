@@ -1,8 +1,8 @@
 package com.zonerental.commands
 
 import com.zonerental.ZoneRental
+import com.zonerental.extensions.sendMiniMessage
 import com.zonerental.util.WorldRegionParser
-import org.bukkit.ChatColor
 import org.bukkit.command.Command
 import org.bukkit.command.CommandExecutor
 import org.bukkit.command.CommandSender
@@ -21,21 +21,21 @@ class RemoveCommand(private val plugin: ZoneRental) : CommandExecutor {
         }
 
         if (args.isEmpty()) {
-            sender.sendMessage("${ChatColor.RED}Usage: /zrremove <world:region>")
-            sender.sendMessage("${ChatColor.YELLOW}Example: /zrremove world:shop1")
-            sender.sendMessage("${ChatColor.YELLOW}This will completely remove ZoneRental setup from the region.")
-            sender.sendMessage("${ChatColor.YELLOW}If the region is currently rented, the rental will be reset with full refund.")
+            sender.sendMiniMessage("<red>Usage: /zrremove <world:region>")
+            sender.sendMiniMessage("<yellow>Example: /zrremove world:shop1")
+            sender.sendMiniMessage("<yellow>This will completely remove ZoneRental setup from the region.")
+            sender.sendMiniMessage("<yellow>If the region is currently rented, the rental will be reset with full refund.")
             return true
         }
 
         // Parse region argument with world inference
         val parsed = WorldRegionParser.parse(args[0], sender) ?: run {
-            sender.sendMessage("${ChatColor.RED}Invalid format! Console must use world:region format (e.g., world:shop1)")
+            sender.sendMiniMessage("<red>Invalid format! Console must use world:region format (e.g., world:shop1)")
             return true
         }
 
         val world = parsed.getWorld() ?: run {
-            sender.sendMessage("${ChatColor.RED}World not found!")
+            sender.sendMiniMessage("<red>World not found!")
             return true
         }
         val regionName = parsed.regionName
@@ -63,13 +63,13 @@ class RemoveCommand(private val plugin: ZoneRental) : CommandExecutor {
                 val formattedTotal = String.format(plugin.configManager.currencyFormat, totalPaid)
                 val formattedAlready = String.format(plugin.configManager.currencyFormat, alreadyRefunded)
 
-                sender.sendMessage("${ChatColor.YELLOW}Active rental found. Player $playerName has been refunded $formattedAmount")
+                sender.sendMiniMessage("<yellow>Active rental found. Player $playerName has been refunded $formattedAmount")
 
                 // Show refund breakdown if any previous refunds exist
                 if (alreadyRefunded > 0) {
-                    sender.sendMessage("${ChatColor.GRAY}  Total paid: ${ChatColor.YELLOW}$formattedTotal")
-                    sender.sendMessage("${ChatColor.GRAY}  Already refunded: ${ChatColor.YELLOW}$formattedAlready")
-                    sender.sendMessage("${ChatColor.GRAY}  Net refund: ${ChatColor.GREEN}$formattedAmount")
+                    sender.sendMiniMessage("<gray>  Total paid: <yellow>$formattedTotal")
+                    sender.sendMiniMessage("<gray>  Already refunded: <yellow>$formattedAlready")
+                    sender.sendMiniMessage("<gray>  Net refund: <green>$formattedAmount")
                 }
             }
         }
@@ -108,27 +108,27 @@ class RemoveCommand(private val plugin: ZoneRental) : CommandExecutor {
             append(plugin.configManager.getMessage("region-removed", "{region}", parsed.getCompositeKey()))
 
             if (signRemoved) {
-                append("\n${ChatColor.GREEN}  ✓ Rental sign removed")
+                append("\n<green>  ✓ Rental sign removed")
             }
 
             if (schematicDeleted) {
-                append("\n${ChatColor.GREEN}  ✓ WorldEdit schematic deleted")
+                append("\n<green>  ✓ WorldEdit schematic deleted")
             }
 
             if (regionConfigRemoved) {
-                append("\n${ChatColor.GREEN}  ✓ Region configuration removed from regions.yml")
+                append("\n<green>  ✓ Region configuration removed from regions.yml")
             }
 
             if (groupRemoved) {
-                append("\n${ChatColor.GREEN}  ✓ Removed from group '$groupName'")
+                append("\n<green>  ✓ Removed from group '$groupName'")
             }
 
             if (rental != null) {
-                append("\n${ChatColor.GREEN}  ✓ Active rental reset with refund")
+                append("\n<green>  ✓ Active rental reset with refund")
             }
         }
 
-        sender.sendMessage(message)
+        sender.sendMiniMessage(message)
 
         // Log the action
         plugin.logger.info("Admin ${sender.name} removed ZoneRental setup from region: ${parsed.getCompositeKey()}")

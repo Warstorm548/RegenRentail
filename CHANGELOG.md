@@ -24,6 +24,38 @@ Going forward, all references use the new name "ZoneRental".
 
 ---
 
+## [3.2.0] - Adventure API Migration
+
+### Changed
+
+- **Complete migration from ChatColor to Adventure API** - Migrated 548 ChatColor usages across 21 source files to use Paper's native Adventure Component API with MiniMessage format
+  - All commands now use `sendMiniMessage()` extension for inline messages
+  - ConfigManager now returns `Component` from `getMessage()` instead of legacy strings
+  - Sign formats updated to use MiniMessage tags (`<red>`, `<green>`, `<gold>`, etc.)
+  - All config.yml messages migrated from `&` color codes to MiniMessage format
+
+- **Deprecated Bukkit API fixes** - Updated 5 deprecated API usages:
+  - `player.sendTitle()` → `player.showTitle()` with Adventure Title
+  - `itemMeta.setDisplayName()` → `itemMeta.displayName(Component)`
+  - `itemMeta.lore = List<String>` → `itemMeta.lore(List<Component>)`
+
+### Added
+
+- **AdventureExtensions.kt** - New extension functions for Adventure API:
+  - `String.toComponent()` - Parse MiniMessage format
+  - `String.legacyToComponent()` - Convert legacy `&` codes to Component
+  - `String.toMiniMessage()` - Convert legacy codes to MiniMessage tags
+  - `CommandSender.sendMiniMessage()` - Send MiniMessage-formatted text
+
+### Breaking Changes
+
+- **Config format change** - `config.yml` now uses MiniMessage format instead of `&` color codes
+  - Old: `prefix: '&8[&6ZoneRental&8]&r '`
+  - New: `prefix: '<dark_gray>[<gold>ZoneRental<dark_gray>]<reset> '`
+  - Existing configs will need to be updated or regenerated
+
+---
+
 ## [3.1.3] - Deprecated Code Cleanup
 
 ### Removed

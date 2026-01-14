@@ -1,7 +1,8 @@
 package com.zonerental.config
 
 import com.zonerental.ZoneRental
-import org.bukkit.ChatColor
+import net.kyori.adventure.text.Component
+import net.kyori.adventure.text.minimessage.MiniMessage
 import org.bukkit.World
 import org.bukkit.configuration.file.FileConfiguration
 
@@ -109,7 +110,7 @@ class ConfigManager(private val plugin: ZoneRental) {
 
     private fun loadConfig() {
         // General settings
-        prefix = config.getString("general.prefix", "&8[&6ZoneRental&8]&r ")?.color() ?: ""
+        prefix = config.getString("general.prefix", "<dark_gray>[<gold>ZoneRental<dark_gray>]<reset> ") ?: ""
         isDebug = config.getBoolean("general.debug", false)
         expirationCheckInterval = config.getInt("general.expiration-check-interval", 1)
 
@@ -154,19 +155,19 @@ class ConfigManager(private val plugin: ZoneRental) {
         // Sign formats
         availableSignFormat = config.getStringList("signs.available-format").ifEmpty {
             listOf(
-                "&2[AVAILABLE]",
-                "&6{region}",
-                "&e{price}",
-                "&7{duration} days"
+                "<dark_green>[AVAILABLE]",
+                "<gold>{region}",
+                "<yellow>{price}",
+                "<gray>{duration} days"
             )
         }
 
         rentedSignFormat = config.getStringList("signs.rented-format").ifEmpty {
             listOf(
-                "&c[RENTED]",
-                "&6{region}",
-                "&e{owner}",
-                "&7Exp: {expires}"
+                "<red>[RENTED]",
+                "<gold>{region}",
+                "<yellow>{owner}",
+                "<gray>Exp: {expires}"
             )
         }
 
@@ -198,38 +199,40 @@ class ConfigManager(private val plugin: ZoneRental) {
 
     private fun loadMessages() {
         messages = mutableMapOf(
-            "no-permission" to "&cYou don't have permission to do that!",
-            "region-not-found" to "&cRegion &e{region}&c not found!",
-            "already-rented" to "&cThis region is already rented!",
-            "rental-success" to "&aYou have successfully rented &e{region}&a for &e{days}&a days!",
-            "rental-expired" to "&cYour rental of &e{region}&c has expired!",
-            "not-enough-money" to "&cYou don't have enough money! Need &e{amount}",
-            "max-rentals-reached" to "&cYou have reached the maximum number of rentals!",
-            "rental-extended" to "&aRental extended for &e{days}&a days!",
-            "max-extensions-reached" to "&cMaximum extensions reached for this rental!",
-            "items-stored" to "&aYour items from &e{region}&a have been stored!",
-            "items-retrieved" to "&aYou have retrieved your stored items!",
-            "no-stored-items" to "&cYou have no stored items!",
-            "sign-created" to "&aRental sign created for region &e{region}!",
-            "sign-removed" to "&aRental sign removed!",
-            "rental-reset" to "&aRental for &e{region}&a has been reset!",
-            "admin-reset-success" to "&aSuccessfully reset rental for &e{region}&a. Player &e{player}&a has been refunded &e{amount}&a.",
-            "rental-reset-refund" to "&aYour rental of &e{region}&a has been reset by an admin. You have been refunded &e{amount}&a.",
-            "region-removed" to "&aZoneRental setup completely removed from &e{region}&a:",
-            "rental-info" to "&6=== Rental Info for {region} ===",
-            "config-reloaded" to "&aConfiguration reloaded!",
+            "no-permission" to "<red>You don't have permission to do that!",
+            "region-not-found" to "<red>Region <yellow>{region}<red> not found!",
+            "already-rented" to "<red>This region is already rented!",
+            "rental-success" to "<green>You have successfully rented <yellow>{region}<green> for <yellow>{days}<green> days!",
+            "rental-expired" to "<red>Your rental of <yellow>{region}<red> has expired!",
+            "not-enough-money" to "<red>You don't have enough money! Need <yellow>{amount}",
+            "max-rentals-reached" to "<red>You have reached the maximum number of rentals!",
+            "rental-extended" to "<green>Rental extended for <yellow>{days}<green> days!",
+            "max-extensions-reached" to "<red>Maximum extensions reached for this rental!",
+            "items-stored" to "<green>Your items from <yellow>{region}<green> have been stored!",
+            "items-retrieved" to "<green>You have retrieved your stored items!",
+            "no-stored-items" to "<red>You have no stored items!",
+            "sign-created" to "<green>Rental sign created for region <yellow>{region}!",
+            "sign-removed" to "<green>Rental sign removed!",
+            "rental-reset" to "<green>Rental for <yellow>{region}<green> has been reset!",
+            "admin-reset-success" to "<green>Successfully reset rental for <yellow>{region}<green>. Player <yellow>{player}<green> has been refunded <yellow>{amount}<green>.",
+            "rental-reset-refund" to "<green>Your rental of <yellow>{region}<green> has been reset by an admin. You have been refunded <yellow>{amount}<green>.",
+            "region-removed" to "<green>ZoneRental setup completely removed from <yellow>{region}<green>:",
+            "rental-info" to "<gold>=== Rental Info for {region} ===",
+            "config-reloaded" to "<green>Configuration reloaded!",
             // Refund tracking messages
-            "refund-issued" to "&aRefund issued to &e{player}&a: &e{amount}&a (Reason: {reason})",
-            "refund-already-given" to "&cCannot refund. Total refunded (&e{refunded}&c) would exceed total paid (&e{paid}&c).",
-            "refund-history-header" to "&a&lRefund History for &e{region}",
-            "refund-partial" to "&aProportional refund for &e{days}&a days removed: &e{amount}",
+            "refund-issued" to "<green>Refund issued to <yellow>{player}<green>: <yellow>{amount}<green> (Reason: {reason})",
+            "refund-already-given" to "<red>Cannot refund. Total refunded (<yellow>{refunded}<red>) would exceed total paid (<yellow>{paid}<red>).",
+            "refund-history-header" to "<green><bold>Refund History for <yellow>{region}",
+            "refund-partial" to "<green>Proportional refund for <yellow>{days}<green> days removed: <yellow>{amount}",
             // Duration command messages
-            "duration-add-charged" to "&aAdded &e{days}&a days to &e{region}&a. Player &e{player}&a was charged &e{amount}&a.",
-            "duration-add-free" to "&aAdded &e{days}&a to &e{region}&a (no charge).",
-            "duration-remove-refunded" to "&aRemoved &e{days}&a days from &e{region}&a. Player &e{player}&a was refunded &e{amount}&a.",
-            "duration-remove-no-refund" to "&aRemoved &e{days}&a days from &e{region}&a (no refund issued).",
+            "duration-add-charged" to "<green>Added <yellow>{days}<green> days to <yellow>{region}<green>. Player <yellow>{player}<green> was charged <yellow>{amount}<green>.",
+            "duration-add-free" to "<green>Added <yellow>{days}<green> to <yellow>{region}<green> (no charge).",
+            "duration-remove-refunded" to "<green>Removed <yellow>{days}<green> days from <yellow>{region}<green>. Player <yellow>{player}<green> was refunded <yellow>{amount}<green>.",
+            "duration-remove-no-refund" to "<green>Removed <yellow>{days}<green> days from <yellow>{region}<green> (no refund issued).",
             // Region size messages
-            "region-too-large" to "&cRegion &e{region}&c is too large to rent! (&e{chunks}&c chunks, max: &e{max}&c)"
+            "region-too-large" to "<red>Region <yellow>{region}<red> is too large to rent! (<yellow>{chunks}<red> chunks, max: <yellow>{max}<red>)",
+            // EzChestShop integration messages
+            "ezchestshop-removed" to "<yellow>Chest shops in <gold>{region}<yellow> have been removed due to rental expiration."
         )
 
         // Override with config values
@@ -238,8 +241,12 @@ class ConfigManager(private val plugin: ZoneRental) {
         }
     }
 
-    fun getMessage(key: String, vararg replacements: String): String {
-        var message = messages.getOrDefault(key, "&cMissing message: $key")
+    companion object {
+        private val MINI_MESSAGE = MiniMessage.miniMessage()
+    }
+
+    fun getMessage(key: String, vararg replacements: String): Component {
+        var message = messages.getOrDefault(key, "<red>Missing message: $key")
         message = prefix + message
 
         // Replace placeholders
@@ -249,10 +256,8 @@ class ConfigManager(private val plugin: ZoneRental) {
             i += 2
         }
 
-        return message.color()
+        return MINI_MESSAGE.deserialize(message)
     }
-
-    private fun String.color(): String = ChatColor.translateAlternateColorCodes('&', this)
 
     /**
      * Validates and sanitizes the command prefix.

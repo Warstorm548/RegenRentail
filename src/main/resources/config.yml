@@ -6,7 +6,7 @@
 # ============================================
 general:
   # Plugin prefix for all messages
-  prefix: '&8[&6ZoneRental&8]&r '
+  prefix: '<dark_gray>[<gold>ZoneRental<dark_gray>]<reset> '
   
   # Enable debug mode for troubleshooting
   debug: false
@@ -199,24 +199,24 @@ teleport:
 signs:
   # Format for available signs (4 lines max)
   available-format:
-    - '&2[AVAILABLE]'
-    - '&6{region}'
-    - '&e{price}'
-    - '&7{duration} days'
-  
+    - '<dark_green>[AVAILABLE]'
+    - '<gold>{region}'
+    - '<yellow>{price}'
+    - '<gray>{duration} days'
+
   # Format for rented signs (4 lines max)
   rented-format:
-    - '&c[RENTED]'
-    - '&6{region}'
-    - '&e{owner}'
-    - '&7Exp: {expires}'
-  
+    - '<red>[RENTED]'
+    - '<gold>{region}'
+    - '<yellow>{owner}'
+    - '<gray>Exp: {expires}'
+
   # Format for expiring soon signs
   expiring-format:
-    - '&6[EXPIRING]'
-    - '&6{region}'
-    - '&e{owner}'
-    - '&c{hours}h left'
+    - '<gold>[EXPIRING]'
+    - '<gold>{region}'
+    - '<yellow>{owner}'
+    - '<red>{hours}h left'
   
   # Protect rental signs from being broken
   protect-signs: true
@@ -420,107 +420,107 @@ notifications:
 # ============================================
 messages:
   # Permission messages
-  no-permission: '&cYou don''t have permission to do that!'
-  
+  no-permission: '<red>You don''t have permission to do that!'
+
   # Region messages
-  region-not-found: '&cRegion &e{region}&c not found!'
-  region-not-setup: '&cRegion &e{region}&c is not set up for rental!'
-  invalid-region-format: '&cInvalid format! Console must use world:region format (e.g., world:shop1)'
-  region-not-found-in-world: '&cRegion &e{region}&c not found in world &e{world}&c!'
-  region-too-large: '&cRegion &e{region}&c is too large to rent! (&e{chunks}&c chunks, max: &e{max}&c)'
-  
+  region-not-found: '<red>Region <yellow>{region}<red> not found!'
+  region-not-setup: '<red>Region <yellow>{region}<red> is not set up for rental!'
+  invalid-region-format: '<red>Invalid format! Console must use world:region format (e.g., world:shop1)'
+  region-not-found-in-world: '<red>Region <yellow>{region}<red> not found in world <yellow>{world}<red>!'
+  region-too-large: '<red>Region <yellow>{region}<red> is too large to rent! (<yellow>{chunks}<red> chunks, max: <yellow>{max}<red>)'
+
   # Rental messages
-  already-rented: '&cThis region is already rented!'
-  rental-success: '&aYou have successfully rented &e{region}&a for &e{days}&a days!'
-  rental-expired: '&cYour rental of &e{region}&c has expired!'
-  rental-expiring-soon: '&eYour rental of &6{region}&e expires in &c{time}!'
-  not-your-rental: '&cYou don''t own this rental!'
-  
+  already-rented: '<red>This region is already rented!'
+  rental-success: '<green>You have successfully rented <yellow>{region}<green> for <yellow>{days}<green> days!'
+  rental-expired: '<red>Your rental of <yellow>{region}<red> has expired!'
+  rental-expiring-soon: '<yellow>Your rental of <gold>{region}<yellow> expires in <red>{time}!'
+  not-your-rental: '<red>You don''t own this rental!'
+
   # Economy messages
-  not-enough-money: '&cYou don''t have enough money! Need &e{amount}'
-  economy-disabled: '&cEconomy features are disabled!'
-  refund-given: '&aYou have been refunded &e{amount}&a!'
-  
+  not-enough-money: '<red>You don''t have enough money! Need <yellow>{amount}'
+  economy-disabled: '<red>Economy features are disabled!'
+  refund-given: '<green>You have been refunded <yellow>{amount}<green>!'
+
   # Limit messages
-  max-rentals-reached: '&cYou have reached the maximum number of rentals! ({current}/{max})'
-  cooldown-active: '&cPlease wait &e{seconds}&c seconds before renting again!'
-  
+  max-rentals-reached: '<red>You have reached the maximum number of rentals! ({current}/{max})'
+  cooldown-active: '<red>Please wait <yellow>{seconds}<red> seconds before renting again!'
+
   # Extension messages
-  rental-extended: '&aRental for &e{region}&a extended for &e{days}&a days!'
-  max-extensions-reached: '&cMaximum extensions reached for this rental! ({current}/{max})'
-  extension-too-early: '&cYou can only extend rentals within &e{hours}&c hours of expiry!'
-  extension-disabled: '&cExtensions are disabled!'
-  
+  rental-extended: '<green>Rental for <yellow>{region}<green> extended for <yellow>{days}<green> days!'
+  max-extensions-reached: '<red>Maximum extensions reached for this rental! ({current}/{max})'
+  extension-too-early: '<red>You can only extend rentals within <yellow>{hours}<red> hours of expiry!'
+  extension-disabled: '<red>Extensions are disabled!'
+
   # Duration command messages
-  duration-added: '&aAdded &e{time}&a to rental &6{region}'
-  duration-removed: '&aRemoved &e{time}&a from rental &6{region}'
-  duration-set: '&aSet rental duration for &6{region}&a to &e{time}'
-  duration-invalid: '&cInvalid duration format! Example: 2 days 3 hours 30 minutes'
-  duration-too-short: '&cDuration would expire the rental immediately!'
+  duration-added: '<green>Added <yellow>{time}<green> to rental <gold>{region}'
+  duration-removed: '<green>Removed <yellow>{time}<green> from rental <gold>{region}'
+  duration-set: '<green>Set rental duration for <gold>{region}<green> to <yellow>{time}'
+  duration-invalid: '<red>Invalid duration format! Example: 2 days 3 hours 30 minutes'
+  duration-too-short: '<red>Duration would expire the rental immediately!'
 
   # Duration command refund/charge messages
-  duration-add-charged: '&aAdded &e{days}&a days to &e{region}&a. Player &e{player}&a was charged &e{amount}&a.'
-  duration-add-free: '&aAdded &e{days}&a to &e{region}&a (no charge).'
-  duration-remove-refunded: '&aRemoved &e{days}&a days from &e{region}&a. Player &e{player}&a was refunded &e{amount}&a.'
-  duration-remove-no-refund: '&aRemoved &e{days}&a days from &e{region}&a (no refund issued).'
+  duration-add-charged: '<green>Added <yellow>{days}<green> days to <yellow>{region}<green>. Player <yellow>{player}<green> was charged <yellow>{amount}<green>.'
+  duration-add-free: '<green>Added <yellow>{days}<green> to <yellow>{region}<green> (no charge).'
+  duration-remove-refunded: '<green>Removed <yellow>{days}<green> days from <yellow>{region}<green>. Player <yellow>{player}<green> was refunded <yellow>{amount}<green>.'
+  duration-remove-no-refund: '<green>Removed <yellow>{days}<green> days from <yellow>{region}<green> (no refund issued).'
 
   # Refund tracking messages
-  refund-issued: '&aRefund issued to &e{player}&a: &e{amount}&a (Reason: {reason})'
-  refund-already-given: '&cCannot refund. Total refunded (&e{refunded}&c) would exceed total paid (&e{paid}&c).'
-  refund-history-header: '&a&lRefund History for &e{region}'
-  refund-partial: '&aProportional refund for &e{days}&a days removed: &e{amount}'
+  refund-issued: '<green>Refund issued to <yellow>{player}<green>: <yellow>{amount}<green> (Reason: {reason})'
+  refund-already-given: '<red>Cannot refund. Total refunded (<yellow>{refunded}<red>) would exceed total paid (<yellow>{paid}<red>).'
+  refund-history-header: '<green><bold>Refund History for <yellow>{region}'
+  refund-partial: '<green>Proportional refund for <yellow>{days}<green> days removed: <yellow>{amount}'
 
   # Storage messages
-  items-stored: '&aYour &e{count}&a items from &6{region}&a have been stored!'
-  items-stored-pages: '&aYour items are stored across &e{pages}&a pages!'
-  items-retrieved: '&aYou have retrieved your stored items!'
-  no-stored-items: '&cYou have no stored items!'
-  storage-expired: '&cYour stored items have expired and been deleted!'
-  
+  items-stored: '<green>Your <yellow>{count}<green> items from <gold>{region}<green> have been stored!'
+  items-stored-pages: '<green>Your items are stored across <yellow>{pages}<green> pages!'
+  items-retrieved: '<green>You have retrieved your stored items!'
+  no-stored-items: '<red>You have no stored items!'
+  storage-expired: '<red>Your stored items have expired and been deleted!'
+
   # Sign messages
-  sign-created: '&aRental sign created for region &e{region}!'
-  sign-removed: '&aRental sign removed!'
-  sign-not-rental: '&cThis is not a rental sign!'
-  sign-protected: '&cRental signs are protected!'
-  sign-support-protected: '&cYou cannot break this block - it supports a rental sign!'
+  sign-created: '<green>Rental sign created for region <yellow>{region}!'
+  sign-removed: '<green>Rental sign removed!'
+  sign-not-rental: '<red>This is not a rental sign!'
+  sign-protected: '<red>Rental signs are protected!'
+  sign-support-protected: '<red>You cannot break this block - it supports a rental sign!'
 
   # Admin messages
-  rental-reset: '&aRental for &e{region}&a has been reset!'
-  admin-reset-success: '&aSuccessfully reset rental for &e{region}&a. Player &e{player}&a has been refunded &e{amount}&a.'
-  rental-reset-refund: '&aYour rental of &e{region}&a has been reset by an admin. You have been refunded &e{amount}&a.'
-  region-removed: '&aZoneRental setup completely removed from &e{region}&a:'
-  rental-info: '&6=== Rental Info for {region} ==='
-  config-reloaded: '&aConfiguration reloaded!'
-  aliases-enabled: '&aShort command aliases have been enabled!'
-  aliases-disabled: '&eShort aliases disabled due to conflicts. Use /zr prefix.'
+  rental-reset: '<green>Rental for <yellow>{region}<green> has been reset!'
+  admin-reset-success: '<green>Successfully reset rental for <yellow>{region}<green>. Player <yellow>{player}<green> has been refunded <yellow>{amount}<green>.'
+  rental-reset-refund: '<green>Your rental of <yellow>{region}<green> has been reset by an admin. You have been refunded <yellow>{amount}<green>.'
+  region-removed: '<green>ZoneRental setup completely removed from <yellow>{region}<green>:'
+  rental-info: '<gold>=== Rental Info for {region} ==='
+  config-reloaded: '<green>Configuration reloaded!'
+  aliases-enabled: '<green>Short command aliases have been enabled!'
+  aliases-disabled: '<yellow>Short aliases disabled due to conflicts. Use /zr prefix.'
 
   # Member management messages
-  member-added: '&aAdded &e{member}&a as a member of &6{region}&a!'
-  member-removed: '&aRemoved &e{member}&a from &6{region}&a!'
-  member-already-added: '&cPlayer &e{member}&c is already a member!'
-  member-not-found: '&cPlayer &e{member}&c is not a member!'
-  member-limit-reached: '&cMember limit reached! ({current}/{max})'
-  member-management-disabled: '&cMember management is disabled!'
-  cannot-add-self: '&cYou cannot add yourself as a member!'
-  members-list-header: '&6=== Members of {region} ==='
-  members-list-entry: '&e  - {member}'
-  members-list-empty: '&7No members added'
-  members-list-footer: '&7Total: {count}/{max} members'
-  member-added-notify: '&aYou were added as member of &6{region}&a by &e{owner}&a!'
-  member-removed-notify: '&cYou were removed from &6{region}&c by &e{owner}&c!'
+  member-added: '<green>Added <yellow>{member}<green> as a member of <gold>{region}<green>!'
+  member-removed: '<green>Removed <yellow>{member}<green> from <gold>{region}<green>!'
+  member-already-added: '<red>Player <yellow>{member}<red> is already a member!'
+  member-not-found: '<red>Player <yellow>{member}<red> is not a member!'
+  member-limit-reached: '<red>Member limit reached! ({current}/{max})'
+  member-management-disabled: '<red>Member management is disabled!'
+  cannot-add-self: '<red>You cannot add yourself as a member!'
+  members-list-header: '<gold>=== Members of {region} ==='
+  members-list-entry: '<yellow>  - {member}'
+  members-list-empty: '<gray>No members added'
+  members-list-footer: '<gray>Total: {count}/{max} members'
+  member-added-notify: '<green>You were added as member of <gold>{region}<green> by <yellow>{owner}<green>!'
+  member-removed-notify: '<red>You were removed from <gold>{region}<red> by <yellow>{owner}<red>!'
 
   # Teleport messages
-  tp-success: '&aTeleported to &e{region}&a!'
-  tp-no-permission: '&cYou don''t have permission to teleport to &e{region}&c!'
-  tp-not-rented: '&cRegion &e{region}&c is not currently rented!'
-  tp-no-safe-location: '&cNo safe teleport location found for &e{region}&c!'
-  tp-cooldown: '&cYou must wait &e{time}&c seconds before teleporting again!'
-  tp-cross-world-warning: '&eWarning: Teleporting to &6{region}&e in world &6{world}&e!'
-  not-rental-owner: '&cYou do not own this rental!'
+  tp-success: '<green>Teleported to <yellow>{region}<green>!'
+  tp-no-permission: '<red>You don''t have permission to teleport to <yellow>{region}<red>!'
+  tp-not-rented: '<red>Region <yellow>{region}<red> is not currently rented!'
+  tp-no-safe-location: '<red>No safe teleport location found for <yellow>{region}<red>!'
+  tp-cooldown: '<red>You must wait <yellow>{time}<red> seconds before teleporting again!'
+  tp-cross-world-warning: '<yellow>Warning: Teleporting to <gold>{region}<yellow> in world <gold>{world}<yellow>!'
+  not-rental-owner: '<red>You do not own this rental!'
 
   # Help messages
-  help-header: '&6=== ZoneRental Help ==='
-  help-footer: '&6======================='
+  help-header: '<gold>=== ZoneRental Help ==='
+  help-footer: '<gold>======================='
 
 # ============================================
 # REGIONS CONFIGURATION FILE SETTINGS
@@ -547,7 +547,7 @@ integration:
     notify-on-removal: true
 
     # Custom message for shop removal (supports {region} placeholder)
-    removal-message: '&eChest shops in &6{region}&e have been removed due to rental expiration.'
+    removal-message: '<yellow>Chest shops in <gold>{region}<yellow> have been removed due to rental expiration.'
 
 # ============================================
 # PER-REGION CUSTOM OVERRIDES
